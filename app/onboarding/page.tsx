@@ -1,31 +1,27 @@
+import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/session";
-import { deconnexion } from "@/app/actions/auth";
+import { WizardOnboarding } from "@/components/onboarding/WizardOnboarding";
 
 export default async function OnboardingPage() {
   const user = await requireUser();
+  // Repasser ici une fois le profil rempli n'aurait aucun sens : le wizard
+  // écraserait les préférences. Les modifications passent par /parametres.
+  if (user.onboarded) redirect("/dashboard");
+
+  const prenom = user.name?.split(" ")[0] ?? "toi";
 
   return (
-    <main className="mx-auto w-full max-w-xl flex-1 px-6 py-16">
+    <main className="mx-auto w-full max-w-xl flex-1 px-6 py-12">
       <p className="font-display text-xs tracking-[0.3em] text-or-500 uppercase">Bienvenue</p>
-      <h1 className="mt-4 text-3xl font-bold text-ivoire">Ton profil, en quatre étapes</h1>
-      <p className="mt-4 leading-relaxed text-brume">
-        Taille et poids, matériel disponible, groupes musculaires à travailler, puis nombre de
-        séances par semaine. On génère ensuite ta première semaine d&apos;entraînement.
+      <h1 className="mt-3 text-3xl font-bold text-ivoire">Quatre étapes, {prenom}</h1>
+      <p className="mt-3 text-sm leading-relaxed text-brume">
+        On construit ton programme à partir de ce que tu as sous la main et de ce que tu veux
+        travailler. Deux minutes, et ta première semaine est prête.
       </p>
 
-      <div className="surface mt-8 p-5">
-        <p className="text-sm text-brume">
-          Le wizard est la prochaine étape de développement. La connexion, elle, fonctionne :
-          tu es identifié comme{" "}
-          <span className="text-ivoire">{user.email ?? user.name ?? user.id}</span>.
-        </p>
+      <div className="mt-10">
+        <WizardOnboarding prenom={prenom} />
       </div>
-
-      <form action={deconnexion} className="mt-6">
-        <button type="submit" className="text-sm text-cendre underline transition hover:text-brume">
-          Se déconnecter
-        </button>
-      </form>
     </main>
   );
 }
