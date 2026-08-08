@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+/*
+ * Thème « hextech » : sombre en permanence. Les écussons de rang sont des PNG
+ * détourés sur fond noir — un thème clair les ferait ressortir en halo gris,
+ * donc pas de variante claire, et `color-scheme: dark` pour que les contrôles
+ * natifs (scrollbars, inputs date) suivent.
+ */
+
+@theme {
+  /* Fonds, du plus profond au plus clair */
+  --color-nuit-950: #05080d;
+  --color-nuit-900: #0a0f17;
+  --color-nuit-850: #0e141e;
+  --color-nuit-800: #131b27;
+  --color-nuit-700: #1c2634;
+  --color-nuit-600: #2a3648;
+
+  /* Or hextech — accent principal, promotions, LP */
+  --color-or-600: #a58a4e;
+  --color-or-500: #c8aa6e;
+  --color-or-400: #dcc38d;
+
+  /* Bleu hextech — accent secondaire, liens, focus */
+  --color-hextech-600: #0a8f8a;
+  --color-hextech-500: #0ac8b9;
+  --color-hextech-400: #4fe0d4;
+
+  /* Texte */
+  --color-ivoire: #e8eaee;
+  --color-brume: #98a1b0;
+  --color-cendre: #5f6a7a;
+
+  /* États — le rouge reste discret : la spec interdit de culpabiliser */
+  --color-succes: #4ba368;
+  --color-manque: #8a5560;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-cinzel), Georgia, "Times New Roman", serif;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+@layer base {
+  body {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, --alpha(var(--color-nuit-800) / 60%), transparent),
+      var(--color-nuit-950);
+    color: var(--color-ivoire);
+    font-family: var(--font-sans);
+  }
+
+  /* Sérif de la planche réservée aux grands titres : Cinzel a des formes
+     capitalisantes qui deviennent illisibles en corps de texte. Les titres
+     courants (h3) restent en sans, et les noms de rang appliquent
+     `font-display` explicitement. */
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    letter-spacing: 0.02em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-hextech-500);
+    outline-offset: 2px;
+  }
+}
+
+@utility surface {
+  background-color: --alpha(var(--color-nuit-850) / 70%);
+  border: 1px solid --alpha(var(--color-nuit-700) / 80%);
+  border-radius: 0.75rem;
+  backdrop-filter: blur(8px);
+}

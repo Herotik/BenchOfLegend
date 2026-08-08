@@ -1,0 +1,222 @@
+// Base SQLite locale pour le développement. Le schéma reste volontairement
+// compatible PostgreSQL (pas de type exotique SQLite) pour permettre la
+// migration ultérieure : tout passe par Prisma, aucune requête SQL brute.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Auth.js — modèles standard, avec champs métier ajoutés sur User
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  // --- Métier ---
+  onboarded   Boolean @default(false)
+  heightCm    Int?
+  goal        Goal    @default(HYPERTROPHIE)
+  level       Level   @default(DEBUTANT)
+  /// Jours d'entraînement par semaine, 2 à 6, choisi à l'onboarding
+  daysPerWeek Int     @default(3)
+  /// LP cumulés. Jamais négatifs : aucune action n'en retire.
+  lp          Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  equipments   UserEquipment[]
+  muscleGroups UserMuscleGroup[]
+  weighIns     WeighIn[]
+  workouts     WorkoutLog[]
+  planDays     PlanDay[]
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// Référentiels (alimentés par le seed)
+// ---------------------------------------------------------------------------
+
+model Equipment {
+  /// Slug : "halteres", "banc", "barre_dc", "tapis_course",
+  /// "elastiques", "barre_traction", "kettlebell", "corde_a_sauter"
+  id    String @id
+  label String
+
+  users UserEquipment[]
+}
+
+model UserEquipment {
+  userId      String
+  equipmentId String
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@id([userId, equipmentId])
+}
+
+model MuscleGroup {
+  /// Slug : "pectoraux", "dos", "epaules", "bras", "jambes", "abdos", "cardio"
+  id    String @id
+  label String
+
+  users UserMuscleGroup[]
+}
+
+model UserMuscleGroup {
+  userId  String
+  groupId String
+  /// 1 = priorité normale, 2 = point fort souhaité
+  priority Int @default(1)
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group MuscleGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([userId, groupId])
+}
+
+model Exercise {
+  id String @id @default(cuid())
+
+  name String
+  /// FK logique vers MuscleGroup.id
+  muscleGroup String
+  /// "aucun" = poids de corps. Sinon slug(s) Equipment, séparés par "+"
+  /// quand plusieurs sont requis (ex. "banc+halteres").
+  equipment String @default("aucun")
+  /// Niveau minimum requis
+  level       Level   @default(DEBUTANT)
+  type        ExoType @default(POLYARTICULAIRE)
+  /// Consignes d'exécution, 1 à 2 phrases
+  description String
+  /// Nom de la variante plus difficile, proposée automatiquement quand
+  /// l'utilisateur dépasse la fourchette haute de reps deux séances de suite.
+  progression String?
+
+  @@unique([name])
+  @@index([muscleGroup, level])
+}
+
+// ---------------------------------------------------------------------------
+// Données utilisateur
+// ---------------------------------------------------------------------------
+
+model PlanDay {
+  id     String @id @default(cuid())
+  userId String
+  /// Jour du calendrier, normalisé à minuit UTC
+  date        DateTime
+  muscleGroup String
+  status      PlanStatus @default(PREVU)
+  /// Rempli à la validation de la séance
+  workoutId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, muscleGroup])
+  @@index([userId, date])
+}
+
+model WorkoutLog {
+  id          String   @id @default(cuid())
+  userId      String
+  date        DateTime
+  muscleGroup String
+  isBonus     Boolean  @default(false)
+  lpEarned    Int
+  /// Snapshot : [{name, sets, reps, restSec, done, weightUsedKg?}]
+  exercises   Json
+  durationMin Int?
+  /// Ressenti post-séance, 1 à 5
+  feeling Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+}
+
+model WeighIn {
+  id     String   @id @default(cuid())
+  userId String
+  date   DateTime
+  kg     Float
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+// ---------------------------------------------------------------------------
+
+enum Goal {
+  HYPERTROPHIE
+  FORCE
+  ENDURANCE
+  PERTE_DE_POIDS
+}
+
+enum Level {
+  DEBUTANT
+  INTERMEDIAIRE
+  AVANCE
+}
+
+enum ExoType {
+  POLYARTICULAIRE
+  ISOLATION
+  CARDIO
+}
+
+enum PlanStatus {
+  PREVU
+  FAIT
+  MANQUE
+  REPOS
+}
