@@ -41,6 +41,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/onboarding/:path*",
+    "/seance-bonus/:path*",
     "/calendrier/:path*",
     "/graphiques/:path*",
     "/historique/:path*",

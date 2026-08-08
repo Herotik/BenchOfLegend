@@ -51,14 +51,19 @@ export async function assurerPlanSemaine(userId: string) {
 
   const inscription = jourUTC(user.createdAt);
 
-  if (existants.length === 0 && profil.muscleGroups.length > 0) {
+  if (profil.muscleGroups.length > 0) {
     const plan = genererPlanSemaine(profil, grainesSemaine());
+    // On complète jour par jour plutôt qu'en tout ou rien : une semaine
+    // partiellement remplie — compte créé en cours de semaine, ou préférences
+    // modifiées — doit pouvoir se compléter sans écraser ce qui existe.
+    const dejaPlanifies = new Set(existants.map((p) => p.date.getTime()));
 
     const lignes: Prisma.PlanDayCreateManyInput[] = [];
     for (const jour of plan) {
       // Rien avant l'inscription : ces jours-là le compte n'existait pas, les
       // faire figurer au calendrier n'aurait aucun sens.
       if (jours[jour.jour] < inscription) continue;
+      if (dejaPlanifies.has(jours[jour.jour].getTime())) continue;
 
       if (jour.groupes.length === 0) {
         // Un jour de repos est une ligne à part entière : le calendrier doit

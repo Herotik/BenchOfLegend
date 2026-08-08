@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireOnboardedUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { jourUTC } from "@/lib/dates";
@@ -95,15 +96,18 @@ export default async function DashboardPage() {
         {duJour.length === 0 && (
           <section className="surface p-6 text-center">
             <p className="text-sm text-brume">
-              Rien de prévu aujourd&apos;hui. Tu peux quand même faire une séance bonus.
+              Rien de prévu aujourd&apos;hui — ton plan te fait récupérer.
             </p>
           </section>
         )}
-      </div>
 
-      <p className="mt-8 text-center text-xs text-cendre">
-        Séance bonus, calendrier et graphiques arrivent aux phases suivantes.
-      </p>
+        <Link
+          href="/seance-bonus"
+          className="rounded-lg border border-nuit-600 px-6 py-3 text-center text-sm text-brume transition hover:border-or-600/60 hover:text-or-400"
+        >
+          {duJour.length === 0 ? "Faire une séance bonus quand même" : "Ajouter une séance bonus"}
+        </Link>
+      </div>
     </main>
   );
 }
