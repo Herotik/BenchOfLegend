@@ -1344,4 +1344,202 @@ export const EXERCISES: ExerciseSeed[] = [
       "Élastique fixé à la taille et ancré derrière soi, courir sur place ou avancer de quelques pas contre la résistance. Blocs de 20 à 30 secondes, appuis rapides et buste légèrement penché en avant.",
     progression: null,
   },
+
+  // ==========================================================================
+  // COMPLÉMENT DÉBUTANT AU POIDS DE CORPS
+  //
+  // Le haut du corps manquait de mouvements accessibles à un débutant sans
+  // matériel : pectoraux, dos et bras plafonnaient à 3 exercices et les
+  // épaules à 2, alors que le moteur en sélectionne 4 à 6 par séance. C'est
+  // pourtant le profil cible de l'app. Les quelques mouvements lestés
+  // ci-dessous utilisent des bouteilles d'eau pleines, au même titre que la
+  // chaise : disponibles partout, donc classés « aucun ».
+  // ==========================================================================
+
+  {
+    name: "Pompes contre un mur",
+    muscleGroup: "pectoraux",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "POLYARTICULAIRE",
+    description:
+      "Debout face à un mur, mains à hauteur d'épaules et pieds reculés de deux pas, fléchir les coudes pour amener la poitrine au mur puis pousser. Garder le corps aligné de la tête aux talons, sans casser au niveau des hanches.",
+    progression: "Pompes sur les genoux",
+  },
+  {
+    name: "Serrage de paumes isométrique",
+    muscleGroup: "pectoraux",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "ISOLATION",
+    description:
+      "Paumes jointes devant la poitrine, coudes écartés à l'horizontale, presser une main contre l'autre aussi fort que possible pendant 10 à 20 secondes. Souffler pendant l'effort plutôt que bloquer la respiration.",
+    // Volontairement sans progression : un isométrique ne mène pas aux
+    // pompes, et le rattacher à leur chaîne priverait le moteur du seul
+    // mouvement de pectoraux distinct dont dispose un débutant sans matériel.
+    progression: null,
+  },
+
+  {
+    name: "Bird dog au sol",
+    muscleGroup: "dos",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "POLYARTICULAIRE",
+    description:
+      "À quatre pattes, tendre simultanément le bras droit devant et la jambe gauche derrière, à l'horizontale, puis alterner. Le bassin ne doit pas basculer : garder les hanches parallèles au sol tout au long du mouvement.",
+    progression: "Superman au sol",
+  },
+  {
+    name: "Y-T-W au sol",
+    muscleGroup: "dos",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "ISOLATION",
+    description:
+      "Allongé sur le ventre, front au sol, décoller les bras et dessiner successivement un Y, un T puis un W avec les coudes. Le mouvement vient des omoplates que l'on serre, pas des mains que l'on lève.",
+    progression: "Nageur au sol",
+  },
+
+  {
+    name: "Touches d'épaules en gainage",
+    muscleGroup: "epaules",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "POLYARTICULAIRE",
+    description:
+      "En position de planche bras tendus, venir toucher l'épaule opposée avec une main puis l'autre, en alternance. Écarter les pieds pour stabiliser et empêcher le bassin de tourner à chaque touche.",
+    progression: "Élévations frontales en gainage",
+  },
+  {
+    name: "Élévations latérales avec bouteilles d'eau",
+    muscleGroup: "epaules",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "ISOLATION",
+    description:
+      "Une bouteille d'eau pleine dans chaque main, bras le long du corps, monter latéralement jusqu'à l'horizontale, coudes très légèrement fléchis. Monter sans hausser les épaules et redescendre en freinant.",
+    progression: "Élévations latérales haltères",
+  },
+  {
+    name: "Élévations frontales avec bouteilles d'eau",
+    muscleGroup: "epaules",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "ISOLATION",
+    description:
+      "Bouteilles d'eau pleines en main, bras tendus devant les cuisses, monter jusqu'à hauteur des yeux puis redescendre lentement. Ne pas prendre d'élan avec le buste : le tronc reste immobile.",
+    progression: "Élévations frontales haltères",
+  },
+
+  {
+    name: "Extensions triceps à la serviette en auto-résistance",
+    muscleGroup: "bras",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "ISOLATION",
+    description:
+      "Une serviette tenue derrière la nuque, main basse qui retient et main haute qui pousse vers le plafond en tendant le coude. Le coude reste haut et près de la tête pendant toute l'extension, puis on inverse les rôles.",
+    progression: "Extensions triceps au sol",
+  },
+  // Familles de mouvements manquantes. Le moteur ne sert qu'un maillon par
+  // chaîne de progression, pour ne pas enchaîner trois variantes de pompes
+  // dans la même séance : il lui faut donc au moins quatre familles distinctes
+  // par groupe. Pectoraux et dos n'en avaient que deux, les épaules trois.
+  {
+    name: "Écartés au sol avec bouteilles d'eau",
+    muscleGroup: "pectoraux",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "ISOLATION",
+    description:
+      "Allongé sur le dos, une bouteille pleine dans chaque main bras tendus vers le plafond, ouvrir les bras en arc de cercle jusqu'à frôler le sol puis refermer. Coudes légèrement fléchis et figés : c'est l'épaule qui ouvre, pas le coude.",
+    progression: "Écartés couché haltères",
+  },
+  {
+    name: "Pull-over au sol avec bouteille d'eau",
+    muscleGroup: "pectoraux",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "ISOLATION",
+    description:
+      "Allongé sur le dos, une bouteille tenue à deux mains au-dessus de la poitrine, descendre les bras tendus derrière la tête puis revenir. Garder les lombaires plaquées au sol en gainant le ventre.",
+    progression: "Pull-over haltère",
+  },
+  {
+    name: "Rowing avec bouteilles d'eau buste penché",
+    muscleGroup: "dos",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "POLYARTICULAIRE",
+    description:
+      "Buste penché à 45°, dos plat et genoux fléchis, tirer les bouteilles vers les hanches en serrant les omoplates puis redescendre. Les coudes longent le corps, ils ne s'écartent pas vers l'extérieur.",
+    progression: "Rowing haltère à un bras",
+  },
+  {
+    name: "Pull-apart à la serviette",
+    muscleGroup: "dos",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "ISOLATION",
+    description:
+      "Serviette tendue à deux mains devant soi, bras à hauteur d'épaules, écarter les mains en tirant sur le tissu jusqu'à ouvrir la poitrine. Le mouvement s'arrête quand les omoplates se touchent, sans cambrer.",
+    progression: null,
+  },
+  {
+    name: "Oiseau avec bouteilles d'eau buste penché",
+    muscleGroup: "epaules",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "ISOLATION",
+    description:
+      "Buste penché vers l'avant, bras pendants avec une bouteille dans chaque main, ouvrir latéralement jusqu'à l'horizontale puis redescendre. Monter avec les coudes plutôt qu'avec les mains, sans à-coup du buste.",
+    progression: "Oiseau haltères buste penché",
+  },
+
+  // Le cardio au poids de corps se réduisait à deux familles — course sur
+  // place et burpees — donc une séance de quatre exercices répétait forcément
+  // le même mouvement. Ces trois-là sont volontairement autonomes : ce sont
+  // des registres différents, pas des maillons d'une progression.
+  {
+    name: "Shadow boxing",
+    muscleGroup: "cardio",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "CARDIO",
+    description:
+      "Debout en garde, enchaîner directs, crochets et esquives en restant mobile sur les appuis. Garder les mains hautes et ne jamais verrouiller le coude en fin de frappe pour protéger l'articulation.",
+    progression: null,
+  },
+  {
+    name: "Sauts à la corde à vide",
+    muscleGroup: "cardio",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "CARDIO",
+    description:
+      "Reproduire le geste de la corde à sauter sans corde : petits sauts sur la pointe des pieds, poignets qui tournent le long du corps. Amortir en gardant les genoux souples, sans écraser les talons au sol.",
+    progression: null,
+  },
+  {
+    name: "Marche de l'ours",
+    muscleGroup: "cardio",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "CARDIO",
+    description:
+      "À quatre pattes genoux décollés de quelques centimètres, avancer en déplaçant main et pied opposés simultanément. Garder le dos plat et le bassin bas : c'est le gainage qui travaille autant que le cardio.",
+    progression: null,
+  },
+
+  {
+    name: "Curl avec bouteilles d'eau",
+    muscleGroup: "bras",
+    equipment: "aucun",
+    level: "DEBUTANT",
+    type: "ISOLATION",
+    description:
+      "Une bouteille d'eau pleine dans chaque main, coudes collés au buste, fléchir jusqu'à l'épaule puis redescendre bras tendus. Éviter le balancement du dos, qui transfère le travail des biceps vers les lombaires.",
+    progression: "Curl biceps haltères",
+  },
 ];
