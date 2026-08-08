@@ -6,6 +6,63 @@ of Legends transposée en mythologie grecque — **Hoplite → Dieu de l'Olympe*
 
 La spécification complète est dans [SPEC-la-faille.md](SPEC-la-faille.md).
 
+## Démarrer
+
+```bash
+npm install
+cp .env.example .env
+npm run db:reset
+npm run dev
+```
+
+`db:reset` crée la base SQLite et charge le catalogue (8 équipements, 7 groupes
+musculaires, 130 exercices). L'app tourne sur http://localhost:3000.
+
+> Sous Windows, si tu écris le `.env` à la main : **UTF-8 sans BOM**. Un BOM
+> casse la lecture de la première clé.
+
+## Connexion Google
+
+L'app n'a pas de mot de passe : l'authentification passe uniquement par Google
+(Auth.js v5, sessions stockées en base). Tant que les identifiants ne sont pas
+renseignés, la landing affiche un message le disant explicitement plutôt qu'un
+bouton mort.
+
+1. Ouvrir la [Google Cloud Console](https://console.cloud.google.com/) et créer
+   un projet (ou en sélectionner un).
+2. **APIs & Services → OAuth consent screen** : type « External », renseigner
+   nom de l'app, e-mail d'assistance et e-mail de contact. Tant que l'app est
+   en mode *Testing*, ajouter ton adresse Google dans **Test users** — sans
+   ça, Google refuse la connexion avec `access_denied`.
+3. **APIs & Services → Credentials → Create credentials → OAuth client ID**,
+   type **Web application**.
+4. Dans **Authorized redirect URIs**, ajouter exactement :
+
+   ```
+   http://localhost:3000/api/auth/callback/google
+   ```
+
+5. Copier le client ID et le client secret dans `.env` :
+
+   ```
+   AUTH_GOOGLE_ID="…apps.googleusercontent.com"
+   AUTH_GOOGLE_SECRET="…"
+   ```
+
+6. **Redémarrer `npm run dev`** — Next.js ne recharge pas `.env` à chaud.
+
+`AUTH_SECRET` est déjà généré dans le `.env` local. Pour en régénérer un :
+`node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`.
+
+### Si ça ne marche pas
+
+| Symptôme | Cause habituelle |
+|---|---|
+| `redirect_uri_mismatch` | L'URI enregistrée ne correspond pas au caractère près — vérifier `http` et non `https`, le port, et l'absence de `/` final |
+| `access_denied` | Compte absent des **Test users** de l'écran de consentement |
+| Le bouton reste absent | `.env` non rechargé : redémarrer le serveur |
+| `invalid_client` | ID ou secret tronqué à la copie |
+
 ## Rangs
 
 Les 8 rangs sont définis dans [`lib/ranks.ts`](lib/ranks.ts) — source de vérité unique pour

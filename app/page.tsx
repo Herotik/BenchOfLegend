@@ -1,5 +1,8 @@
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import { RANKS } from "@/lib/ranks";
+import { auth, googleConfigured } from "@/auth";
+import { connexionGoogle } from "@/app/actions/auth";
 
 const ETAPES = [
   {
@@ -19,7 +22,13 @@ const ETAPES = [
   },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage({ searchParams }: PageProps<"/">) {
+  // Déjà connecté : la landing n'a plus rien à offrir.
+  const session = await auth();
+  if (session?.user) redirect(session.user.onboarded ? "/dashboard" : "/onboarding");
+
+  const { suivant } = await searchParams;
+
   return (
     <main className="flex-1">
       {/* --- Hero --- */}
@@ -35,14 +44,35 @@ export default function LandingPage() {
           <span className="text-or-500">Dieu de l&apos;Olympe</span>.
         </p>
 
-        <a
-          href="/api/auth/signin/google"
-          className="mt-10 inline-flex items-center gap-3 rounded-lg border border-or-600/60 bg-or-500/10 px-6 py-3 text-base font-medium text-or-400 transition hover:bg-or-500/20 hover:text-or-400"
-        >
-          <GoogleIcon />
-          Se connecter avec Google
-        </a>
-        <p className="mt-4 text-sm text-cendre">Gratuit. Aucune donnée revendue.</p>
+        {googleConfigured ? (
+          <>
+            <form action={connexionGoogle} className="mt-10">
+              <input
+                type="hidden"
+                name="suivant"
+                value={typeof suivant === "string" ? suivant : "/dashboard"}
+              />
+              <button
+                type="submit"
+                className="inline-flex items-center gap-3 rounded-lg border border-or-600/60 bg-or-500/10 px-6 py-3 text-base font-medium text-or-400 transition hover:bg-or-500/20"
+              >
+                <GoogleIcon />
+                Se connecter avec Google
+              </button>
+            </form>
+            <p className="mt-4 text-sm text-cendre">Gratuit. Aucune donnée revendue.</p>
+          </>
+        ) : (
+          <div className="surface mt-10 max-w-md p-5 text-left">
+            <p className="text-sm font-medium text-or-400">Connexion Google non configurée</p>
+            <p className="mt-2 text-sm leading-relaxed text-brume">
+              Renseigne <code className="text-ivoire">AUTH_GOOGLE_ID</code> et{" "}
+              <code className="text-ivoire">AUTH_GOOGLE_SECRET</code> dans le fichier{" "}
+              <code className="text-ivoire">.env</code>, puis redémarre le serveur. La marche à
+              suivre est dans la section « Connexion Google » du README.
+            </p>
+          </div>
+        )}
       </section>
 
       {/* --- Comment ça marche --- */}
