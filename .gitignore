@@ -1,0 +1,47 @@
+# Dépendances
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/versions
+
+# Build Next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+
+# Base de données locale (SQLite)
+*.db
+*.db-journal
+/prisma/*.db
+/prisma/*.db-journal
+/prisma/migrations/dev.db*
+
+# Secrets — ne jamais committer, voir .env.example
+.env
+.env*.local
+!.env.example
+
+# Tests & couverture
+/coverage
+/.vitest
+
+# Réglages Claude Code propres à la machine
+.claude/settings.local.json
+
+# Divers
+.DS_Store
+*.pem
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vercel
+*.tsbuildinfo
+
+# Python (scripts/extract-ranks.py)
+__pycache__/
+*.pyc
