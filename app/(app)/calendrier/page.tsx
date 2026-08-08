@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireOnboardedUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { jourUTC } from "@/lib/dates";
+import { assurerPlans } from "@/lib/plan-hebdo";
 import { muscleGroupLabel } from "@/lib/referentiel";
 
 const MOIS = [
@@ -13,6 +14,10 @@ const JOURS_COURTS = ["L", "M", "M", "J", "V", "S", "D"];
 export default async function CalendrierPage({ searchParams }: PageProps<"/calendrier">) {
   const session = await requireOnboardedUser();
   const { m } = await searchParams;
+
+  // Idempotent : arriver ici directement, sans passer par le tableau de bord,
+  // ne doit pas afficher un mois vide.
+  await assurerPlans(session.id);
 
   const aujourdhui = jourUTC();
   const base = typeof m === "string" && /^\d{4}-\d{2}$/.test(m)

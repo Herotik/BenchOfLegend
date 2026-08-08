@@ -39,9 +39,10 @@ export async function chargerCatalogue(): Promise<ExerciceDisponible[]> {
  * Appelé au chargement du dashboard : c'est le « cron logique » de la spec
  * §5.1, qui évite d'avoir à faire tourner une vraie tâche planifiée.
  */
-export async function assurerPlanSemaine(userId: string) {
+export async function assurerPlanSemaine(userId: string, decalageSemaines = 0) {
   const { user, profil } = await chargerProfil(userId);
-  const jours = joursDeLaSemaine();
+  const reference = new Date(Date.now() + decalageSemaines * 7 * 86_400_000);
+  const jours = joursDeLaSemaine(reference);
   const debut = jours[0];
   const fin = new Date(debut.getTime() + 7 * 86_400_000);
 
@@ -52,7 +53,7 @@ export async function assurerPlanSemaine(userId: string) {
   const inscription = jourUTC(user.createdAt);
 
   if (profil.muscleGroups.length > 0) {
-    const plan = genererPlanSemaine(profil, grainesSemaine());
+    const plan = genererPlanSemaine(profil, grainesSemaine(reference));
     // On complète jour par jour plutôt qu'en tout ou rien : une semaine
     // partiellement remplie — compte créé en cours de semaine, ou préférences
     // modifiées — doit pouvoir se compléter sans écraser ce qui existe.
@@ -105,6 +106,20 @@ export async function assurerPlanSemaine(userId: string) {
     where: { userId, date: { gte: debut, lt: fin } },
     orderBy: { date: "asc" },
   });
+}
+
+/**
+ * Semaine en cours **et** semaine suivante.
+ *
+ * Ne générer que la semaine courante laissait un calendrier vide à quiconque
+ * s'inscrivait en fin de semaine : il n'y avait littéralement rien à voir
+ * avant le lundi suivant. Avoir toujours une semaine d'avance donne aussi de
+ * la visibilité sur ce qui arrive, ce que la spec attend du calendrier.
+ */
+export async function assurerPlans(userId: string) {
+  const semaine = await assurerPlanSemaine(userId, 0);
+  await assurerPlanSemaine(userId, 1);
+  return semaine;
 }
 
 /**

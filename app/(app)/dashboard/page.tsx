@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireOnboardedUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { jourUTC } from "@/lib/dates";
-import { assurerPlanSemaine, seanceDuJour } from "@/lib/plan-hebdo";
+import { assurerPlans, seanceDuJour } from "@/lib/plan-hebdo";
 import { rankForLp } from "@/lib/ranks";
 import { muscleGroupLabel } from "@/lib/referentiel";
 import { EcussonRang } from "@/components/EcussonRang";
@@ -14,7 +14,7 @@ export default async function DashboardPage() {
 
   // « Cron logique » de la spec §5.1 : le plan de la semaine se crée au
   // premier chargement, et les jours passés non validés basculent en MANQUE.
-  const plan = await assurerPlanSemaine(session.id);
+  const plan = await assurerPlans(session.id);
   const aujourdhui = jourUTC();
 
   const duJour = plan.filter(
