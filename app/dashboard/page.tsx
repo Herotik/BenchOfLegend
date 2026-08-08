@@ -1,34 +1,118 @@
 import { requireOnboardedUser } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
+import { jourUTC } from "@/lib/dates";
+import { assurerPlanSemaine, seanceDuJour } from "@/lib/plan-hebdo";
+import { rankForLp } from "@/lib/ranks";
+import { muscleGroupLabel } from "@/lib/referentiel";
 import { EcussonRang } from "@/components/EcussonRang";
+import { SeanceDuJour } from "@/components/dashboard/SeanceDuJour";
 import { deconnexion } from "@/app/actions/auth";
 
 export default async function DashboardPage() {
-  const user = await requireOnboardedUser();
+  const session = await requireOnboardedUser();
+
+  // « Cron logique » de la spec §5.1 : le plan de la semaine se crée au
+  // premier chargement, et les jours passés non validés basculent en MANQUE.
+  const plan = await assurerPlanSemaine(session.id);
+  const aujourdhui = jourUTC();
+
+  const duJour = plan.filter(
+    (p) => p.date.getTime() === aujourdhui.getTime() && p.status !== "REPOS",
+  );
+
+  const [user, totalSeances, derniereePesee] = await Promise.all([
+    prisma.user.findUniqueOrThrow({ where: { id: session.id }, select: { lp: true, name: true } }),
+    prisma.workoutLog.count({ where: { userId: session.id } }),
+    prisma.weighIn.findFirst({ where: { userId: session.id }, orderBy: { date: "desc" } }),
+  ]);
+
+  const streak = await prisma.workoutLog.count({
+    where: {
+      userId: session.id,
+      date: { gte: new Date(aujourdhui.getTime() - 6 * 86_400_000) },
+    },
+  });
+
+  const rang = rankForLp(user.lp);
+  const seances = await Promise.all(
+    duJour.map(async (p) => ({
+      planDay: p,
+      seance: await seanceDuJour(session.id, p.muscleGroup),
+    })),
+  );
+
+  const prenom = user.name?.split(" ")[0] ?? "toi";
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
-      <header className="flex items-center justify-between gap-4">
+    <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-10">
+      <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-ivoire">Salut {user.name ?? "toi"}</h1>
-          <p className="mt-1 text-sm text-brume">Ta séance du jour t&apos;attend.</p>
+          <h1 className="text-2xl font-bold text-ivoire">Salut {prenom}</h1>
+          <p className="mt-1 text-sm text-brume">
+            {duJour.length > 0
+              ? `Au programme : ${duJour.map((p) => muscleGroupLabel(p.muscleGroup)).join(" et ")}.`
+              : "Jour de repos. La récupération fait partie de la progression."}
+          </p>
         </div>
         <form action={deconnexion}>
           <button
             type="submit"
-            className="rounded-lg border border-nuit-600 px-3 py-1.5 text-sm text-brume transition hover:text-ivoire"
+            className="shrink-0 rounded-lg border border-nuit-600 px-3 py-1.5 text-sm text-brume transition hover:text-ivoire"
           >
-            Se déconnecter
+            Déconnexion
           </button>
         </form>
       </header>
 
-      <section className="surface mt-8 flex justify-center p-8">
+      <section className="surface mt-8 flex justify-center p-7">
         <EcussonRang lp={user.lp} />
       </section>
 
-      <p className="mt-8 text-center text-sm text-cendre">
-        Séance du jour, checklist et chrono de repos arrivent à la phase suivante.
+      <dl className="mt-4 grid grid-cols-3 gap-3">
+        <Stat terme="Séances" valeur={String(totalSeances)} />
+        <Stat terme="Sur 7 jours" valeur={String(streak)} />
+        <Stat terme="Poids" valeur={derniereePesee ? `${derniereePesee.kg} kg` : "—"} />
+      </dl>
+
+      <div className="mt-8 flex flex-col gap-6">
+        {seances.map(({ planDay, seance }) =>
+          planDay.status === "FAIT" ? (
+            <section key={planDay.id} className="surface p-5 text-center">
+              <p className="text-sm text-succes">
+                {muscleGroupLabel(planDay.muscleGroup)} — séance validée. À demain.
+              </p>
+            </section>
+          ) : (
+            <SeanceDuJour
+              key={planDay.id}
+              seance={seance}
+              planDayId={planDay.id}
+              couleur={rang.color}
+            />
+          ),
+        )}
+
+        {duJour.length === 0 && (
+          <section className="surface p-6 text-center">
+            <p className="text-sm text-brume">
+              Rien de prévu aujourd&apos;hui. Tu peux quand même faire une séance bonus.
+            </p>
+          </section>
+        )}
+      </div>
+
+      <p className="mt-8 text-center text-xs text-cendre">
+        Séance bonus, calendrier et graphiques arrivent aux phases suivantes.
       </p>
     </main>
+  );
+}
+
+function Stat({ terme, valeur }: { terme: string; valeur: string }) {
+  return (
+    <div className="surface p-3 text-center">
+      <dt className="text-xs text-cendre">{terme}</dt>
+      <dd className="mt-1 text-lg font-medium text-ivoire">{valeur}</dd>
+    </div>
   );
 }
