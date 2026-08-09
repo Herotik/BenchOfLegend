@@ -34,7 +34,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       <Navigation />
       {/* pb-20 : la barre de navigation mobile est fixée en bas et
           masquerait le dernier élément de la page. */}
-      <div className="flex flex-1 flex-col pb-20 sm:pb-0">{children}</div>
+      <div id="contenu" className="flex flex-1 flex-col pb-20 sm:pb-0">
+        {children}
+      </div>
       {peseeDuJour?.manquante && <ModalePesee dernierPoids={peseeDuJour.dernierPoids} />}
     </div>
   );

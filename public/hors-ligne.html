@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hors ligne — La Faille</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 2rem;
+        text-align: center;
+        background: #05080d;
+        color: #e8eaee;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      img { width: 96px; height: 96px; }
+      h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+      p { margin: 0; max-width: 22rem; color: #98a1b0; line-height: 1.6; }
+      button {
+        margin-top: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border: 1px solid rgba(165, 138, 78, 0.6);
+        border-radius: 0.5rem;
+        background: rgba(200, 170, 110, 0.1);
+        color: #dcc38d;
+        font: inherit;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <img src="/icon-192.png" alt="" />
+    <h1>Pas de connexion</h1>
+    <p>
+      La Faille a besoin du réseau pour charger ta séance et enregistrer tes validations. Ta
+      progression est intacte, rien n&apos;est perdu.
+    </p>
+    <button onclick="location.reload()">Réessayer</button>
+  </body>
+</html>
