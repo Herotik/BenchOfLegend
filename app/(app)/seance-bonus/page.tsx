@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireOnboardedUser } from "@/lib/session";
+import { jourUTC } from "@/lib/dates";
 import { seanceDuJour } from "@/lib/plan-hebdo";
 import { rankForLp } from "@/lib/ranks";
 import { MUSCLE_GROUPS, muscleGroupLabel } from "@/lib/referentiel";
@@ -46,9 +47,19 @@ export default async function SeanceBonusPage({ searchParams }: PageProps<"/sean
     );
   }
 
-  const [seance, avertissement] = await Promise.all([
+  const aujourdhui = jourUTC();
+  const [seance, avertissement, seancesSur7Jours, bonusDuJour] = await Promise.all([
     seanceDuJour(session.id, choisi),
     avertissementRecuperation(choisi),
+    prisma.workoutLog.count({
+      where: {
+        userId: session.id,
+        date: { gte: new Date(aujourdhui.getTime() - 6 * 86_400_000) },
+      },
+    }),
+    prisma.workoutLog.count({
+      where: { userId: session.id, date: aujourdhui, isBonus: true },
+    }),
   ]);
 
   return (
@@ -71,7 +82,13 @@ export default async function SeanceBonusPage({ searchParams }: PageProps<"/sean
 
       <div className="mt-6">
         {seance.exercices.length > 0 ? (
-          <SeanceDuJour seance={seance} isBonus couleur={rang.color} />
+          <SeanceDuJour
+            seance={seance}
+            isBonus
+            couleur={rang.color}
+            seancesSur7Jours={seancesSur7Jours}
+            bonusDejaCompte={bonusDuJour > 0}
+          />
         ) : (
           <p className="surface p-6 text-center text-sm text-brume">
             Aucun exercice disponible pour ce groupe avec ton matériel et ton niveau.

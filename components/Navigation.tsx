@@ -41,7 +41,12 @@ export function Navigation() {
         aria-label="Navigation principale"
         className="fixed top-0 left-0 z-40 hidden h-full w-56 flex-col border-r border-nuit-700/70 px-4 py-8 sm:flex"
       >
-        <p className="font-display px-3 text-lg font-bold text-ivoire">La Faille</p>
+        <Link
+          href="/"
+          className="font-display px-3 text-lg font-bold text-ivoire transition hover:text-or-400"
+        >
+          La Faille
+        </Link>
         <ul className="mt-8 flex flex-col gap-1">
           {NAVIGATION.map((item) => (
             <li key={item.href}>

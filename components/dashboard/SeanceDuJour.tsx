@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { ChronoRepos } from "./ChronoRepos";
 import { validerSeance, type ResultatValidation } from "@/app/actions/seance";
 import type { Seance } from "@/lib/engine";
-import { SEUIL_COMPLET, SEUIL_PARTIEL } from "@/lib/lp";
+import { calculerLp, ratioComplete as partFaite, SEUIL_PARTIEL } from "@/lib/lp";
 import { muscleGroupLabel } from "@/lib/referentiel";
 
 export function SeanceDuJour({
@@ -12,20 +12,34 @@ export function SeanceDuJour({
   planDayId,
   isBonus = false,
   couleur,
+  seancesSur7Jours = 0,
+  bonusDejaCompte = false,
 }: {
   seance: Seance;
   planDayId?: string;
   isBonus?: boolean;
   couleur: string;
+  /** Séances déjà validées sur 7 jours glissants, pour l'aperçu des LP. */
+  seancesSur7Jours?: number;
+  bonusDejaCompte?: boolean;
 }) {
   const [coches, setCoches] = useState<Set<number>>(new Set());
   const [resultat, setResultat] = useState<ResultatValidation | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, startTransition] = useTransition();
 
-  const ratio = seance.exercices.length === 0 ? 0 : coches.size / seance.exercices.length;
-  const seuil =
-    ratio >= SEUIL_COMPLET ? "complete" : ratio >= SEUIL_PARTIEL ? "partielle" : "insuffisante";
+  // Aperçu calculé par la **même** fonction que le serveur. Une formule
+  // dupliquée ici annonçait 20 LP sur une séance bonus qui en rapporte 8.
+  const exercicesEtat = seance.exercices.map((e, i) => ({ ...e, done: coches.has(i) }));
+  const ratio = partFaite(exercicesEtat);
+  const apercu = calculerLp({
+    ratioComplete: ratio,
+    isBonus,
+    finisherComplete: exercicesEtat.some((e) => e.finisher && e.done),
+    seancesSur7Jours,
+    bonusDejaCompteAujourdhui: bonusDejaCompte,
+  });
+  const minimumRequis = Math.ceil(seance.exercices.length * SEUIL_PARTIEL);
 
   function basculer(i: number) {
     setCoches((s) => {
@@ -153,16 +167,16 @@ export function SeanceDuJour({
           </p>
         )}
         <p className="mb-3 text-xs text-cendre">
-          {seuil === "complete"
-            ? "Séance complète : +20 LP."
-            : seuil === "partielle"
-              ? "Séance partielle : +12 LP. Encore quelques exercices pour la compter pleine."
-              : `Coche au moins ${Math.ceil(seance.exercices.length * SEUIL_PARTIEL)} exercices pour qu'elle compte.`}
+          {apercu.total > 0
+            ? `${apercu.details.map((d) => d.libelle).join(", ")} — +${apercu.total} LP.`
+            : bonusDejaCompte && isBonus
+              ? "Tu as déjà validé une séance bonus aujourd'hui : celle-ci ne rapportera pas de LP."
+              : `Coche au moins ${minimumRequis} exercice${minimumRequis > 1 ? "s" : ""} pour qu'elle compte.`}
         </p>
         <button
           type="button"
           onClick={valider}
-          disabled={enCours || seuil === "insuffisante"}
+          disabled={enCours || ratio < SEUIL_PARTIEL}
           className="w-full rounded-lg border border-or-600/60 bg-or-500/10 px-6 py-3 font-medium text-or-400 transition hover:bg-or-500/20 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {enCours ? "Validation…" : "Valider la séance"}

@@ -27,12 +27,17 @@ export default async function DashboardPage() {
     prisma.weighIn.findFirst({ where: { userId: session.id }, orderBy: { date: "desc" } }),
   ]);
 
-  const streak = await prisma.workoutLog.count({
-    where: {
-      userId: session.id,
-      date: { gte: new Date(aujourdhui.getTime() - 6 * 86_400_000) },
-    },
-  });
+  const [streak, bonusDuJour] = await Promise.all([
+    prisma.workoutLog.count({
+      where: {
+        userId: session.id,
+        date: { gte: new Date(aujourdhui.getTime() - 6 * 86_400_000) },
+      },
+    }),
+    prisma.workoutLog.count({
+      where: { userId: session.id, date: aujourdhui, isBonus: true },
+    }),
+  ]);
 
   const rang = rankForLp(user.lp);
   const seances = await Promise.all(
@@ -89,6 +94,8 @@ export default async function DashboardPage() {
               seance={seance}
               planDayId={planDay.id}
               couleur={rang.color}
+              seancesSur7Jours={streak}
+              bonusDejaCompte={bonusDuJour > 0}
             />
           ),
         )}

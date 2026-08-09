@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { redirect } from "next/navigation";
+import Link from "next/link";
 import { RANKS } from "@/lib/ranks";
 import { auth, googleConfigured } from "@/auth";
 import { connexionGoogle } from "@/app/actions/auth";
@@ -23,9 +23,11 @@ const ETAPES = [
 ];
 
 export default async function LandingPage({ searchParams }: PageProps<"/">) {
-  // Déjà connecté : la landing n'a plus rien à offrir.
+  // Accessible même connecté : c'est la seule page qui présente l'échelle des
+  // rangs en entier. On remplace simplement le bouton de connexion par un
+  // accès direct au tableau de bord.
   const session = await auth();
-  if (session?.user) redirect(session.user.onboarded ? "/dashboard" : "/onboarding");
+  const connecte = Boolean(session?.user);
 
   const { suivant } = await searchParams;
 
@@ -44,7 +46,14 @@ export default async function LandingPage({ searchParams }: PageProps<"/">) {
           <span className="text-or-500">Dieu de l&apos;Olympe</span>.
         </p>
 
-        {googleConfigured ? (
+        {connecte ? (
+          <Link
+            href={session!.user.onboarded ? "/dashboard" : "/onboarding"}
+            className="mt-10 inline-flex items-center gap-3 rounded-lg border border-or-600/60 bg-or-500/10 px-6 py-3 text-base font-medium text-or-400 transition hover:bg-or-500/20"
+          >
+            {session!.user.onboarded ? "Aller au tableau de bord" : "Terminer mon inscription"}
+          </Link>
+        ) : googleConfigured ? (
           <>
             <form action={connexionGoogle} className="mt-10">
               <input
