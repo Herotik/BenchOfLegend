@@ -32,62 +32,72 @@ export async function chargerCatalogue(): Promise<ExerciceDisponible[]> {
   return prisma.exercise.findMany();
 }
 
+/** Nombre de semaines couvertes à l'avance, au-delà de la semaine en cours. */
+export const SEMAINES_A_LAVANCE = 5;
+
 /**
- * Garantit que la semaine en cours a un plan, et bascule en MANQUE les jours
- * passés restés à PREVU.
+ * Garantit que les semaines à venir ont un plan, et bascule en MANQUE les
+ * jours passés restés à PREVU.
  *
- * Appelé au chargement du dashboard : c'est le « cron logique » de la spec
- * §5.1, qui évite d'avoir à faire tourner une vraie tâche planifiée.
+ * Appelé au chargement du tableau de bord et du calendrier : c'est le « cron
+ * logique » de la spec §5.1, qui évite d'avoir à faire tourner une vraie tâche
+ * planifiée.
+ *
+ * Six semaines d'un coup — la courante plus cinq — pour qu'une vue mensuelle
+ * soit remplie quel que soit le jour où on la consulte. Tout tient en quatre
+ * requêtes : une lecture de l'existant sur toute la plage, un createMany, un
+ * updateMany, une relecture. Boucler semaine par semaine en multipliait le
+ * nombre par six.
  */
-export async function assurerPlanSemaine(userId: string, decalageSemaines = 0) {
+export async function assurerPlans(userId: string, semaines = SEMAINES_A_LAVANCE) {
   const { user, profil } = await chargerProfil(userId);
-  const reference = new Date(Date.now() + decalageSemaines * 7 * 86_400_000);
-  const jours = joursDeLaSemaine(reference);
-  const debut = jours[0];
-  const fin = new Date(debut.getTime() + 7 * 86_400_000);
+
+  const semaineCourante = joursDeLaSemaine();
+  const debut = semaineCourante[0];
+  const fin = new Date(debut.getTime() + (semaines + 1) * 7 * 86_400_000);
 
   const existants = await prisma.planDay.findMany({
     where: { userId, date: { gte: debut, lt: fin } },
+    select: { date: true },
   });
 
   const inscription = jourUTC(user.createdAt);
+  const dejaPlanifies = new Set(existants.map((p) => p.date.getTime()));
+  const lignes: Prisma.PlanDayCreateManyInput[] = [];
 
   if (profil.muscleGroups.length > 0) {
-    const plan = genererPlanSemaine(profil, grainesSemaine(reference));
-    // On complète jour par jour plutôt qu'en tout ou rien : une semaine
-    // partiellement remplie — compte créé en cours de semaine, ou préférences
-    // modifiées — doit pouvoir se compléter sans écraser ce qui existe.
-    const dejaPlanifies = new Set(existants.map((p) => p.date.getTime()));
+    for (let decalage = 0; decalage <= semaines; decalage++) {
+      const reference = new Date(Date.now() + decalage * 7 * 86_400_000);
+      const jours = joursDeLaSemaine(reference);
 
-    const lignes: Prisma.PlanDayCreateManyInput[] = [];
-    for (const jour of plan) {
-      // Rien avant l'inscription : ces jours-là le compte n'existait pas, les
-      // faire figurer au calendrier n'aurait aucun sens.
-      if (jours[jour.jour] < inscription) continue;
-      if (dejaPlanifies.has(jours[jour.jour].getTime())) continue;
+      // La graine dépend du numéro de semaine ISO : chaque semaine reçoit donc
+      // une rotation différente des groupes, plutôt que six copies conformes.
+      const plan = genererPlanSemaine(profil, grainesSemaine(reference));
 
-      if (jour.groupes.length === 0) {
-        // Un jour de repos est une ligne à part entière : le calendrier doit
-        // pouvoir le distinguer d'un jour sans plan du tout.
-        lignes.push({
-          userId,
-          date: jours[jour.jour],
-          muscleGroup: "repos",
-          status: PlanStatus.REPOS,
-        });
-        continue;
-      }
-      for (const groupe of jour.groupes) {
-        lignes.push({
-          userId,
-          date: jours[jour.jour],
-          muscleGroup: groupe,
-          status: PlanStatus.PREVU,
-        });
+      for (const jour of plan) {
+        const date = jours[jour.jour];
+
+        // Rien avant l'inscription : ces jours-là le compte n'existait pas, les
+        // faire figurer au calendrier n'aurait aucun sens.
+        if (date < inscription) continue;
+        // On complète jour par jour plutôt qu'en tout ou rien : une semaine
+        // partiellement remplie doit pouvoir se compléter sans rien écraser.
+        if (dejaPlanifies.has(date.getTime())) continue;
+        dejaPlanifies.add(date.getTime());
+
+        if (jour.groupes.length === 0) {
+          // Un jour de repos est une ligne à part entière : le calendrier doit
+          // pouvoir le distinguer d'un jour sans plan du tout.
+          lignes.push({ userId, date, muscleGroup: "repos", status: PlanStatus.REPOS });
+          continue;
+        }
+        for (const groupe of jour.groupes) {
+          lignes.push({ userId, date, muscleGroup: groupe, status: PlanStatus.PREVU });
+        }
       }
     }
 
-    await prisma.planDay.createMany({ data: lignes });
+    if (lignes.length > 0) await prisma.planDay.createMany({ data: lignes });
   }
 
   // Les jours passés jamais validés basculent en MANQUE. Neutre visuellement :
@@ -98,28 +108,14 @@ export async function assurerPlanSemaine(userId: string, decalageSemaines = 0) {
   const debutManques = inscription > debut ? inscription : debut;
 
   await prisma.planDay.updateMany({
-    where: { userId, date: { gte: debutManques, lt: jourUTC() }, status: "PREVU" },
-    data: { status: "MANQUE" },
+    where: { userId, date: { gte: debutManques, lt: jourUTC() }, status: PlanStatus.PREVU },
+    data: { status: PlanStatus.MANQUE },
   });
 
   return prisma.planDay.findMany({
-    where: { userId, date: { gte: debut, lt: fin } },
+    where: { userId, date: { gte: debut, lt: new Date(debut.getTime() + 7 * 86_400_000) } },
     orderBy: { date: "asc" },
   });
-}
-
-/**
- * Semaine en cours **et** semaine suivante.
- *
- * Ne générer que la semaine courante laissait un calendrier vide à quiconque
- * s'inscrivait en fin de semaine : il n'y avait littéralement rien à voir
- * avant le lundi suivant. Avoir toujours une semaine d'avance donne aussi de
- * la visibilité sur ce qui arrive, ce que la spec attend du calendrier.
- */
-export async function assurerPlans(userId: string) {
-  const semaine = await assurerPlanSemaine(userId, 0);
-  await assurerPlanSemaine(userId, 1);
-  return semaine;
 }
 
 /**
