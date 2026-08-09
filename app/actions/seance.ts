@@ -52,12 +52,26 @@ export async function validerSeance(
   const seance = await seanceDuJour(user.id, d.muscleGroup);
   if (seance.exercices.length === 0) return { erreur: "Aucune séance à valider" };
 
-  // Une seule validation de séance minimum par PlanDay.
+  // Une seule validation de séance minimum par PlanDay, et seulement celle
+  // du jour. Le plan est publié six semaines à l'avance et le calendrier en
+  // expose les identifiants : sans le contrôle de date, un client bricolé
+  // encaissait d'un coup la trentaine de séances à venir, 20 LP pièce.
   if (!d.isBonus) {
     if (!d.planDayId) return { erreur: "Séance du jour introuvable" };
     const planDay = await prisma.planDay.findUnique({ where: { id: d.planDayId } });
     if (!planDay || planDay.userId !== user.id) return { erreur: "Séance du jour introuvable" };
     if (planDay.status === "FAIT") return { erreur: "Cette séance est déjà validée" };
+    if (planDay.date.getTime() > aujourdhui.getTime()) {
+      return { erreur: "Cette séance est prévue pour plus tard" };
+    }
+    if (planDay.date.getTime() < aujourdhui.getTime()) {
+      return { erreur: "Cette séance est passée. Fais-la en séance bonus." };
+    }
+    // Sans ça, on solderait le jour « dos » en présentant une séance de
+    // pectoraux : le calendrier et l'historique se contrediraient.
+    if (planDay.muscleGroup !== d.muscleGroup) {
+      return { erreur: "Cette séance ne correspond pas au groupe prévu" };
+    }
   }
 
   const exercices = seance.exercices.map((e, i) => ({
@@ -82,8 +96,11 @@ export async function validerSeance(
   const rangAvant = rankForLp(user.lp);
   const rangApres = rankForLp(lpTotal);
 
-  const [workout] = await prisma.$transaction([
-    prisma.workoutLog.create({
+  // Transaction interactive : le PlanDay doit basculer dans le **même** atome
+  // que le crédit des LP. Séparés, un échec entre les deux laissait les LP
+  // acquis et le jour encore rejouable.
+  await prisma.$transaction(async (tx) => {
+    const workout = await tx.workoutLog.create({
       data: {
         userId: user.id,
         date: aujourdhui,
@@ -101,16 +118,17 @@ export async function validerSeance(
         durationMin: d.durationMin,
         feeling: VALEUR_RESSENTI[d.ressenti as Ressenti],
       },
-    }),
-    prisma.user.update({ where: { id: user.id }, data: { lp: lpTotal } }),
-  ]);
-
-  if (!d.isBonus && d.planDayId) {
-    await prisma.planDay.update({
-      where: { id: d.planDayId },
-      data: { status: "FAIT", workoutId: workout.id },
     });
-  }
+
+    await tx.user.update({ where: { id: user.id }, data: { lp: lpTotal } });
+
+    if (!d.isBonus && d.planDayId) {
+      await tx.planDay.update({
+        where: { id: d.planDayId },
+        data: { status: "FAIT", workoutId: workout.id },
+      });
+    }
+  });
 
   // Le décalage n'est jamais appliqué d'office : on propose, l'utilisateur
   // décide. Une séance facile peut l'être pour mille raisons étrangères au

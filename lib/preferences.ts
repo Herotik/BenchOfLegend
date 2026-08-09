@@ -56,13 +56,20 @@ export function operationsPreferences(
     prisma.userEquipment.createMany({
       data: d.equipments.map((equipmentId) => ({ userId, equipmentId })),
     }),
-    prisma.userMuscleGroup.deleteMany({ where: { userId } }),
-    prisma.userMuscleGroup.createMany({
-      data: d.muscleGroups.map((groupId) => ({
-        userId,
-        groupId,
-        priority: pointsForts.has(groupId) ? 2 : 1,
-      })),
+    // Les groupes, eux, se mettent à jour ligne par ligne plutôt que d'être
+    // effacés puis recréés : `levelOffset` n'est pas une préférence, c'est un
+    // calibrage gagné séance après séance par le ressenti. Un effacement le
+    // remettait à zéro, si bien que corriger sa taille d'un centimètre
+    // annulait la progression de tous les groupes, sans le dire.
+    prisma.userMuscleGroup.deleteMany({
+      where: { userId, groupId: { notIn: d.muscleGroups } },
     }),
+    ...d.muscleGroups.map((groupId) =>
+      prisma.userMuscleGroup.upsert({
+        where: { userId_groupId: { userId, groupId } },
+        update: { priority: pointsForts.has(groupId) ? 2 : 1 },
+        create: { userId, groupId, priority: pointsForts.has(groupId) ? 2 : 1 },
+      }),
+    ),
   ];
 }
