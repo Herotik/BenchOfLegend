@@ -88,6 +88,65 @@
   }
 }
 
+/*
+ * Animations.
+ *
+ * Toutes sont neutralisées sous `prefers-reduced-motion` : l'app s'utilise en
+ * mouvement, écran secoué, et une animation subie donne la nausée à qui y est
+ * sensible. La règle globale plus bas coupe tout d'un coup.
+ */
+
+@keyframes apparition {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes surgissement {
+  0%   { opacity: 0; transform: scale(0.7) rotate(-6deg); }
+  60%  { opacity: 1; transform: scale(1.06) rotate(1deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+/* Souffle lent du halo derrière l'écusson : le rang « respire ». */
+@keyframes souffle {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50%      { opacity: 0.75; transform: scale(1.06); }
+}
+
+/* Éclat qui balaie une surface, comme la lumière sur du métal poli. */
+@keyframes lueur {
+  from { transform: translateX(-120%) skewX(-18deg); }
+  to   { transform: translateX(320%) skewX(-18deg); }
+}
+
+@keyframes montee {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+@utility apparait {
+  animation: apparition 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility surgit {
+  animation: surgissement 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@utility monte {
+  animation: montee 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @utility surface {
   background-color: --alpha(var(--color-nuit-850) / 70%);
   border: 1px solid --alpha(var(--color-nuit-700) / 80%);

@@ -3,6 +3,10 @@ import Link from "next/link";
 import { RANKS } from "@/lib/ranks";
 import { auth, googleConfigured } from "@/auth";
 import { connexionGoogle } from "@/app/actions/auth";
+import { Meandre, SeparateurLosange } from "@/components/ornements/Meandre";
+
+/** Chiffres romains : l'app compte comme la planche de rangs, pas comme un tableur. */
+const ROMAIN = ["I", "II", "III"];
 
 const ETAPES = [
   {
@@ -35,10 +39,15 @@ export default async function LandingPage({ searchParams }: PageProps<"/">) {
     <main className="flex-1">
       {/* --- Hero --- */}
       <section className="mx-auto flex max-w-3xl flex-col items-center px-6 pt-20 pb-16 text-center sm:pt-28">
-        <p className="font-display text-xs tracking-[0.35em] text-or-500 uppercase">
+        <p className="font-display text-xs tracking-[0.35em] text-or-500 uppercase motion-safe:apparait">
           Entraînement classé
         </p>
-        <h1 className="mt-5 text-5xl font-bold text-ivoire sm:text-7xl">La Faille</h1>
+        <h1 className="mt-5 text-5xl font-bold text-ivoire sm:text-7xl motion-safe:surgit">
+          La Faille
+        </h1>
+        <div className="mt-5 w-40 text-or-600 motion-safe:apparait">
+          <Meandre opacite={0.5} />
+        </div>
         <p className="mt-6 max-w-xl text-lg leading-relaxed text-brume">
           Ton programme de musculation, construit chaque semaine à partir de ton matériel et de
           tes objectifs. Tu valides tes séances, tu gagnes des LP, tu grimpes d&apos;
@@ -88,8 +97,12 @@ export default async function LandingPage({ searchParams }: PageProps<"/">) {
       <section className="mx-auto max-w-5xl px-6 pb-20">
         <div className="grid gap-4 sm:grid-cols-3">
           {ETAPES.map((etape, i) => (
-            <div key={etape.titre} className="surface p-5">
-              <span className="font-display text-2xl text-or-600">{i + 1}</span>
+            <div
+              key={etape.titre}
+              className="surface p-5 transition-colors hover:border-or-600/50 motion-safe:monte"
+              style={{ animationDelay: `${i * 90}ms` }}
+            >
+              <span className="font-display text-2xl text-or-600">{ROMAIN[i]}</span>
               <h3 className="mt-2 text-base font-semibold text-ivoire">{etape.titre}</h3>
               <p className="mt-2 text-sm leading-relaxed text-brume">{etape.texte}</p>
             </div>
@@ -99,7 +112,10 @@ export default async function LandingPage({ searchParams }: PageProps<"/">) {
 
       {/* --- L'échelle des rangs --- */}
       <section className="mx-auto max-w-4xl px-6 pb-24">
-        <h2 className="text-center text-2xl font-semibold text-ivoire sm:text-3xl">
+        <div className="mx-auto max-w-xs">
+          <SeparateurLosange />
+        </div>
+        <h2 className="mt-8 text-center text-2xl font-semibold text-ivoire sm:text-3xl">
           Huit rangs à gravir
         </h2>
         <p className="mt-3 text-center text-sm text-brume">
@@ -107,15 +123,26 @@ export default async function LandingPage({ searchParams }: PageProps<"/">) {
         </p>
 
         <ul className="mt-12 flex flex-col gap-6">
-          {RANKS.map((rang) => (
-            <li key={rang.slug} className="flex items-center gap-5 sm:gap-8">
-              <Image
-                src={rang.logo}
-                alt=""
-                width={96}
-                height={96}
-                className="size-16 shrink-0 sm:size-24"
-              />
+          {RANKS.map((rang, i) => (
+            <li
+              key={rang.slug}
+              className="group flex items-center gap-5 motion-safe:monte sm:gap-8"
+              style={{ animationDelay: `${i * 70}ms` }}
+            >
+              <div className="relative shrink-0">
+                <span
+                  aria-hidden
+                  className="absolute inset-2 rounded-full opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-60"
+                  style={{ backgroundColor: rang.color }}
+                />
+                <Image
+                  src={rang.logo}
+                  alt=""
+                  width={96}
+                  height={96}
+                  className="relative size-16 transition-transform duration-500 group-hover:scale-105 sm:size-24"
+                />
+              </div>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-baseline gap-x-3">
                   <h3
