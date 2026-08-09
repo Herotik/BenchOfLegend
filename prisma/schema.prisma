@@ -47,6 +47,7 @@ model User {
   planDays     PlanDay[]
   charges      ExerciseLoad[]
   apiTokens    ApiRefreshToken[]
+  handoffCodes ApiHandoffCode[]
 }
 
 model Account {
@@ -227,6 +228,25 @@ model ApiRefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+/// Code de relais entre le navigateur et l'app mobile, à usage unique.
+///
+/// La connexion Google native exige d'enregistrer un schéma d'URL propre à
+/// l'app, ce qu'Expo Go ne peut pas faire. On passe donc par le navigateur :
+/// il mène le flux web habituel, puis renvoie vers l'app un code éphémère que
+/// celle-ci échange contre ses jetons. Le code transite par une URL — d'où sa
+/// durée de vie très courte et son usage unique.
+model ApiHandoffCode {
+  id        String   @id @default(cuid())
+  userId    String
+  /// SHA-256 du code. Le code en clair ne vit que dans l'URL de retour.
+  codeHash  String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model WeighIn {

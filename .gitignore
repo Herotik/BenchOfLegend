@@ -47,3 +47,9 @@ yarn-error.log*
 # Python (scripts/extract-ranks.py)
 __pycache__/
 *.pyc
+
+# App mobile Expo
+/mobile/node_modules
+/mobile/.expo
+/mobile/dist
+/mobile/.env
