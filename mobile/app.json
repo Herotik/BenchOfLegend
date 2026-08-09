@@ -1,17 +1,21 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "La Faille",
+    "slug": "la-faille",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "scheme": "lafaille",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#05080d",
     "ios": {
+      "bundleIdentifier": "com.herotik.benchoflegend",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.herotik.benchoflegend",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#05080d",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -25,7 +29,15 @@
       "expo-router",
       "expo-secure-store",
       "expo-web-browser",
-      "expo-splash-screen"
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#05080d"
+        }
+      ]
     ]
   }
 }

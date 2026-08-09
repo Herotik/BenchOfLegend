@@ -1,0 +1,111 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { COULEURS } from "../theme/couleurs";
+import { chronoEnTexte } from "../outils/dates";
+import { BarreProgression } from "./BarreProgression";
+
+/**
+ * Chronomètre de repos entre séries.
+ *
+ * Le décompte se calcule à partir d'une **échéance absolue**, jamais en
+ * retranchant une seconde par battement : les minuteurs JavaScript dérivent, et
+ * ils sont suspendus quand l'app passe en arrière-plan — ce qui arrive à chaque
+ * fois qu'on repose le téléphone pendant le repos. Au retour, l'échéance donne
+ * le temps réellement écoulé.
+ */
+export function ChronoRepos({ secondes }: { secondes: number }) {
+  const [restant, setRestant] = useState(secondes);
+  const [enMarche, setEnMarche] = useState(false);
+  const echeance = useRef<number | null>(null);
+
+  // Exercice suivant : le chrono repart de la consigne du nouvel exercice.
+  useEffect(() => {
+    setEnMarche(false);
+    echeance.current = null;
+    setRestant(secondes);
+  }, [secondes]);
+
+  useEffect(() => {
+    if (!enMarche) return;
+
+    const battement = setInterval(() => {
+      const fin = echeance.current;
+      if (fin === null) return;
+
+      const reste = Math.max(0, Math.ceil((fin - Date.now()) / 1000));
+      setRestant(reste);
+      if (reste === 0) {
+        setEnMarche(false);
+        echeance.current = null;
+      }
+    }, 250);
+
+    return () => clearInterval(battement);
+  }, [enMarche]);
+
+  const basculer = useCallback(() => {
+    if (enMarche) {
+      setEnMarche(false);
+      echeance.current = null;
+      setRestant(secondes);
+      return;
+    }
+    echeance.current = Date.now() + secondes * 1000;
+    setRestant(secondes);
+    setEnMarche(true);
+  }, [enMarche, secondes]);
+
+  const termine = !enMarche && restant === 0;
+
+  return (
+    <Pressable onPress={basculer} accessibilityRole="button" style={styles.bloc}>
+      <View style={styles.ligne}>
+        <Text style={styles.etiquette}>Repos</Text>
+        <Text style={[styles.valeur, enMarche && styles.valeurActive]}>
+          {chronoEnTexte(restant)}
+        </Text>
+      </View>
+      <BarreProgression
+        part={secondes > 0 ? 1 - restant / secondes : 1}
+        couleur={COULEURS.hextech500}
+      />
+      <Text style={styles.aide}>
+        {enMarche ? "Touche pour arrêter" : termine ? "Repos terminé" : "Touche pour lancer"}
+      </Text>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  bloc: {
+    backgroundColor: COULEURS.nuit900,
+    borderColor: COULEURS.nuit700,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    gap: 8,
+  },
+  ligne: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+  },
+  etiquette: {
+    color: COULEURS.brume,
+    fontSize: 12,
+    letterSpacing: 2,
+    fontWeight: "700",
+  },
+  valeur: {
+    color: COULEURS.ivoire,
+    fontSize: 26,
+    fontVariant: ["tabular-nums"],
+  },
+  valeurActive: {
+    color: COULEURS.hextech400,
+  },
+  aide: {
+    color: COULEURS.cendre,
+    fontSize: 12,
+  },
+});

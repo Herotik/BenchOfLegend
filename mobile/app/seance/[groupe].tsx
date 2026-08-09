@@ -1,0 +1,720 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ajusterDifficulte, chargerSeance, validerSeance } from "../../src/api/routes";
+import type {
+  ExercicePrescrit,
+  ReponseSeance,
+  ReponseValidation,
+  Ressenti,
+  StatutExercice,
+} from "../../src/api/types";
+import { useSession } from "../../src/auth/session";
+import { useReferentiel } from "../../src/donnees/referentiel";
+import { Bouton } from "../../src/composants/Bouton";
+import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
+import { ChronoRepos } from "../../src/composants/Chrono";
+import { Chargement, EcranErreur } from "../../src/composants/Etats";
+import { FilAriane } from "../../src/composants/FilAriane";
+import { COULEURS, POLICE_TITRE } from "../../src/theme/couleurs";
+
+/**
+ * Séance guidée — l'écran central de l'app.
+ *
+ * **Un exercice à la fois.** Une liste à cocher se consulte assis ; ici on
+ * s'entraîne, le téléphone posé au sol, et il faut pouvoir lire la consigne et
+ * répondre d'un appui.
+ *
+ * Aucune règle métier ici : la séance vient de `GET /seance`, les LP et le rang
+ * de `POST /seance/valider`. L'app n'envoie que trois choses — le statut de
+ * chaque exercice, la charge utilisée, et le ressenti final.
+ */
+
+type Phase = "exercices" | "ressenti" | "bilan";
+
+/**
+ * Bornes de charge acceptées par `schemaValidationSeance` (`lib/seance.ts`).
+ *
+ * Recopiées ici pour une seule raison : prévenir **avant** l'envoi. Le serveur
+ * reste seul juge — mais son refus arrive à la validation, c'est-à-dire après
+ * la séance entière, et rejetterait tout le lot pour une virgule mal placée.
+ */
+const CHARGE_MIN = 0;
+const CHARGE_MAX = 500;
+
+export default function SeanceGuidee() {
+  const { groupe } = useLocalSearchParams<{ groupe: string }>();
+  const router = useRouter();
+  const marges = useSafeAreaInsets();
+  const { libelleGroupe, referentiel } = useReferentiel();
+  const { rafraichirProfil } = useSession();
+
+  const [donnees, setDonnees] = useState<ReponseSeance | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [phase, setPhase] = useState<Phase>("exercices");
+  const [index, setIndex] = useState(0);
+  const [statuts, setStatuts] = useState<(StatutExercice | undefined)[]>([]);
+  const [charges, setCharges] = useState<string[]>([]);
+  const [envoi, setEnvoi] = useState(false);
+  const [bilan, setBilan] = useState<ReponseValidation | null>(null);
+
+  /** Début de séance, pour renseigner `dureeMin` à la validation. */
+  const depart = useRef(Date.now());
+
+  useEffect(() => {
+    if (!groupe) return;
+    let vivant = true;
+
+    chargerSeance(groupe)
+      .then((reponse) => {
+        if (!vivant) return;
+        setDonnees(reponse);
+        setStatuts(new Array<StatutExercice | undefined>(reponse.seance.exercices.length));
+        // Charge pré-remplie avec la dernière utilisée : c'est le poids de
+        // travail, on ne devrait pas avoir à le rechercher dans son journal.
+        setCharges(
+          reponse.seance.exercices.map((e) =>
+            e.derniereCharge !== null && e.derniereCharge !== undefined
+              ? String(e.derniereCharge)
+              : "",
+          ),
+        );
+        depart.current = Date.now();
+      })
+      .catch((cause: unknown) => {
+        if (vivant) setErreur(cause instanceof Error ? cause.message : "Séance indisponible");
+      });
+
+    return () => {
+      vivant = false;
+    };
+  }, [groupe]);
+
+  const exercices = donnees?.seance.exercices ?? [];
+  const exercice: ExercicePrescrit | undefined = exercices[index];
+
+  /** Séance libre dès que le groupe n'est pas (ou n'est plus) au programme. */
+  const bonus = donnees ? donnees.planDayId === null : false;
+
+  const avancer = useCallback(
+    (statut: StatutExercice) => {
+      setStatuts((precedent) => {
+        const suivant = [...precedent];
+        suivant[index] = statut;
+        return suivant;
+      });
+
+      if (index + 1 < exercices.length) setIndex(index + 1);
+      else setPhase("ressenti");
+    },
+    [index, exercices.length],
+  );
+
+  const changerCharge = useCallback((valeur: string) => {
+    setCharges((precedent) => {
+      const suivant = [...precedent];
+      suivant[index] = valeur;
+      return suivant;
+    });
+  }, [index]);
+
+  const envoyer = useCallback(
+    (ressenti: Ressenti) => {
+      if (!donnees) return;
+      setEnvoi(true);
+      setErreur(null);
+
+      const dureeMin = Math.min(
+        600,
+        Math.max(1, Math.round((Date.now() - depart.current) / 60_000)),
+      );
+
+      void validerSeance({
+        // Absent en bonus : le serveur refuse un `planDayId` d'un autre jour,
+        // et n'en attend aucun pour une séance libre.
+        planDayId: bonus ? undefined : (donnees.planDayId ?? undefined),
+        groupe: donnees.groupe,
+        bonus,
+        // Un exercice jamais atteint compte comme non fait : c'est le cas
+        // quand on quitte l'écran en cours de route.
+        statuts: exercices.map((_, i) => statuts[i] ?? "non_fait"),
+        charges: exercices.map((e, i) => (e.chargeRequise ? nombreOuNull(charges[i]) : null)),
+        ressenti,
+        dureeMin,
+      })
+        .then((resultat) => {
+          setBilan(resultat);
+          setPhase("bilan");
+          // Le rang et les LP viennent de changer : l'onglet « Aujourd'hui »
+          // doit repartir du nouveau total, pas de celui d'avant la séance.
+          void rafraichirProfil();
+        })
+        .catch((cause: unknown) => {
+          setErreur(cause instanceof Error ? cause.message : "Validation impossible");
+          setPhase("ressenti");
+        })
+        .finally(() => setEnvoi(false));
+    },
+    [donnees, bonus, exercices, statuts, charges, rafraichirProfil],
+  );
+
+  const quitter = useCallback(() => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/aujourdhui");
+  }, [router]);
+
+  const apercuLp = useMemo(() => {
+    if (!donnees || !referentiel) return null;
+    const bareme = referentiel.lp.bareme;
+
+    if (bonus && donnees.bonusDejaCompte) {
+      return "Un bonus a déjà été compté aujourd'hui : celle-ci ne rapportera pas de LP.";
+    }
+
+    const base = bonus
+      ? `Séance bonus · +${bareme.seanceBonus} LP`
+      : `Séance du jour · jusqu'à +${bareme.seanceComplete} LP`;
+
+    const regularite =
+      donnees.seancesSur7Jours >= referentiel.lp.seancesAvantRegularite
+        ? ` · +${bareme.regularite} LP de régularité`
+        : "";
+
+    return `${base}${regularite}`;
+  }, [donnees, referentiel, bonus]);
+
+  if (erreur && !donnees) {
+    return <EcranErreur message={erreur} libelleAction="Revenir" onReessayer={quitter} />;
+  }
+  if (!donnees) {
+    return <Chargement message="Préparation de la séance…" />;
+  }
+
+  if (exercices.length === 0) {
+    return (
+      <EcranErreur
+        titre="Séance vide"
+        message={`Aucun exercice disponible pour ${libelleGroupe(
+          donnees.groupe,
+        )} avec le matériel déclaré dans ton profil.`}
+        libelleAction="Revenir"
+        onReessayer={quitter}
+      />
+    );
+  }
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.page}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <View style={[styles.entete, { paddingTop: marges.top + 12 }]}>
+        <View style={styles.enteteLigne}>
+          <Pressable onPress={quitter} accessibilityRole="button" hitSlop={12}>
+            <Text style={styles.retour}>‹ Quitter</Text>
+          </Pressable>
+          <Text style={styles.groupe}>{libelleGroupe(donnees.groupe)}</Text>
+        </View>
+        <FilAriane
+          total={exercices.length}
+          courant={phase === "exercices" ? index : exercices.length}
+          statuts={statuts}
+        />
+      </View>
+
+      <ScrollView
+        contentContainerStyle={[styles.contenu, { paddingBottom: marges.bottom + 28 }]}
+        keyboardShouldPersistTaps="handled"
+      >
+        {phase === "exercices" && exercice ? (
+          <EtapeExercice
+            exercice={exercice}
+            premier={index === 0}
+            echauffement={donnees.seance.echauffement}
+            avertissement={donnees.avertissement}
+            apercuLp={apercuLp}
+            dejaValidee={donnees.dejaValidee}
+            charge={charges[index] ?? ""}
+            onCharge={changerCharge}
+            onTerminee={() => avancer("fait")}
+            onInachevee={() => avancer("partiel")}
+            onPassee={() => avancer("non_fait")}
+          />
+        ) : null}
+
+        {phase === "ressenti" ? (
+          <EtapeRessenti erreur={erreur} envoi={envoi} onChoisir={envoyer} />
+        ) : null}
+
+        {phase === "bilan" && bilan ? (
+          <EtapeBilan bilan={bilan} onFini={quitter} />
+        ) : null}
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Étape : un exercice
+// ---------------------------------------------------------------------------
+
+function EtapeExercice({
+  exercice,
+  premier,
+  echauffement,
+  avertissement,
+  apercuLp,
+  dejaValidee,
+  charge,
+  onCharge,
+  onTerminee,
+  onInachevee,
+  onPassee,
+}: {
+  exercice: ExercicePrescrit;
+  premier: boolean;
+  echauffement: string[];
+  avertissement: string | null;
+  apercuLp: string | null;
+  dejaValidee: boolean;
+  charge: string;
+  onCharge: (valeur: string) => void;
+  onTerminee: () => void;
+  onInachevee: () => void;
+  onPassee: () => void;
+}) {
+  return (
+    <>
+      {premier ? (
+        <>
+          {avertissement ? (
+            <Carte style={styles.carteAlerte}>
+              <Text style={styles.alerteTexte}>{avertissement}</Text>
+            </Carte>
+          ) : null}
+          {dejaValidee ? (
+            <Carte style={styles.carteAlerte}>
+              <Text style={styles.alerteTexte}>
+                La séance du jour sur ce groupe est déjà validée. Celle-ci comptera en bonus.
+              </Text>
+            </Carte>
+          ) : null}
+          {apercuLp ? <Text style={styles.apercu}>{apercuLp}</Text> : null}
+
+          {echauffement.length > 0 ? (
+            <Carte style={styles.echauffement}>
+              <Text style={styles.echauffementTitre}>Échauffement</Text>
+              {echauffement.map((ligne) => (
+                <Text key={ligne} style={styles.echauffementLigne}>
+                  · {ligne}
+                </Text>
+              ))}
+            </Carte>
+          ) : null}
+        </>
+      ) : null}
+
+      <Text style={styles.nom}>{exercice.nom}</Text>
+      <Text style={styles.prescription}>
+        {exercice.reps !== undefined
+          ? `${exercice.series} séries × ${exercice.reps} répétitions`
+          : `${exercice.series} séries · ${exercice.duree ?? "à l'effort"}`}
+      </Text>
+
+      {exercice.finisher ? <Text style={styles.finisher}>Finisher</Text> : null}
+
+      <Carte style={styles.consigne}>
+        <Text style={styles.consigneTexte}>{exercice.description}</Text>
+        {exercice.progression ? (
+          <Text style={styles.progression}>Variante plus dure : {exercice.progression}</Text>
+        ) : null}
+      </Carte>
+
+      {exercice.chargeRequise ? (
+        <Carte style={styles.charge}>
+          <Text style={styles.chargeTitre}>Charge</Text>
+          <View style={styles.chargeLigne}>
+            <TextInput
+              value={charge}
+              onChangeText={onCharge}
+              keyboardType="decimal-pad"
+              placeholder="0"
+              placeholderTextColor={COULEURS.cendre}
+              style={styles.champ}
+              accessibilityLabel={`Charge utilisée sur ${exercice.nom}, en kilos`}
+              returnKeyType="done"
+            />
+            <Text style={styles.unite}>kg</Text>
+          </View>
+          <Text style={styles.chargeAide}>
+            {exercice.derniereCharge !== null && exercice.derniereCharge !== undefined
+              ? `La dernière fois : ${exercice.derniereCharge} kg`
+              : "Première fois sur cet exercice — note ta charge."}
+          </Text>
+          {charge !== "" && nombreOuNull(charge) === null ? (
+            <Text style={styles.chargeErreur}>
+              Charge entre {CHARGE_MIN} et {CHARGE_MAX} kg — sinon elle ne sera pas retenue.
+            </Text>
+          ) : null}
+        </Carte>
+      ) : null}
+
+      <ChronoRepos secondes={exercice.restSec} />
+
+      <View style={styles.actions}>
+        <Bouton titre="Série terminée" onPress={onTerminee} />
+        <Bouton
+          titre="Je n'ai pas fini"
+          aide="La série compte pour moitié"
+          intention="sombre"
+          onPress={onInachevee}
+        />
+        <Bouton titre="Passer cet exercice" intention="discret" onPress={onPassee} />
+      </View>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Étape : ressenti
+// ---------------------------------------------------------------------------
+
+/**
+ * Le ressenti pilote l'ajustement de difficulté (`lib/difficulte.ts`).
+ *
+ * Les trois choix et leurs libellés viennent de `GET /referentiel` : les
+ * recopier ici les ferait diverger du serveur, qui est seul à décider de ce
+ * qu'un ressenti déclenche.
+ */
+function EtapeRessenti({
+  erreur,
+  envoi,
+  onChoisir,
+}: {
+  erreur: string | null;
+  envoi: boolean;
+  onChoisir: (ressenti: Ressenti) => void;
+}) {
+  const { referentiel, chargement, recharger } = useReferentiel();
+
+  if (!referentiel) {
+    return chargement ? (
+      <Chargement message="Chargement des ressentis…" />
+    ) : (
+      <EcranErreur message="Les ressentis n'ont pas pu être chargés." onReessayer={recharger} />
+    );
+  }
+
+  return (
+    <View style={styles.fin}>
+      <Ornement />
+      <Text style={styles.finTitre}>Séance bouclée</Text>
+      <Text style={styles.finTexte}>Comment c&apos;était ?</Text>
+
+      <View style={styles.actions}>
+        {referentiel.ressentis.map((r, position) => (
+          <Bouton
+            key={r.id}
+            titre={r.label}
+            aide={r.aide}
+            intention={position === 0 ? "or" : "sombre"}
+            onPress={() => onChoisir(r.id)}
+            enCours={envoi}
+          />
+        ))}
+      </View>
+
+      {erreur ? <Text style={styles.erreurTexte}>{erreur}</Text> : null}
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Étape : bilan
+// ---------------------------------------------------------------------------
+
+function EtapeBilan({ bilan, onFini }: { bilan: ReponseValidation; onFini: () => void }) {
+  const [proposition, setProposition] = useState(bilan.proposition);
+  const [ajustement, setAjustement] = useState<string | null>(null);
+  const [enCours, setEnCours] = useState(false);
+
+  const accepter = useCallback(() => {
+    if (!proposition) return;
+    setEnCours(true);
+
+    void ajusterDifficulte(proposition.groupe, proposition.delta)
+      .then(() => {
+        setAjustement("C'est noté. La prochaine séance en tiendra compte.");
+        setProposition(null);
+      })
+      .catch((cause: unknown) => {
+        setAjustement(cause instanceof Error ? cause.message : "Ajustement impossible");
+      })
+      .finally(() => setEnCours(false));
+  }, [proposition]);
+
+  return (
+    <View style={styles.fin}>
+      <Ornement />
+      <Text style={styles.gain}>+{bilan.lpGagnes} LP</Text>
+      <Text style={styles.finTexte}>
+        {bilan.promotion ? `Nouveau palier : ${bilan.rang}` : bilan.rang}
+      </Text>
+
+      <Carte style={styles.detail}>
+        {bilan.details.length === 0 ? (
+          <Text style={styles.detailVide}>
+            Pas assez d&apos;exercices bouclés pour créditer des LP cette fois. Aucune perte : le
+            compteur ne recule jamais.
+          </Text>
+        ) : (
+          bilan.details.map((ligne) => (
+            <View key={ligne.libelle} style={styles.detailLigne}>
+              <Text style={styles.detailLibelle}>{ligne.libelle}</Text>
+              <Text style={styles.detailLp}>+{ligne.lp}</Text>
+            </View>
+          ))
+        )}
+        <View style={styles.detailTotal}>
+          <Text style={styles.detailLibelle}>Total du compte</Text>
+          <Text style={styles.detailLp}>{bilan.lpTotal} LP</Text>
+        </View>
+      </Carte>
+
+      {proposition ? (
+        <>
+          <TitreSection>Ajustement</TitreSection>
+          <Carte style={styles.consigne}>
+            <Text style={styles.consigneTexte}>{proposition.message}</Text>
+          </Carte>
+          <View style={styles.actions}>
+            <Bouton titre="Oui, ajuste" onPress={accepter} enCours={enCours} />
+            <Bouton
+              titre="Non, garde comme ça"
+              intention="discret"
+              onPress={() => setProposition(null)}
+            />
+          </View>
+        </>
+      ) : null}
+
+      {ajustement ? <Text style={styles.apercu}>{ajustement}</Text> : null}
+
+      <Bouton titre="Terminer" intention="sombre" onPress={onFini} style={styles.terminer} />
+    </View>
+  );
+}
+
+/**
+ * Charge saisie → nombre, ou `null` si le champ est vide, illisible, ou hors
+ * des bornes du serveur. Mieux vaut une charge non notée qu'une séance entière
+ * refusée en 400.
+ */
+function nombreOuNull(valeur: string | undefined): number | null {
+  if (!valeur) return null;
+  // Le clavier décimal d'iOS produit une virgule en français.
+  const nombre = Number(valeur.replace(",", "."));
+  if (!Number.isFinite(nombre)) return null;
+  return nombre >= CHARGE_MIN && nombre <= CHARGE_MAX ? nombre : null;
+}
+
+const styles = StyleSheet.create({
+  page: {
+    flex: 1,
+    backgroundColor: COULEURS.nuit950,
+  },
+  entete: {
+    paddingHorizontal: 18,
+    paddingBottom: 14,
+    gap: 12,
+    borderBottomColor: COULEURS.nuit800,
+    borderBottomWidth: 1,
+  },
+  enteteLigne: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  retour: {
+    color: COULEURS.brume,
+    fontSize: 15,
+  },
+  groupe: {
+    color: COULEURS.or500,
+    fontSize: 12,
+    letterSpacing: 2,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  contenu: {
+    paddingHorizontal: 18,
+    paddingTop: 20,
+    gap: 14,
+  },
+  carteAlerte: {
+    borderColor: COULEURS.or600,
+  },
+  alerteTexte: {
+    color: COULEURS.or400,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  apercu: {
+    color: COULEURS.brume,
+    fontSize: 13,
+    textAlign: "center",
+  },
+  echauffement: {
+    gap: 4,
+  },
+  echauffementTitre: {
+    color: COULEURS.brume,
+    fontSize: 11,
+    letterSpacing: 2,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  echauffementLigne: {
+    color: COULEURS.ivoire,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  nom: {
+    color: COULEURS.ivoire,
+    fontFamily: POLICE_TITRE,
+    fontSize: 30,
+    lineHeight: 38,
+  },
+  prescription: {
+    color: COULEURS.or400,
+    fontSize: 17,
+    fontWeight: "600",
+    marginTop: -6,
+  },
+  finisher: {
+    color: COULEURS.hextech400,
+    fontSize: 12,
+    letterSpacing: 2,
+    fontWeight: "700",
+  },
+  consigne: {
+    gap: 8,
+  },
+  consigneTexte: {
+    color: COULEURS.ivoire,
+    fontSize: 14,
+    lineHeight: 22,
+  },
+  progression: {
+    color: COULEURS.brume,
+    fontSize: 12,
+  },
+  charge: {
+    gap: 8,
+  },
+  chargeTitre: {
+    color: COULEURS.brume,
+    fontSize: 11,
+    letterSpacing: 2,
+    fontWeight: "700",
+  },
+  chargeLigne: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  champ: {
+    flex: 1,
+    color: COULEURS.ivoire,
+    backgroundColor: COULEURS.nuit900,
+    borderColor: COULEURS.nuit600,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 22,
+  },
+  unite: {
+    color: COULEURS.brume,
+    fontSize: 16,
+  },
+  chargeAide: {
+    color: COULEURS.brume,
+    fontSize: 12,
+  },
+  chargeErreur: {
+    color: COULEURS.manque,
+    fontSize: 12,
+  },
+  actions: {
+    gap: 10,
+    marginTop: 4,
+  },
+  fin: {
+    gap: 12,
+    alignItems: "stretch",
+  },
+  finTitre: {
+    color: COULEURS.ivoire,
+    fontFamily: POLICE_TITRE,
+    fontSize: 30,
+    textAlign: "center",
+  },
+  finTexte: {
+    color: COULEURS.brume,
+    fontSize: 15,
+    textAlign: "center",
+  },
+  gain: {
+    color: COULEURS.or400,
+    fontFamily: POLICE_TITRE,
+    fontSize: 46,
+    textAlign: "center",
+  },
+  detail: {
+    gap: 10,
+  },
+  detailLigne: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  detailTotal: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderTopColor: COULEURS.nuit700,
+    borderTopWidth: 1,
+    paddingTop: 10,
+  },
+  detailLibelle: {
+    color: COULEURS.brume,
+    fontSize: 14,
+  },
+  detailLp: {
+    color: COULEURS.or400,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  detailVide: {
+    color: COULEURS.brume,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  erreurTexte: {
+    color: COULEURS.manque,
+    fontSize: 13,
+    textAlign: "center",
+  },
+  terminer: {
+    marginTop: 10,
+  },
+});

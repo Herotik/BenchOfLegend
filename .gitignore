@@ -53,3 +53,4 @@ __pycache__/
 /mobile/.expo
 /mobile/dist
 /mobile/.env
+/mobile/.claude/
