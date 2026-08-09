@@ -45,11 +45,31 @@
 
 @layer base {
   body {
-    background:
-      radial-gradient(ellipse 80% 50% at 50% -10%, --alpha(var(--color-nuit-800) / 60%), transparent),
-      var(--color-nuit-950);
+    background-color: var(--color-nuit-950);
     color: var(--color-ivoire);
     font-family: var(--font-sans);
+  }
+
+  /*
+   * Halo hextech en haut de page.
+   *
+   * Posé sur un pseudo-élément fixe et dimensionné en pixels, pas en
+   * pourcentages sur le `body` : la taille d'un dégradé en pourcentage suit la
+   * hauteur de son élément, si bien que le halo restait discret sur une page
+   * courte et noyait la moitié de l'écran sur une page longue — avec une
+   * arête visible là où l'ellipse se terminait.
+   */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse 900px 380px at 50% -60px,
+      --alpha(var(--color-nuit-700) / 55%),
+      transparent
+    );
   }
 
   /* Sérif de la planche réservée aux grands titres : Cinzel a des formes
