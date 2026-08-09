@@ -22,6 +22,9 @@ export default defineConfig({
     // le script npm, jamais la base de développement.
     env: {
       DATABASE_URL: "postgresql://lafaille:lafaille@localhost:5433/lafaille_test?schema=public",
+      // Les tests d'API signent de vrais jetons d'accès plutôt que de mocker
+      // la garde : sans secret, `lib/api/jetons.ts` refuse de signer.
+      AUTH_SECRET: "secret-de-test-la-faille-jamais-deploye",
     },
 
     testTimeout: 20_000,

@@ -115,6 +115,32 @@ describe("terminerOnboarding", () => {
     expect(resultat).toEqual({ erreur: "Choisis au moins un groupe musculaire" });
   });
 
+  /**
+   * Non-régression : la garde vivait dans l'écran, pas dans la règle.
+   *
+   * `/onboarding` redirige un profil déjà complet vers le tableau de bord, et
+   * la page disait pourquoi — « le wizard écraserait les préférences ». Mais
+   * une Server Action est une URL comme une autre, appelable avec une session
+   * valide sans passer par la page : les préférences étaient alors remplacées
+   * et la pesée du jour écrasée par le poids du formulaire, sans qu'`onboarded`
+   * ait jamais été consulté.
+   *
+   * Le refus est désormais porté par `lib/onboarding.ts`, dont l'action et
+   * `POST /api/v1/me/onboarding` héritent l'un comme l'autre.
+   */
+  it("refuse de refaire un onboarding déjà terminé", async () => {
+    const user = await creerUtilisateur({ onboarded: true, heightCm: 180 });
+    await prisma.weighIn.create({ data: { userId: user.id, date: jourUTC(), kg: 70 } });
+
+    // Pas de redirection : l'action rend un refus, elle ne mène nulle part.
+    const resultat = await terminerOnboarding(reponses({ heightCm: 165, poidsKg: 90 }));
+    expect(resultat).toHaveProperty("erreur");
+
+    const apres = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(apres.heightCm).toBe(180);
+    expect((await prisma.weighIn.findFirstOrThrow({ where: { userId: user.id } })).kg).toBe(70);
+  });
+
   it("accepte un profil sans aucun matériel", async () => {
     // Cas normal et non dégradé : l'app doit rester utilisable au poids de corps.
     const user = await creerUtilisateur({ onboarded: false, muscleGroups: [] });

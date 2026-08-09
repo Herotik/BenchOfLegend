@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Goal, Level } from "@prisma/client";
+import { creerJetonAcces } from "@/lib/api/jetons";
 import { connecter } from "./session-courante";
 
 /** Outils partagés par les tests d'intégration. */
@@ -81,6 +82,50 @@ export async function creerUtilisateur(options: OptionsUtilisateur = {}) {
 export async function nettoyerBase(): Promise<void> {
   await prisma.user.deleteMany();
   connecter(null);
+}
+
+/**
+ * Requête telle que l'app mobile l'émet.
+ *
+ * Un **vrai** jeton d'accès, signé par `lib/api/jetons.ts` et relu par
+ * `lib/api/garde.ts` : les doublures de `setup.ts` ne servent qu'aux Server
+ * Actions, et mocker la garde reviendrait à ne tester que la moitié du chemin.
+ * Sans `userId` ni `jeton`, la requête part sans en-tête — c'est le cas 401.
+ */
+export async function requeteApi(
+  chemin: string,
+  options: {
+    userId?: string;
+    /** Jeton fourni tel quel, pour les cas où il doit être invalide. */
+    jeton?: string;
+    methode?: string;
+    corps?: unknown;
+  } = {},
+): Promise<Request> {
+  const entetes: Record<string, string> = {};
+
+  const jeton = options.jeton ?? (options.userId ? await creerJetonAcces(options.userId) : null);
+  if (jeton) entetes.Authorization = `Bearer ${jeton}`;
+
+  const avecCorps = options.corps !== undefined;
+  if (avecCorps) entetes["Content-Type"] = "application/json";
+
+  return new Request(`https://la-faille.test${chemin}`, {
+    method: options.methode ?? (avecCorps ? "POST" : "GET"),
+    headers: entetes,
+    body: avecCorps ? JSON.stringify(options.corps) : undefined,
+  });
+}
+
+/** Statut et corps JSON d'une réponse, en une fois. */
+export async function reponseJson<T = Record<string, unknown>>(
+  reponse: Response,
+): Promise<{ statut: number; corps: T; cache: string | null }> {
+  return {
+    statut: reponse.status,
+    corps: (await reponse.json()) as T,
+    cache: reponse.headers.get("Cache-Control"),
+  };
 }
 
 /**

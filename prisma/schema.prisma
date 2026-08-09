@@ -46,6 +46,7 @@ model User {
   workouts     WorkoutLog[]
   planDays     PlanDay[]
   charges      ExerciseLoad[]
+  apiTokens    ApiRefreshToken[]
 }
 
 model Account {
@@ -204,6 +205,28 @@ model ExerciseLoad {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, exerciseName])
+}
+
+/// Jeton de rafraîchissement de l'API mobile.
+///
+/// Les sessions par cookie ne conviennent pas à une app native : elle porte un
+/// jeton d'accès court en en-tête, et le renouvelle avec celui-ci. Seul le
+/// condensat est stocké — une fuite de la base ne rend aucun jeton utilisable.
+model ApiRefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  /// SHA-256 du jeton. Le jeton en clair n'existe que chez le client.
+  tokenHash String   @unique
+  /// Libellé d'appareil, pour que l'utilisateur puisse révoquer un téléphone perdu.
+  appareil  String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  /// Renseigné à la rotation ou à la déconnexion.
+  revokedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model WeighIn {

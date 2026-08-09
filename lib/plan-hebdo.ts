@@ -120,6 +120,22 @@ export async function assurerPlans(userId: string, semaines = SEMAINES_A_LAVANCE
 }
 
 /**
+ * Jours de plan sur une plage, génération assurée au passage.
+ *
+ * Bornes incluses : la plage est exprimée en jours, pas en instants. C'est ce
+ * que fait déjà le calendrier — `assurerPlans` puis lecture de la fenêtre
+ * voulue — et ce que `GET /api/v1/plan` doit faire à son tour.
+ */
+export async function planSurPlage(userId: string, debut: Date, fin: Date) {
+  await assurerPlans(userId);
+
+  return prisma.planDay.findMany({
+    where: { userId, date: { gte: debut, lte: fin } },
+    orderBy: [{ date: "asc" }, { muscleGroup: "asc" }],
+  });
+}
+
+/**
  * Séance du jour pour un groupe donné.
  *
  * Non persistée : elle est régénérée à chaque affichage. La graine combine

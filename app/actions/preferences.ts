@@ -3,29 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireOnboardedUser } from "@/lib/session";
-import { jourUTC } from "@/lib/dates";
-import { operationsPreferences, schemaPreferences, type Preferences } from "@/lib/preferences";
+import { appliquerPreferences } from "@/lib/preferences";
 import { signOut } from "@/auth";
 
+/** Enveloppe web de `lib/preferences.ts` — `PUT /api/v1/me/preferences` appelle le même module. */
 export async function modifierPreferences(entree: unknown) {
   const user = await requireOnboardedUser();
 
-  const parse = schemaPreferences.safeParse(entree);
-  if (!parse.success) {
-    return { erreur: parse.error.issues[0]?.message ?? "Données invalides" };
-  }
-
-  await prisma.$transaction([
-    ...operationsPreferences(user.id, parse.data as Preferences),
-
-    // Le plan à venir est régénéré, jamais le passé (spec §4.2). Les séances
-    // déjà validées sont préservées : elles font partie de l'historique et
-    // ont rapporté des LP. Les jours restants sont supprimés, la génération
-    // les recrée au prochain chargement avec les nouvelles préférences.
-    prisma.planDay.deleteMany({
-      where: { userId: user.id, date: { gte: jourUTC() }, status: { not: "FAIT" } },
-    }),
-  ]);
+  const resultat = await appliquerPreferences(user.id, entree);
+  if ("erreur" in resultat) return { erreur: resultat.erreur };
 
   revalidatePath("/dashboard");
   revalidatePath("/calendrier");
