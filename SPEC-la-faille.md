@@ -201,7 +201,11 @@ Sélectionner 4 à 6 exercices dans la base selon :
 
 - Volume par séance : viser **10 à 16 séries de travail au total** (l'échauffement ne compte pas), soit ~10-12 séries hebdo par groupe pour un débutant réparties sur 2 séances, davantage pour intermédiaire/avancé.
 - Chaque séance commence par un bloc "Échauffement" fixe (non compté en LP bonus) : 5 min de mobilité + 2 séries légères du premier mouvement.
-- Pour les exercices au poids de corps, remplacer la notion de charge par la **variante** (ex. si l'utilisateur dépasse la fourchette haute de reps deux séances de suite → proposer automatiquement la `progression` de l'exercice la fois suivante). Stocker les reps effectuées pour permettre cette logique.
+- **Répétitions affichées : un nombre précis, jamais une fourchette.** Les fourchettes du tableau ci-dessus restent la référence de programmation, mais l'utilisateur voit « 3 séries × 8 répétitions ». Une fourchette le laisserait choisir son effort et rendrait inexploitable la notion de série non terminée. Bas de fourchette sur les polyarticulaires, haut sur l'isolation.
+- **Suivi par exercice en trois états** : non fait, série non terminée, fait. Une série entamée sans être bouclée compte pour moitié dans l'avancement de la séance et dans le volume — signaler un échec ne doit pas revenir à se pénaliser, sinon personne ne le fera.
+- **Progression par le ressenti.** En fin de séance, l'utilisateur déclare *Facile*, *Juste ce qu'il faut* ou *Trop dur*. « Facile » propose de monter d'un cran la difficulté du groupe travaillé, « trop dur » de la baisser ; la proposition n'est jamais appliquée d'office. Le cran est stocké dans `UserMuscleGroup.levelOffset` (−1 à +1) et s'ajoute au niveau déclaré pour choisir les variantes : un débutant à +1 accède aux mouvements intermédiaires de ce seul groupe.
+
+  > Cette règle remplace la version initiale de la spec — « si l'utilisateur dépasse la fourchette haute de reps deux séances de suite ». Elle était inapplicable : l'app prescrit un nombre précis, on ne le dépasse donc pas, et l'interface n'enregistre pas les reps réellement effectuées. Le ressenti déclaré remplit le même rôle, vaut aussi bien au poids de corps qu'avec des charges, et coûte un seul appui.
 - Cardio : prescription en durée/intervalles (ex. 8 × 30 s effort / 90 s récup) au lieu de séries×reps.
 
 ### 5.3 Séances bonus

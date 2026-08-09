@@ -114,6 +114,10 @@ model UserMuscleGroup {
   groupId String
   /// 1 = priorité normale, 2 = point fort souhaité
   priority Int @default(1)
+  /// Décalage de difficulté sur ce groupe, -1 à +1, piloté par le ressenti
+  /// de fin de séance. S'ajoute au niveau déclaré pour choisir les variantes :
+  /// un débutant à +1 accède aux mouvements intermédiaires de ce groupe.
+  levelOffset Int @default(0)
 
   user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   group MuscleGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)

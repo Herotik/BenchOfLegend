@@ -4,6 +4,23 @@ import type { ExerciceDisponible, ExercicePrescrit, ProfilEntrainement, Seance }
 
 const ORDRE_NIVEAU: Record<Level, number> = { DEBUTANT: 0, INTERMEDIAIRE: 1, AVANCE: 2 };
 
+/** Décalage maximum accordé par le ressenti, dans un sens comme dans l'autre. */
+export const DECALAGE_MAX = 1;
+
+/**
+ * Niveau effectif sur un groupe : le niveau déclaré, ajusté par le ressenti
+ * accumulé sur ce groupe.
+ *
+ * C'est ce qui permet de progresser sans redéclarer son niveau : quelqu'un
+ * qui trouve ses tractions faciles passe aux variantes intermédiaires du dos
+ * sans que ses pompes changent.
+ */
+export function niveauEffectif(profil: ProfilEntrainement, muscleGroup: string): number {
+  const groupe = profil.muscleGroups.find((g) => g.id === muscleGroup);
+  const decalage = Math.max(-DECALAGE_MAX, Math.min(DECALAGE_MAX, groupe?.levelOffset ?? 0));
+  return Math.max(0, Math.min(2, ORDRE_NIVEAU[profil.level] + decalage));
+}
+
 /** Nombre d'exercices par séance (spec §5.2). */
 const EXERCICES = { min: 4, max: 6, cible: 5 } as const;
 
@@ -33,7 +50,7 @@ export function genererSeance(
   catalogue: ExerciceDisponible[],
   graine = 0,
 ): Seance {
-  const plafond = ORDRE_NIVEAU[profil.level];
+  const plafond = niveauEffectif(profil, muscleGroup);
 
   const eligibles = catalogue.filter(
     (e) =>
@@ -219,14 +236,15 @@ function prescrire(
       };
     }
 
+    const polyarticulaire = e.type === "POLYARTICULAIRE";
     return {
       exerciceId: e.id,
       nom: e.name,
       type: e.type,
       description: e.description,
       series: series[i],
-      reps: p.reps,
-      restSec: e.type === "POLYARTICULAIRE" ? p.restPolyarticulaire : p.restIsolation,
+      reps: polyarticulaire ? p.repsPolyarticulaire : p.repsIsolation,
+      restSec: polyarticulaire ? p.restPolyarticulaire : p.restIsolation,
       finisher,
       progression: e.progression,
     };

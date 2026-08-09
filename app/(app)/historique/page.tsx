@@ -5,11 +5,22 @@ import { muscleGroupLabel } from "@/lib/referentiel";
 interface ExerciceJournal {
   name: string;
   sets: number;
-  reps: [number, number] | null;
+  /** Nombre précis depuis le passage au ressenti ; anciennes séances : fourchette. */
+  reps: number | [number, number] | null;
   duree: string | null;
   restSec: number;
-  done: boolean;
+  statut?: "non_fait" | "partiel" | "fait";
+  /** Champ des séances enregistrées avant le suivi en trois états. */
+  done?: boolean;
 }
+
+const statutDe = (e: ExerciceJournal) => e.statut ?? (e.done ? "fait" : "non_fait");
+
+const doseDe = (e: ExerciceJournal) => {
+  if (e.duree) return `${e.sets} × ${e.duree}`;
+  if (Array.isArray(e.reps)) return `${e.sets} × ${e.reps[0]}-${e.reps[1]}`;
+  return `${e.sets} × ${e.reps}`;
+};
 
 export default async function HistoriquePage() {
   const session = await requireOnboardedUser();
@@ -37,7 +48,7 @@ export default async function HistoriquePage() {
         <ul className="mt-8 flex flex-col gap-3">
           {seances.map((s) => {
             const exercices = s.exercises as unknown as ExerciceJournal[];
-            const faits = exercices.filter((e) => e.done).length;
+            const faits = exercices.filter((e) => statutDe(e) === "fait").length;
 
             return (
               <li key={s.id}>
@@ -66,19 +77,31 @@ export default async function HistoriquePage() {
                   </summary>
 
                   <ul className="border-t border-nuit-700/60">
-                    {exercices.map((e, i) => (
-                      <li
-                        key={`${s.id}-${i}`}
-                        className="flex items-baseline justify-between gap-4 border-b border-nuit-700/40 px-4 py-2.5 last:border-0"
-                      >
-                        <span className={e.done ? "text-sm text-brume" : "text-sm text-cendre line-through"}>
-                          {e.name}
-                        </span>
-                        <span className="shrink-0 text-xs text-cendre">
-                          {e.duree ? `${e.sets} × ${e.duree}` : `${e.sets} × ${e.reps?.[0]}-${e.reps?.[1]}`}
-                        </span>
-                      </li>
-                    ))}
+                    {exercices.map((e, i) => {
+                      const statut = statutDe(e);
+                      return (
+                        <li
+                          key={`${s.id}-${i}`}
+                          className="flex items-baseline justify-between gap-4 border-b border-nuit-700/40 px-4 py-2.5 last:border-0"
+                        >
+                          <span
+                            className={
+                              statut === "fait"
+                                ? "text-sm text-brume"
+                                : statut === "partiel"
+                                  ? "text-sm text-brume"
+                                  : "text-sm text-cendre line-through"
+                            }
+                          >
+                            {e.name}
+                            {statut === "partiel" && (
+                              <span className="ml-2 text-xs text-manque">non finie</span>
+                            )}
+                          </span>
+                          <span className="shrink-0 text-xs text-cendre">{doseDe(e)}</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </details>
               </li>

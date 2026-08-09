@@ -15,8 +15,11 @@ export interface ProfilEntrainement {
   daysPerWeek: number;
   /** Slugs du matériel possédé. Vide = poids de corps pur. */
   equipments: string[];
-  /** Groupes choisis, avec leur priorité (2 = point fort souhaité). */
-  muscleGroups: { id: MuscleGroupId; priority: number }[];
+  /**
+   * Groupes choisis, avec leur priorité (2 = point fort souhaité) et leur
+   * décalage de difficulté (-1 à +1), piloté par le ressenti de fin de séance.
+   */
+  muscleGroups: { id: MuscleGroupId; priority: number; levelOffset?: number }[];
 }
 
 /** Un exercice tel que lu en base, réduit à ce dont le moteur se sert. */
@@ -38,8 +41,12 @@ export interface ExercicePrescrit {
   type: ExoType;
   description: string;
   series: number;
-  /** Fourchette de répétitions, ex. [6, 12]. Absent pour le cardio. */
-  reps?: [number, number];
+  /**
+   * Objectif de répétitions par série. Un nombre précis, jamais une
+   * fourchette : c'est ce qui rend une série « non terminée » signifiable.
+   * Absent pour le cardio, prescrit en durée.
+   */
+  reps?: number;
   /** Consigne de durée pour le cardio, ex. « 8 × 30 s effort / 90 s récup ». */
   duree?: string;
   /** Temps de repos entre séries, en secondes. */

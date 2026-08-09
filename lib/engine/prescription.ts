@@ -12,8 +12,17 @@ import type { Goal } from "@/lib/referentiel";
  * en perte de poids pour maintenir la densité de la séance.
  */
 export interface Prescription {
-  /** Fourchette de répétitions [min, max]. */
+  /**
+   * Fourchette de référence [min, max]. Elle documente la plage utile de
+   * l'objectif, mais n'est jamais affichée : l'app prescrit un nombre précis.
+   * Une fourchette laisse l'utilisateur choisir son effort, et rend
+   * inexploitable la notion de série non terminée.
+   */
   reps: [number, number];
+  /** Objectif de répétitions sur un polyarticulaire — bas de fourchette. */
+  repsPolyarticulaire: number;
+  /** Objectif sur un exercice d'isolation — haut de fourchette. */
+  repsIsolation: number;
   /** Repos après un exercice polyarticulaire, en secondes. */
   restPolyarticulaire: number;
   /** Repos après un exercice d'isolation, en secondes. */
@@ -26,6 +35,8 @@ export const PRESCRIPTIONS: Record<Goal, Prescription> = {
   // 6-12 reps, 2-3 min sur les polyarticulaires, 60-90 s en isolation, 3-4 séries
   HYPERTROPHIE: {
     reps: [6, 12],
+    repsPolyarticulaire: 8,
+    repsIsolation: 11,
     restPolyarticulaire: 150,
     restIsolation: 75,
     series: [3, 4],
@@ -33,6 +44,8 @@ export const PRESCRIPTIONS: Record<Goal, Prescription> = {
   // 3-6 reps, 3-5 min, 2 min en isolation, 3-5 séries
   FORCE: {
     reps: [3, 6],
+    repsPolyarticulaire: 4,
+    repsIsolation: 6,
     restPolyarticulaire: 240,
     restIsolation: 120,
     series: [3, 5],
@@ -40,6 +53,8 @@ export const PRESCRIPTIONS: Record<Goal, Prescription> = {
   // 15-20+ reps, 30-45 s, 30 s en isolation, 2-3 séries
   ENDURANCE: {
     reps: [15, 20],
+    repsPolyarticulaire: 16,
+    repsIsolation: 20,
     restPolyarticulaire: 40,
     restIsolation: 30,
     series: [2, 3],
@@ -47,6 +62,8 @@ export const PRESCRIPTIONS: Record<Goal, Prescription> = {
   // 12-15 reps en circuit, 30-60 s, 30-45 s en isolation, 3 séries
   PERTE_DE_POIDS: {
     reps: [12, 15],
+    repsPolyarticulaire: 12,
+    repsIsolation: 15,
     restPolyarticulaire: 45,
     restIsolation: 40,
     series: [3, 3],

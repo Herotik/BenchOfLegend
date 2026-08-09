@@ -76,9 +76,19 @@ describe("calculerLp", () => {
 });
 
 describe("ratioComplete", () => {
-  it("compte la part d'exercices cochés", () => {
-    expect(ratioComplete([{ done: true }, { done: false }])).toBe(0.5);
-    expect(ratioComplete([{ done: true }, { done: true }])).toBe(1);
+  it("compte la part d'exercices terminés", () => {
+    expect(ratioComplete([{ statut: "fait" }, { statut: "non_fait" }])).toBe(0.5);
+    expect(ratioComplete([{ statut: "fait" }, { statut: "fait" }])).toBe(1);
+  });
+
+  it("compte une série non finie pour moitié", () => {
+    // Signaler un échec ne doit pas revenir à se pénaliser, sinon personne
+    // ne le fera et l'ajustement de difficulté perd sa matière première.
+    expect(ratioComplete([{ statut: "partiel" }, { statut: "partiel" }])).toBe(0.5);
+    expect(ratioComplete([{ statut: "fait" }, { statut: "partiel" }])).toBe(0.75);
+    expect(ratioComplete([{ statut: "partiel" }])).toBeGreaterThan(
+      ratioComplete([{ statut: "non_fait" }]),
+    );
   });
 
   it("rend 0 sur une séance vide plutôt que NaN", () => {

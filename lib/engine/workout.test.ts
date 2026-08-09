@@ -185,13 +185,20 @@ describe("genererSeance — structure", () => {
 });
 
 describe("genererSeance — prescription", () => {
-  it("respecte les fourchettes de reps et de repos de chaque objectif", () => {
+  it("prescrit un nombre de répétitions précis, dans la fourchette de l'objectif", () => {
+    // Une fourchette laisserait l'utilisateur choisir son effort et rendrait
+    // inexploitable la notion de série non terminée.
     for (const goal of OBJECTIFS) {
       const p = PRESCRIPTIONS[goal];
       for (const groupe of GROUPES.filter((g) => g !== "cardio")) {
         const seance = genererSeance(profil({ goal }), groupe, CATALOGUE);
         for (const exo of seance.exercices) {
-          expect(exo.reps, `${exo.nom} sans fourchette de reps`).toEqual(p.reps);
+          const attendu =
+            exo.type === "POLYARTICULAIRE" ? p.repsPolyarticulaire : p.repsIsolation;
+          expect(typeof exo.reps, `${exo.nom} : reps doit être un nombre`).toBe("number");
+          expect(exo.reps, `${exo.nom}`).toBe(attendu);
+          expect(exo.reps!).toBeGreaterThanOrEqual(p.reps[0]);
+          expect(exo.reps!).toBeLessThanOrEqual(p.reps[1]);
           expect(exo.restSec).toBe(
             exo.type === "POLYARTICULAIRE" ? p.restPolyarticulaire : p.restIsolation,
           );

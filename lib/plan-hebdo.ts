@@ -22,6 +22,7 @@ export async function chargerProfil(userId: string) {
     muscleGroups: user.muscleGroups.map((g) => ({
       id: g.groupId as MuscleGroupId,
       priority: g.priority,
+      levelOffset: g.levelOffset,
     })),
   };
 

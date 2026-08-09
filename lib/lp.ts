@@ -76,8 +76,24 @@ export function calculerLp(entree: EntreeLp): ResultatLp {
   return { total: details.reduce((s, d) => s + d.lp, 0), details };
 }
 
-/** Part d'exercices cochés dans une séance. */
-export function ratioComplete(exercices: { done: boolean }[]): number {
+/**
+ * Statut d'un exercice dans une séance.
+ * `partiel` : commencé mais série non terminée.
+ */
+export type StatutExercice = "non_fait" | "partiel" | "fait";
+
+/** Poids d'un exercice dans le calcul d'avancement de la séance. */
+const POIDS: Record<StatutExercice, number> = {
+  non_fait: 0,
+  // Une série entamée sans être bouclée vaut mieux que rien : elle compte à
+  // moitié plutôt que d'être ignorée, sinon signaler un échec revient à se
+  // pénaliser et personne ne le fera.
+  partiel: 0.5,
+  fait: 1,
+};
+
+/** Avancement de la séance, entre 0 et 1. */
+export function ratioComplete(exercices: { statut: StatutExercice }[]): number {
   if (exercices.length === 0) return 0;
-  return exercices.filter((e) => e.done).length / exercices.length;
+  return exercices.reduce((s, e) => s + POIDS[e.statut], 0) / exercices.length;
 }

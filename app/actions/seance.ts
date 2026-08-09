@@ -5,19 +5,20 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireOnboardedUser } from "@/lib/session";
 import { jourUTC } from "@/lib/dates";
-import { calculerLp, ratioComplete } from "@/lib/lp";
+import { calculerLp, ratioComplete, type StatutExercice } from "@/lib/lp";
 import { rankForLp, rankLabel } from "@/lib/ranks";
 import { seanceDuJour, seancesSur7Jours } from "@/lib/plan-hebdo";
 import { MUSCLE_GROUPS } from "@/lib/referentiel";
+import { decalagePropose, VALEUR_RESSENTI, type Ressenti } from "@/lib/difficulte";
 
 const schemaValidation = z.object({
   planDayId: z.string().optional(),
   muscleGroup: z.enum(MUSCLE_GROUPS.map((g) => g.id) as [string, ...string[]]),
   isBonus: z.boolean(),
-  /** Index des exercices cochés, tels qu'affichés dans la séance du jour. */
-  coches: z.array(z.number().int().min(0)),
+  /** Statut de chaque exercice, dans l'ordre de la séance affichée. */
+  statuts: z.array(z.enum(["non_fait", "partiel", "fait"])),
+  ressenti: z.enum(["facile", "juste", "difficile"]),
   durationMin: z.number().int().min(1).max(600).optional(),
-  feeling: z.number().int().min(1).max(5).optional(),
 });
 
 export type ResultatValidation = {
@@ -26,15 +27,17 @@ export type ResultatValidation = {
   promoted: boolean;
   newRank: string;
   lpTotal: number;
+  /** Proposition d'ajustement de difficulté, si le ressenti en appelle une. */
+  proposition: { delta: 1 | -1; message: string; muscleGroup: string } | null;
 };
 
 /**
  * Valide une séance et crédite les LP.
  *
- * **Tout le calcul se fait ici.** Le client n'envoie que les index cochés :
- * la séance est régénérée côté serveur à partir de la même graine, si bien
- * qu'un client modifié ne peut ni inventer des exercices, ni s'attribuer des
- * LP, ni faire passer une séance partielle pour complète.
+ * **Tout le calcul se fait ici.** Le client n'envoie que les statuts : la
+ * séance est régénérée côté serveur à partir de la même graine, si bien qu'un
+ * client modifié ne peut ni inventer des exercices, ni s'attribuer des LP, ni
+ * faire passer une séance partielle pour complète.
  */
 export async function validerSeance(
   entree: z.input<typeof schemaValidation>,
@@ -57,8 +60,10 @@ export async function validerSeance(
     if (planDay.status === "FAIT") return { erreur: "Cette séance est déjà validée" };
   }
 
-  const coches = new Set(d.coches.filter((i) => i < seance.exercices.length));
-  const exercices = seance.exercices.map((e, i) => ({ ...e, done: coches.has(i) }));
+  const exercices = seance.exercices.map((e, i) => ({
+    ...e,
+    statut: (d.statuts[i] ?? "non_fait") as StatutExercice,
+  }));
 
   const finisher = exercices.find((e) => e.finisher);
   const bonusDuJour = await prisma.workoutLog.count({
@@ -68,13 +73,13 @@ export async function validerSeance(
   const lp = calculerLp({
     ratioComplete: ratioComplete(exercices),
     isBonus: d.isBonus,
-    finisherComplete: Boolean(finisher?.done),
+    finisherComplete: finisher?.statut === "fait",
     seancesSur7Jours: await seancesSur7Jours(user.id),
     bonusDejaCompteAujourdhui: bonusDuJour > 0,
   });
 
-  const rangAvant = rankForLp(user.lp);
   const lpTotal = user.lp + lp.total;
+  const rangAvant = rankForLp(user.lp);
   const rangApres = rankForLp(lpTotal);
 
   const [workout] = await prisma.$transaction([
@@ -91,10 +96,10 @@ export async function validerSeance(
           reps: e.reps ?? null,
           duree: e.duree ?? null,
           restSec: e.restSec,
-          done: e.done,
+          statut: e.statut,
         })),
         durationMin: d.durationMin,
-        feeling: d.feeling,
+        feeling: VALEUR_RESSENTI[d.ressenti as Ressenti],
       },
     }),
     prisma.user.update({ where: { id: user.id }, data: { lp: lpTotal } }),
@@ -107,6 +112,14 @@ export async function validerSeance(
     });
   }
 
+  // Le décalage n'est jamais appliqué d'office : on propose, l'utilisateur
+  // décide. Une séance facile peut l'être pour mille raisons étrangères au
+  // niveau — bonne nuit, journée légère, groupe déjà échauffé.
+  const groupe = await prisma.userMuscleGroup.findUnique({
+    where: { userId_groupId: { userId: user.id, groupId: d.muscleGroup } },
+  });
+  const propose = groupe ? decalagePropose(d.ressenti as Ressenti, groupe.levelOffset) : null;
+
   revalidatePath("/dashboard");
 
   return {
@@ -117,5 +130,27 @@ export async function validerSeance(
     promoted: rankLabel(user.lp) !== rankLabel(lpTotal) || rangAvant.slug !== rangApres.slug,
     newRank: rankLabel(lpTotal),
     lpTotal,
+    proposition: propose ? { ...propose, muscleGroup: d.muscleGroup } : null,
   };
+}
+
+/** Applique l'ajustement de difficulté proposé après une séance. */
+export async function ajusterDifficulte(muscleGroup: string, delta: number) {
+  const user = await requireOnboardedUser();
+
+  if (delta !== 1 && delta !== -1) return { erreur: "Ajustement invalide" };
+
+  const groupe = await prisma.userMuscleGroup.findUnique({
+    where: { userId_groupId: { userId: user.id, groupId: muscleGroup } },
+  });
+  if (!groupe) return { erreur: "Groupe introuvable" };
+
+  const nouveau = Math.max(-1, Math.min(1, groupe.levelOffset + delta));
+  await prisma.userMuscleGroup.update({
+    where: { userId_groupId: { userId: user.id, groupId: muscleGroup } },
+    data: { levelOffset: nouveau },
+  });
+
+  revalidatePath("/dashboard");
+  return { ok: true as const, levelOffset: nouveau };
 }

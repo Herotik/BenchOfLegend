@@ -94,8 +94,21 @@ export async function chargerStats(userId: string): Promise<Stats> {
 
   for (const w of seances) {
     const s = toucher(w.date);
-    const exercices = w.exercises as unknown as { sets: number; done: boolean }[];
-    const series = exercices.filter((e) => e.done).reduce((total, e) => total + e.sets, 0);
+    const exercices = w.exercises as unknown as {
+      sets: number;
+      statut?: "non_fait" | "partiel" | "fait";
+      /** Séances enregistrées avant le suivi en trois états. */
+      done?: boolean;
+    }[];
+
+    // Une série non terminée compte pour moitié dans le volume, comme dans le
+    // calcul des LP — sinon la courbe de volume punirait l'honnêteté.
+    const series = exercices.reduce((total, e) => {
+      const statut = e.statut ?? (e.done ? "fait" : "non_fait");
+      if (statut === "fait") return total + e.sets;
+      if (statut === "partiel") return total + e.sets / 2;
+      return total;
+    }, 0);
     s.volume[w.muscleGroup] = (s.volume[w.muscleGroup] ?? 0) + series;
     s.volumeTotal += series;
   }
