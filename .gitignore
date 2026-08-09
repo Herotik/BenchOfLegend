@@ -14,12 +14,14 @@
 /build
 next-env.d.ts
 
-# Base de données locale (SQLite)
+# Base de données locale — les données vivent dans le volume Docker
 *.db
 *.db-journal
 /prisma/*.db
 /prisma/*.db-journal
-/prisma/migrations/dev.db*
+
+# Export intermédiaire de la migration SQLite -> PostgreSQL
+/migration-donnees.json
 
 # Secrets — ne jamais committer, voir .env.example
 .env

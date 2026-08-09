@@ -1,20 +1,24 @@
 import { execFileSync } from "node:child_process";
-import fs from "node:fs";
 import path from "node:path";
 
 /**
  * Prépare la base de test, une fois pour toute la suite.
  *
- * `prisma/dev.db` contient les vraies données de l'utilisateur et ne doit
- * jamais être touchée : tout passe par `prisma/test.db`, créée ici et
- * supprimée au démontage.
+ * La base de développement contient les vraies données de l'utilisateur et ne
+ * doit jamais être touchée : tout passe par une base Postgres distincte,
+ * `lafaille_test`, sur la même instance Docker. Elle est recréée à vide ici.
  */
 
 const RACINE = path.resolve(import.meta.dirname, "..", "..");
 
-/** Chemin relatif au `schema.prisma`, comme le fait `.env` pour dev.db. */
-export const URL_BASE_TEST = "file:./test.db";
-const FICHIER_BASE_TEST = path.join(RACINE, "prisma", "test.db");
+/** Base de test dédiée, sur l'instance Postgres montée par docker compose. */
+export const NOM_BASE_TEST = "lafaille_test";
+export const URL_BASE_TEST =
+  process.env.DATABASE_URL_TEST ??
+  `postgresql://lafaille:lafaille@localhost:5433/${NOM_BASE_TEST}?schema=public`;
+
+/** Même instance, mais base d'administration : on ne peut pas supprimer celle où l'on est connecté. */
+const URL_ADMIN = URL_BASE_TEST.replace(`/${NOM_BASE_TEST}?`, "/postgres?");
 
 const BINAIRE_PRISMA = path.join(RACINE, "node_modules", "prisma", "build", "index.js");
 const BINAIRE_TSX = path.join(RACINE, "node_modules", "tsx", "dist", "cli.mjs");
@@ -30,40 +34,43 @@ function lancer(script: string, args: string[]): void {
   });
 }
 
-/**
- * Supprime la base de test et ses fichiers annexes (journal, WAL).
- *
- * `maxRetries` : sous Windows, le fichier reste verrouillé quelques
- * millisecondes après la fermeture du dernier processus de test.
- */
-function supprimerBaseTest(): void {
-  for (const suffixe of ["", "-journal", "-wal", "-shm"]) {
-    fs.rmSync(`${FICHIER_BASE_TEST}${suffixe}`, { force: true, maxRetries: 20, retryDelay: 100 });
+/** Recrée la base de test à vide, en se connectant à `postgres` pour la piloter. */
+async function recreerBaseTest(): Promise<void> {
+  const { PrismaClient } = await import("@prisma/client");
+  const admin = new PrismaClient({ datasourceUrl: URL_ADMIN });
+  try {
+    // WITH (FORCE) coupe les connexions restées ouvertes par une exécution
+    // précédente interrompue, sinon le DROP reste bloqué indéfiniment.
+    await admin.$executeRawUnsafe(`DROP DATABASE IF EXISTS "${NOM_BASE_TEST}" WITH (FORCE)`);
+    await admin.$executeRawUnsafe(`CREATE DATABASE "${NOM_BASE_TEST}"`);
+  } finally {
+    await admin.$disconnect();
   }
 }
 
 export default async function preparerBaseDeTest() {
   process.env.DATABASE_URL = URL_BASE_TEST;
 
-  // On repart d'un fichier vierge plutôt que de demander à Prisma un
-  // `--force-reset` : le résultat est le même, et supprimer un fichier dont on
-  // maîtrise le nom ne peut pas déraper sur une autre base.
-  supprimerBaseTest();
+  // On repart d'une base vierge plutôt que de demander à Prisma un
+  // `--force-reset` : le résultat est le même, et piloter un nom de base qu'on
+  // maîtrise ne peut pas déraper sur celle de développement.
+  await recreerBaseTest();
 
   lancer(BINAIRE_PRISMA, ["db", "push", "--skip-generate"]);
   lancer(BINAIRE_TSX, [path.join("prisma", "seed.ts")]);
 
-  // Vérification a posteriori : on demande à SQLite quel fichier il a
-  // réellement ouvert. Un test ne démarre pas tant que ce n'est pas test.db.
+  // Vérification a posteriori : on demande à Postgres à quelle base il est
+  // réellement connecté. Un test ne démarre pas tant que ce n'est pas celle-ci.
   const { PrismaClient } = await import("@prisma/client");
   const client = new PrismaClient();
   try {
-    const bases = await client.$queryRawUnsafe<{ file: string }[]>("PRAGMA database_list");
-    const fichier = bases[0]?.file ?? "";
-    if (path.resolve(fichier) !== FICHIER_BASE_TEST) {
+    const [{ current_database }] = await client.$queryRawUnsafe<{ current_database: string }[]>(
+      "SELECT current_database()",
+    );
+    if (current_database !== NOM_BASE_TEST) {
       throw new Error(
-        `Base inattendue : les tests s'apprêtaient à écrire dans « ${fichier} » ` +
-          `au lieu de « ${FICHIER_BASE_TEST} ». Suite interrompue.`,
+        `Base inattendue : les tests s'apprêtaient à écrire dans « ${current_database} » ` +
+          `au lieu de « ${NOM_BASE_TEST} ». Suite interrompue.`,
       );
     }
     const exercices = await client.exercise.count();
@@ -71,6 +78,4 @@ export default async function preparerBaseDeTest() {
   } finally {
     await client.$disconnect();
   }
-
-  return () => supprimerBaseTest();
 }

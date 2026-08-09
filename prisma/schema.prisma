@@ -1,13 +1,16 @@
-// Base SQLite locale pour le développement. Le schéma reste volontairement
-// compatible PostgreSQL (pas de type exotique SQLite) pour permettre la
-// migration ultérieure : tout passe par Prisma, aucune requête SQL brute.
+// Base PostgreSQL, montée par `docker compose up -d`.
+//
+// Le projet a démarré sur SQLite, avec un schéma volontairement gardé
+// compatible : aucune requête SQL brute, aucun type exotique. La bascule
+// n'a donc demandé que ce mot — et c'est le préalable à toute app mobile,
+// un téléphone ne pouvant pas se connecter au fichier local d'un PC.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

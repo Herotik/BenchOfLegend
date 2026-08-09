@@ -9,14 +9,36 @@ La spécification complète est dans [SPEC-la-faille.md](SPEC-la-faille.md).
 ## Démarrer
 
 ```bash
+docker compose up -d
 npm install
 cp .env.example .env
 npm run db:reset
 npm run dev
 ```
 
-`db:reset` crée la base SQLite et charge le catalogue (8 équipements, 7 groupes
-musculaires, 130 exercices). L'app tourne sur http://localhost:3000.
+`docker compose up -d` monte PostgreSQL 17 sur le port **5433** — décalé pour ne
+pas entrer en conflit avec une instance déjà installée sur la machine. Les
+données vivent dans un volume Docker, pas dans le dépôt.
+
+`db:reset` applique le schéma et charge le catalogue (8 équipements, 7 groupes
+musculaires, 147 exercices). L'app tourne sur http://localhost:3000.
+
+> Le projet a démarré sur SQLite. La bascule vers PostgreSQL n'a demandé qu'un
+> mot dans le schéma — aucune requête SQL brute, aucun type exotique — et c'est
+> le préalable à toute app mobile : un téléphone ne peut pas se connecter au
+> fichier local d'un PC. Le script `scripts/migration-sqlite-postgres.ts`
+> transfère les données d'une base existante.
+
+## Tests
+
+```bash
+npm test              # 54 tests unitaires — moteur, barème LP, difficulté. Aucune base.
+npm run test:integration   # 72 tests sur une base PostgreSQL dédiée
+```
+
+Les tests d'intégration recréent la base `lafaille_test` à chaque exécution et
+vérifient, avant d'écrire quoi que ce soit, à quelle base ils sont réellement
+connectés.
 
 > Sous Windows, si tu écris le `.env` à la main : **UTF-8 sans BOM**. Un BOM
 > casse la lecture de la première clé.

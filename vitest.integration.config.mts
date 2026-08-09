@@ -2,7 +2,7 @@ import path from "node:path";
 import { defineConfig } from "vitest/config";
 
 /**
- * Tests d'intégration : ils parlent à une vraie base SQLite.
+ * Tests d'intégration : ils parlent à une vraie base PostgreSQL.
  *
  * Configuration séparée de `vitest.config.mts` pour que `npm test` reste une
  * suite unitaire rapide, sans base ni migration. Les deux ne partagent que
@@ -20,7 +20,9 @@ export default defineConfig({
 
     // Filet de sécurité : même si quelqu'un lance cette config sans passer par
     // le script npm, jamais la base de développement.
-    env: { DATABASE_URL: "file:./test.db" },
+    env: {
+      DATABASE_URL: "postgresql://lafaille:lafaille@localhost:5433/lafaille_test?schema=public",
+    },
 
     testTimeout: 20_000,
     // Le globalSetup applique le schéma puis charge 147 exercices.

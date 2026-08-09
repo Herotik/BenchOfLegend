@@ -1,0 +1,28 @@
+# Base de développement.
+#
+# SQLite convenait tant que l'app ne tournait que sur un poste. Une app mobile
+# suppose un backend hébergé, et donc Postgres — le schéma est resté compatible
+# depuis le début, c'est le moment de le vérifier pour de bon.
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: la-faille-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lafaille
+      POSTGRES_PASSWORD: lafaille
+      POSTGRES_DB: lafaille
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      # Sans ça, `docker compose up -d` rend la main avant que la base accepte
+      # les connexions, et le premier `prisma db push` échoue.
+      test: ["CMD-SHELL", "pg_isready -U lafaille -d lafaille"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  postgres-data:

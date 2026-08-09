@@ -1,4 +1,3 @@
-import path from "node:path";
 import { afterAll, beforeAll, vi } from "vitest";
 
 /**
@@ -11,26 +10,27 @@ import { afterAll, beforeAll, vi } from "vitest";
 
 // Garde-fou : si DATABASE_URL n'a pas été forcée, on s'arrête avant d'avoir
 // écrit quoi que ce soit dans la base de développement.
-if (!/test\.db$/.test(process.env.DATABASE_URL ?? "")) {
+if (!/\/lafaille_test(\?|$)/.test(process.env.DATABASE_URL ?? "")) {
   throw new Error(
     `DATABASE_URL vaut « ${process.env.DATABASE_URL} ». Les tests d'intégration ` +
-      `n'écrivent que dans prisma/test.db — lance-les avec npm run test:integration.`,
+      `n'écrivent que dans la base lafaille_test — lance-les avec npm run test:integration.`,
   );
 }
 
-// Deuxième garde-fou, cette fois sur le fichier que SQLite a réellement
-// ouvert : la variable d'environnement pourrait mentir, pas le PRAGMA.
+// Deuxième garde-fou, cette fois sur la base à laquelle Postgres est
+// réellement connecté : la variable d'environnement pourrait mentir, pas lui.
 beforeAll(async () => {
   const { prisma } = await import("@/lib/prisma");
-  const bases = await prisma.$queryRawUnsafe<{ file: string }[]>("PRAGMA database_list");
-  const fichier = bases[0]?.file ?? "";
-  if (path.basename(fichier) !== "test.db") {
-    throw new Error(`Les tests écriraient dans « ${fichier} ». Suite interrompue.`);
+  const [{ current_database }] = await prisma.$queryRawUnsafe<{ current_database: string }[]>(
+    "SELECT current_database()",
+  );
+  if (current_database !== "lafaille_test") {
+    throw new Error(`Les tests écriraient dans « ${current_database} ». Suite interrompue.`);
   }
 });
 
-// Sans ça, Windows garde le fichier SQLite verrouillé et le démontage global
-// n'arrive pas à supprimer la base de test.
+// On libère la connexion : sans ça, le DROP DATABASE de la prochaine
+// exécution resterait bloqué par une session encore ouverte.
 afterAll(async () => {
   const { prisma } = await import("@/lib/prisma");
   await prisma.$disconnect();
