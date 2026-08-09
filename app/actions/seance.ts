@@ -17,6 +17,8 @@ const schemaValidation = z.object({
   isBonus: z.boolean(),
   /** Statut de chaque exercice, dans l'ordre de la séance affichée. */
   statuts: z.array(z.enum(["non_fait", "partiel", "fait"])),
+  /** Charge utilisée par exercice, en kilos. `null` quand il n'y en a pas. */
+  charges: z.array(z.number().min(0).max(500).nullable()).default([]),
   ressenti: z.enum(["facile", "juste", "difficile"]),
   durationMin: z.number().int().min(1).max(600).optional(),
 });
@@ -77,6 +79,9 @@ export async function validerSeance(
   const exercices = seance.exercices.map((e, i) => ({
     ...e,
     statut: (d.statuts[i] ?? "non_fait") as StatutExercice,
+    // Une charge n'est retenue que sur un exercice qui en demande une : un
+    // client bricolé ne fera pas apparaître 200 kg sur des pompes.
+    charge: e.chargeRequise ? (d.charges[i] ?? null) : null,
   }));
 
   const finisher = exercices.find((e) => e.finisher);
@@ -114,6 +119,7 @@ export async function validerSeance(
           duree: e.duree ?? null,
           restSec: e.restSec,
           statut: e.statut,
+          poidsKg: e.charge,
         })),
         durationMin: d.durationMin,
         feeling: VALEUR_RESSENTI[d.ressenti as Ressenti],
@@ -126,6 +132,17 @@ export async function validerSeance(
       await tx.planDay.update({
         where: { id: d.planDayId },
         data: { status: "FAIT", workoutId: workout.id },
+      });
+    }
+
+    // La charge de référence ne bouge que sur une série menée à son terme :
+    // un poids sur lequel on a calé n'est pas un poids de travail.
+    for (const e of exercices) {
+      if (e.charge === null || e.statut !== "fait") continue;
+      await tx.exerciseLoad.upsert({
+        where: { userId_exerciseName: { userId: user.id, exerciseName: e.nom } },
+        update: { kg: e.charge },
+        create: { userId: user.id, exerciseName: e.nom, kg: e.charge },
       });
     }
   });

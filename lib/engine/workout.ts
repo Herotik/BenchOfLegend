@@ -1,4 +1,4 @@
-import { canPerform, type Level } from "@/lib/referentiel";
+import { canPerform, demandeCharge, type Level } from "@/lib/referentiel";
 import { CARDIO_PAR_OBJECTIF, PRESCRIPTIONS, VOLUME_SEANCE } from "./prescription";
 import type { ExerciceDisponible, ExercicePrescrit, ProfilEntrainement, Seance } from "./types";
 
@@ -232,6 +232,7 @@ function prescrire(
         duree: c.duree,
         restSec: c.restSec,
         finisher,
+        chargeRequise: false,
         progression: e.progression,
       };
     }
@@ -246,6 +247,7 @@ function prescrire(
       reps: polyarticulaire ? p.repsPolyarticulaire : p.repsIsolation,
       restSec: polyarticulaire ? p.restPolyarticulaire : p.restIsolation,
       finisher,
+      chargeRequise: demandeCharge(e.equipment),
       progression: e.progression,
     };
   });

@@ -70,6 +70,19 @@ export const muscleGroupLabel = (id: string): string =>
 export const parseEquipment = (value: string): string[] =>
   value === AUCUN_EQUIPEMENT ? [] : value.split("+");
 
+/**
+ * Matériel dont l'usage suppose une charge chiffrée.
+ *
+ * Ni la barre de traction ni le banc n'en sont : on s'y suspend ou on s'y
+ * allonge, la charge reste le poids du corps. Les élastiques non plus — leur
+ * résistance se lit sur la bande, pas en kilos.
+ */
+export const MATERIEL_CHARGE: readonly string[] = ["halteres", "barre_dc", "kettlebell"];
+
+/** Vrai si l'exercice se pratique avec une charge à noter. */
+export const demandeCharge = (equipmentExercice: string): boolean =>
+  parseEquipment(equipmentExercice).some((slug) => MATERIEL_CHARGE.includes(slug));
+
 /** Vrai si l'utilisateur possède tout le matériel requis par l'exercice. */
 export const canPerform = (exerciseEquipment: string, owned: readonly string[]): boolean =>
   parseEquipment(exerciseEquipment).every((slug) => owned.includes(slug));

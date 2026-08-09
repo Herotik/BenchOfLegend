@@ -53,6 +53,17 @@ export interface ExercicePrescrit {
   restSec: number;
   /** Vrai pour le dernier exercice quand c'est un finisher. */
   finisher: boolean;
+  /**
+   * Vrai si l'exercice se pratique avec une charge à saisir (haltères, barre,
+   * kettlebell). Au poids de corps, c'est la variante qui fait office de
+   * charge, et il n'y a rien à noter.
+   */
+  chargeRequise: boolean;
+  /**
+   * Dernière charge utilisée sur cet exercice, en kilos. Renseignée par la
+   * couche serveur — le moteur, lui, ne connaît pas l'historique.
+   */
+  derniereCharge?: number | null;
   /** Variante plus difficile, proposée quand la fourchette haute est dépassée. */
   progression: string | null;
 }

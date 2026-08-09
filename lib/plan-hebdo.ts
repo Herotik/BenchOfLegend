@@ -134,7 +134,26 @@ export async function seanceDuJour(
   const { profil } = await chargerProfil(userId);
   const catalogue = await chargerCatalogue();
   const graine = grainesSemaine(date) + Math.floor(date.getTime() / 86_400_000);
-  return genererSeance(profil, muscleGroup, catalogue, graine);
+  const seance = genererSeance(profil, muscleGroup, catalogue, graine);
+
+  // Le moteur reste pur et ignore l'historique : c'est ici qu'on rattache la
+  // dernière charge connue, pour que l'utilisateur retrouve son poids de
+  // travail sans le chercher dans son journal.
+  const aCharge = seance.exercices.filter((e) => e.chargeRequise).map((e) => e.nom);
+  if (aCharge.length === 0) return seance;
+
+  const charges = await prisma.exerciseLoad.findMany({
+    where: { userId, exerciseName: { in: aCharge } },
+  });
+  const parNom = new Map(charges.map((c) => [c.exerciseName, c.kg]));
+
+  return {
+    ...seance,
+    exercices: seance.exercices.map((e) => ({
+      ...e,
+      derniereCharge: e.chargeRequise ? (parNom.get(e.nom) ?? null) : null,
+    })),
+  };
 }
 
 /** Séances déjà validées sur les 7 derniers jours glissants. */

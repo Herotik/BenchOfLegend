@@ -10,6 +10,8 @@ interface ExerciceJournal {
   duree: string | null;
   restSec: number;
   statut?: "non_fait" | "partiel" | "fait";
+  /** Charge utilisée, en kilos. Absente au poids de corps. */
+  poidsKg?: number | null;
   /** Champ des séances enregistrées avant le suivi en trois états. */
   done?: boolean;
 }
@@ -18,8 +20,8 @@ const statutDe = (e: ExerciceJournal) => e.statut ?? (e.done ? "fait" : "non_fai
 
 const doseDe = (e: ExerciceJournal) => {
   if (e.duree) return `${e.sets} × ${e.duree}`;
-  if (Array.isArray(e.reps)) return `${e.sets} × ${e.reps[0]}-${e.reps[1]}`;
-  return `${e.sets} × ${e.reps}`;
+  const reps = Array.isArray(e.reps) ? `${e.reps[0]}-${e.reps[1]}` : e.reps;
+  return e.poidsKg != null ? `${e.sets} × ${reps} · ${e.poidsKg} kg` : `${e.sets} × ${reps}`;
 };
 
 export default async function HistoriquePage() {

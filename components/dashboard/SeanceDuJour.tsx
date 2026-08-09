@@ -30,6 +30,9 @@ export function SeanceDuJour({
   const [statuts, setStatuts] = useState<StatutExercice[]>(() =>
     seance.exercices.map(() => "non_fait"),
   );
+  const [charges, setCharges] = useState<(number | null)[]>(() =>
+    seance.exercices.map((e) => e.derniereCharge ?? null),
+  );
   const [position, setPosition] = useState<Position>(-1);
   const [etape, setEtape] = useState<"seance" | "ressenti">("seance");
   const [resultat, setResultat] = useState<ResultatValidation | null>(null);
@@ -64,6 +67,7 @@ export function SeanceDuJour({
         muscleGroup: seance.muscleGroup,
         isBonus,
         statuts,
+        charges,
         ressenti,
       });
       if ("erreur" in r) {
@@ -187,6 +191,45 @@ export function SeanceDuJour({
           </p>
 
           <p className="mt-4 text-sm leading-relaxed text-brume">{exo.description}</p>
+
+          {exo.chargeRequise && (
+            <div className="mt-5">
+              <label className="text-sm text-brume" htmlFor={`charge-${position}`}>
+                Charge utilisée
+              </label>
+              <div className="mt-1.5 flex items-center gap-2">
+                <input
+                  id={`charge-${position}`}
+                  type="number"
+                  inputMode="decimal"
+                  step="0.5"
+                  min="0"
+                  value={charges[position] ?? ""}
+                  onChange={(e) => {
+                    const v = e.target.value === "" ? null : Number(e.target.value);
+                    setCharges((c) => c.map((k, j) => (j === position ? v : k)));
+                  }}
+                  placeholder="—"
+                  className="w-28 rounded-lg border border-nuit-600 bg-nuit-900 px-3 py-2.5 text-lg tabular-nums text-ivoire"
+                />
+                <span className="text-brume">kg</span>
+              </div>
+              {exo.derniereCharge != null && (
+                <p className="mt-1.5 text-xs text-cendre">
+                  La dernière fois : {exo.derniereCharge} kg
+                  {charges[position] != null && charges[position] !== exo.derniereCharge && (
+                    <span
+                      className="ml-2"
+                      style={{ color: charges[position]! > exo.derniereCharge ? "var(--color-succes)" : "var(--color-brume)" }}
+                    >
+                      {charges[position]! > exo.derniereCharge ? "+" : ""}
+                      {Math.round((charges[position]! - exo.derniereCharge) * 10) / 10} kg
+                    </span>
+                  )}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="mt-5">
             <ChronoRepos secondes={exo.restSec} couleur={couleur} />

@@ -42,6 +42,7 @@ model User {
   weighIns     WeighIn[]
   workouts     WorkoutLog[]
   planDays     PlanDay[]
+  charges      ExerciseLoad[]
 }
 
 model Account {
@@ -183,6 +184,23 @@ model WorkoutLog {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, date])
+}
+
+/// Charge courante par exercice — la dernière utilisée.
+///
+/// Table dédiée plutôt qu'une lecture dans le JSON des `WorkoutLog` : c'est
+/// consulté à chaque affichage de séance, et fouiller un snapshot JSON pour y
+/// retrouver la dernière occurrence d'un nom d'exercice ne s'indexe pas.
+model ExerciseLoad {
+  userId String
+  /// Nom de l'exercice, tel que dans le catalogue.
+  exerciseName String
+  kg           Float
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, exerciseName])
 }
 
 model WeighIn {
