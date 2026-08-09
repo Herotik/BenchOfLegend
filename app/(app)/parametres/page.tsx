@@ -1,12 +1,8 @@
 import { requireOnboardedUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { deconnexion } from "@/app/actions/auth";
-import {
-  GOAL_LABELS,
-  LEVEL_LABELS,
-  equipmentLabel,
-  muscleGroupLabel,
-} from "@/lib/referentiel";
+import { FormulairePreferences } from "@/components/parametres/FormulairePreferences";
+import { ZoneDanger } from "@/components/parametres/ZoneDanger";
 
 export default async function ParametresPage() {
   const session = await requireOnboardedUser();
@@ -19,33 +15,26 @@ export default async function ParametresPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-10">
       <h1 className="text-2xl font-bold text-ivoire">Réglages</h1>
-
-      <dl className="surface mt-8 flex flex-col p-5">
-        <Ligne terme="Compte" valeur={user.email ?? "—"} />
-        <Ligne terme="Taille" valeur={user.heightCm ? `${user.heightCm} cm` : "—"} />
-        <Ligne terme="Niveau" valeur={LEVEL_LABELS[user.level]} />
-        <Ligne terme="Objectif" valeur={GOAL_LABELS[user.goal]} />
-        <Ligne terme="Rythme" valeur={`${user.daysPerWeek} séances par semaine`} />
-        <Ligne
-          terme="Matériel"
-          valeur={
-            user.equipments.length === 0
-              ? "Poids de corps uniquement"
-              : user.equipments.map((e) => equipmentLabel(e.equipmentId)).join(", ")
-          }
-        />
-        <Ligne
-          terme="Groupes"
-          valeur={user.muscleGroups.map((g) => muscleGroupLabel(g.groupId)).join(", ")}
-          dernier
-        />
-      </dl>
-
-      <p className="mt-4 text-sm text-cendre">
-        La modification de ces préférences, l&apos;export JSON de tes données et la suppression de
-        compte arrivent à la dernière phase. Toute modification régénérera le plan des semaines à
-        venir, jamais le passé.
+      <p className="mt-2 text-sm text-brume">
+        Connecté avec <span className="text-ivoire">{user.email}</span>. Toute modification
+        régénère le plan des semaines à venir, jamais le passé.
       </p>
+
+      <div className="mt-8">
+        <FormulairePreferences
+          initial={{
+            heightCm: user.heightCm,
+            level: user.level,
+            goal: user.goal,
+            daysPerWeek: user.daysPerWeek,
+            equipments: user.equipments.map((e) => e.equipmentId),
+            muscleGroups: user.muscleGroups.map((g) => g.groupId),
+            pointsForts: user.muscleGroups.filter((g) => g.priority >= 2).map((g) => g.groupId),
+          }}
+        />
+      </div>
+
+      <ZoneDanger />
 
       <form action={deconnexion} className="mt-8">
         <button
@@ -60,16 +49,5 @@ export default async function ParametresPage() {
         Cette application ne remplace pas un avis médical.
       </p>
     </main>
-  );
-}
-
-function Ligne({ terme, valeur, dernier }: { terme: string; valeur: string; dernier?: boolean }) {
-  return (
-    <div
-      className={`flex justify-between gap-6 py-3 text-sm ${dernier ? "" : "border-b border-nuit-700/60"}`}
-    >
-      <dt className="shrink-0 text-brume">{terme}</dt>
-      <dd className="text-right text-ivoire">{valeur}</dd>
-    </div>
   );
 }
