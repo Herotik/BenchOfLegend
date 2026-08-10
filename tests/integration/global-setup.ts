@@ -29,7 +29,9 @@ function lancer(script: string, args: string[]): void {
     // Les variables déjà présentes dans l'environnement priment sur `.env` :
     // `prisma.config.ts` a beau appeler `process.loadEnvFile`, DATABASE_URL
     // reste celle qu'on impose ici.
-    env: { ...process.env, DATABASE_URL: URL_BASE_TEST },
+    // `directUrl` du schéma : les migrations passent par elle, et en test
+    // elle vise la même base que la connexion applicative.
+    env: { ...process.env, DATABASE_URL: URL_BASE_TEST, DIRECT_URL: URL_BASE_TEST },
     stdio: "pipe",
   });
 }
@@ -56,7 +58,10 @@ export default async function preparerBaseDeTest() {
   // maîtrise ne peut pas déraper sur celle de développement.
   await recreerBaseTest();
 
-  lancer(BINAIRE_PRISMA, ["db", "push", "--skip-generate"]);
+  // `migrate deploy` plutôt que `db push` : les tests appliquent exactement les
+  // migrations qui partiront en production. Une migration qui aurait dérivé du
+  // schéma casserait ici, et non au déploiement.
+  lancer(BINAIRE_PRISMA, ["migrate", "deploy"]);
   lancer(BINAIRE_TSX, [path.join("prisma", "seed.ts")]);
 
   // Vérification a posteriori : on demande à Postgres à quelle base il est

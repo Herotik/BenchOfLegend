@@ -20,8 +20,10 @@ npm run dev
 pas entrer en conflit avec une instance déjà installée sur la machine. Les
 données vivent dans un volume Docker, pas dans le dépôt.
 
-`db:reset` applique le schéma et charge le catalogue (8 équipements, 7 groupes
-musculaires, 147 exercices). L'app tourne sur http://localhost:3000.
+`db:reset` applique les migrations et charge le catalogue (8 équipements,
+7 groupes musculaires, 147 exercices). L'app tourne sur http://localhost:3000.
+
+Pour la mettre en ligne : [DEPLOIEMENT.md](DEPLOIEMENT.md).
 
 > Le projet a démarré sur SQLite. La bascule vers PostgreSQL n'a demandé qu'un
 > mot dans le schéma — aucune requête SQL brute, aucun type exotique — et c'est
@@ -32,8 +34,8 @@ musculaires, 147 exercices). L'app tourne sur http://localhost:3000.
 ## Tests
 
 ```bash
-npm test              # 54 tests unitaires — moteur, barème LP, difficulté. Aucune base.
-npm run test:integration   # 72 tests sur une base PostgreSQL dédiée
+npm test                   # 54 tests unitaires — moteur, barème LP, difficulté. Aucune base.
+npm run test:integration   # 157 tests sur une base PostgreSQL dédiée
 ```
 
 Les tests d'intégration recréent la base `lafaille_test` à chaque exécution et

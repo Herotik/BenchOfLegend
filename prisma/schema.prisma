@@ -11,7 +11,13 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Connexion **poolée** en production : en serverless, chaque invocation
+  // ouvre sa propre connexion et une base managée est vite saturée.
+  url = env("DATABASE_URL")
+  // Connexion directe, réservée aux migrations : un pooler transactionnel
+  // comme PgBouncer ne sait pas exécuter un DDL. En local, les deux pointent
+  // sur la même instance.
+  directUrl = env("DIRECT_URL")
 }
 
 // ---------------------------------------------------------------------------
