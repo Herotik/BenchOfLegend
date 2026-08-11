@@ -5,9 +5,11 @@ moins rogné — et avec une bordure plus ou moins épaisse. Servis tels quels, 
 sembleraient « respirer » à chaque promotion, puisqu'ils se succèdent au même
 emplacement du tableau de bord.
 
-Le traitement recadre chacun sur son médaillon, le centre dans un carré et le
-sort à taille fixe. Les fonds étant déjà transparents en sortie de génération,
-il n'y a pas de détourage à faire.
+Le traitement recadre chacun sur son médaillon, le redresse au cercle vrai et
+le sort à taille fixe : les cinq premiers écussons arrivaient ovales de 3 à
+5 %, ce qui donnait jusqu'à 23 px d'écart de diamètre entre deux rangs. Les
+fonds étant déjà transparents en sortie de génération, il n'y a pas de
+détourage à faire.
 
     python scripts/normaliser-ecussons.py [--contraste 5-elyseen=1.25]
 """
@@ -49,17 +51,16 @@ def normaliser(chemin: str, contraste: float) -> tuple[str, int, int]:
         rvb = ImageEnhance.Contrast(medaillon.convert("RGB")).enhance(contraste)
         medaillon = Image.merge("RGBA", (*rvb.split(), medaillon.split()[3]))
 
-    # Carré à partir du plus grand côté : un médaillon légèrement ovale garde
-    # ses proportions plutôt que d'être étiré au cercle parfait.
-    cote = max(medaillon.size)
-    carre = Image.new("RGBA", (cote, cote), (0, 0, 0, 0))
-    carre.paste(
-        medaillon,
-        ((cote - medaillon.width) // 2, (cote - medaillon.height) // 2),
-    )
-
+    # Mise au cercle vrai, par une mise à l'échelle non uniforme.
+    #
+    # Les médaillons sortent du générateur ovales de 3 à 5 % — un cadre non
+    # carré, que le texte du prompt ne rattrape pas. Préserver ces proportions
+    # reviendrait à propager l'erreur, et les rangs n'auraient pas tous le même
+    # diamètre : l'image semblerait « respirer » à chaque promotion, puisqu'ils
+    # se succèdent au même emplacement. On redresse donc au cercle. L'étirement
+    # reste sous 5 %, invisible sur les figures, et les sources sont conservées.
     interieur = round(TAILLE * OCCUPATION)
-    carre = carre.resize((interieur, interieur), Image.LANCZOS)
+    carre = medaillon.resize((interieur, interieur), Image.LANCZOS)
 
     final = Image.new("RGBA", (TAILLE, TAILLE), (0, 0, 0, 0))
     marge = (TAILLE - interieur) // 2
@@ -95,10 +96,11 @@ def main() -> None:
         image.save(os.path.join(SORTIE, f"{slug}.png"), optimize=True)
         image.save(os.path.join(SORTIE, f"{slug}.webp"), quality=92, method=6)
 
-        # Un rapport loin de 1 signale un médaillon ovale : il gardera ses
-        # proportions, mais paraîtra plus petit que les autres.
+        # Ovalité de la **source**, reportée à titre indicatif : elle est
+        # redressée à la mise à l'échelle. Au-delà de 8 %, mieux vaut
+        # régénérer que d'étirer.
         ovalite = larg / haut
-        alerte = "  <- ovale" if abs(ovalite - 1) > 0.03 else ""
+        alerte = "  <- source ovale, redressée" if abs(ovalite - 1) > 0.03 else ""
         print(f"{slug:<16} {larg}x{haut:<9} {ovalite:>8.3f}{alerte}")
 
     print(f"\n{len(fichiers)} écussons -> {SORTIE} ({TAILLE}px, PNG + WebP)")
