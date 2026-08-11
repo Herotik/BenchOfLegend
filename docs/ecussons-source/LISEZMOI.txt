@@ -1,0 +1,15 @@
+Écussons de rang, images sources telles que sorties du générateur.
+
+Dépose ici les huit PNG, nommés par rang :
+  1-hoplite.png
+  2-myrmidon.png
+  3-spartiate.png
+  4-heracles.png
+  5-elyseen.png
+  6-titan.png
+  7-demi-dieu.png
+  8-dieu-olympe.png
+
+scripts/normaliser-ecussons.py en tire les fichiers servis dans public/ranks/ :
+détourage du fond, diamètre et cadrage uniformes, contraste, 512 px.
+Ces sources sont conservées pour pouvoir rejouer le traitement.

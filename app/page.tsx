@@ -20,9 +20,9 @@ const ETAPES = [
       "Un calendrier avec tes séances minimum, chaque groupe travaillé deux fois, jamais deux jours d'affilée.",
   },
   {
-    titre: "Chaque séance validée rapporte des LP",
+    titre: "Chaque séance validée rapporte des Δ",
     texte:
-      "Séries, répétitions et temps de repos affichés. Tu coches, tu montes. Aucun LP ne se perd jamais.",
+      "Séries, répétitions et temps de repos affichés. Tu coches, tu montes. Aucun Δ ne se perd jamais.",
   },
 ];
 
@@ -39,26 +39,26 @@ export default async function LandingPage({ searchParams }: PageProps<"/">) {
     <main className="flex-1">
       {/* --- Hero --- */}
       <section className="mx-auto flex max-w-3xl flex-col items-center px-6 pt-20 pb-16 text-center sm:pt-28">
-        <p className="font-display text-xs tracking-[0.35em] text-or-500 uppercase motion-safe:apparait">
+        <p className="font-display text-xs tracking-[0.35em] text-accent uppercase motion-safe:apparait">
           Entraînement classé
         </p>
-        <h1 className="mt-5 text-5xl font-bold text-ivoire sm:text-7xl motion-safe:surgit">
-          La Faille
+        <h1 className="mt-5 text-5xl font-bold text-texte sm:text-7xl motion-safe:apparait">
+          Frame of Legends
         </h1>
-        <div className="mt-5 w-40 text-or-600 motion-safe:apparait">
+        <div className="mt-5 w-40 text-accent motion-safe:apparait">
           <Meandre opacite={0.5} />
         </div>
-        <p className="mt-6 max-w-xl text-lg leading-relaxed text-brume">
+        <p className="mt-6 max-w-xl text-lg leading-relaxed text-texte-2">
           Ton programme de musculation, construit chaque semaine à partir de ton matériel et de
-          tes objectifs. Tu valides tes séances, tu gagnes des LP, tu grimpes d&apos;
-          <span className="text-ivoire">Hoplite</span> à{" "}
-          <span className="text-or-500">Dieu de l&apos;Olympe</span>.
+          tes objectifs. Tu valides tes séances, tu gagnes des Δ, tu grimpes d&apos;
+          <span className="text-texte">Hoplite</span> à{" "}
+          <span className="text-accent">Dieu de l&apos;Olympe</span>.
         </p>
 
         {connecte ? (
           <Link
             href={session!.user.onboarded ? "/dashboard" : "/onboarding"}
-            className="mt-10 inline-flex items-center gap-3 rounded-lg border border-or-600/60 bg-or-500/10 px-6 py-3 text-base font-medium text-or-400 transition hover:bg-or-500/20"
+            className="mt-10 inline-flex items-center gap-3 rounded-lg border border-accent/60 bg-accent/10 px-6 py-3 text-base font-medium text-accent transition hover:bg-accent/20"
           >
             {session!.user.onboarded ? "Aller au tableau de bord" : "Terminer mon inscription"}
           </Link>
@@ -72,21 +72,21 @@ export default async function LandingPage({ searchParams }: PageProps<"/">) {
               />
               <button
                 type="submit"
-                className="inline-flex items-center gap-3 rounded-lg border border-or-600/60 bg-or-500/10 px-6 py-3 text-base font-medium text-or-400 transition hover:bg-or-500/20"
+                className="inline-flex items-center gap-3 rounded-lg border border-accent/60 bg-accent/10 px-6 py-3 text-base font-medium text-accent transition hover:bg-accent/20"
               >
                 <GoogleIcon />
                 Se connecter avec Google
               </button>
             </form>
-            <p className="mt-4 text-sm text-cendre">Gratuit. Aucune donnée revendue.</p>
+            <p className="mt-4 text-sm text-texte-3">Gratuit. Aucune donnée revendue.</p>
           </>
         ) : (
           <div className="surface mt-10 max-w-md p-5 text-left">
-            <p className="text-sm font-medium text-or-400">Connexion Google non configurée</p>
-            <p className="mt-2 text-sm leading-relaxed text-brume">
-              Renseigne <code className="text-ivoire">AUTH_GOOGLE_ID</code> et{" "}
-              <code className="text-ivoire">AUTH_GOOGLE_SECRET</code> dans le fichier{" "}
-              <code className="text-ivoire">.env</code>, puis redémarre le serveur. La marche à
+            <p className="text-sm font-medium text-accent">Connexion Google non configurée</p>
+            <p className="mt-2 text-sm leading-relaxed text-texte-2">
+              Renseigne <code className="text-texte">AUTH_GOOGLE_ID</code> et{" "}
+              <code className="text-texte">AUTH_GOOGLE_SECRET</code> dans le fichier{" "}
+              <code className="text-texte">.env</code>, puis redémarre le serveur. La marche à
               suivre est dans la section « Connexion Google » du README.
             </p>
           </div>
@@ -99,12 +99,12 @@ export default async function LandingPage({ searchParams }: PageProps<"/">) {
           {ETAPES.map((etape, i) => (
             <div
               key={etape.titre}
-              className="surface p-5 transition-colors hover:border-or-600/50 motion-safe:monte"
+              className="surface p-5 transition-colors hover:border-accent/50 motion-safe:monte"
               style={{ animationDelay: `${i * 90}ms` }}
             >
-              <span className="font-display text-2xl text-or-600">{ROMAIN[i]}</span>
-              <h3 className="mt-2 text-base font-semibold text-ivoire">{etape.titre}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-brume">{etape.texte}</p>
+              <span className="font-display text-2xl text-accent">{ROMAIN[i]}</span>
+              <h3 className="mt-2 text-base font-semibold text-texte">{etape.titre}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-texte-2">{etape.texte}</p>
             </div>
           ))}
         </div>
@@ -115,10 +115,10 @@ export default async function LandingPage({ searchParams }: PageProps<"/">) {
         <div className="mx-auto max-w-xs">
           <SeparateurLosange />
         </div>
-        <h2 className="mt-8 text-center text-2xl font-semibold text-ivoire sm:text-3xl">
+        <h2 className="mt-8 text-center text-2xl font-semibold text-texte sm:text-3xl">
           Huit rangs à gravir
         </h2>
-        <p className="mt-3 text-center text-sm text-brume">
+        <p className="mt-3 text-center text-sm text-texte-2">
           Du fantassin anonyme au sommet de l&apos;Olympe.
         </p>
 
@@ -151,20 +151,20 @@ export default async function LandingPage({ searchParams }: PageProps<"/">) {
                   >
                     {rang.name}
                   </h3>
-                  <span className="text-xs text-cendre">{rang.metal}</span>
+                  <span className="text-xs text-texte-3">{rang.metal}</span>
                 </div>
-                <p className="mt-0.5 text-sm tracking-wide text-brume uppercase">
+                <p className="mt-0.5 text-sm tracking-wide text-texte-2 uppercase">
                   {rang.subtitle}
                 </p>
-                <p className="mt-1 text-sm text-cendre">{rang.description}</p>
+                <p className="mt-1 text-sm text-texte-3">{rang.description}</p>
               </div>
             </li>
           ))}
         </ul>
       </section>
 
-      <footer className="border-t border-nuit-700/60 px-6 py-8 text-center text-xs text-cendre">
-        La Faille ne remplace pas un avis médical.
+      <footer className="border-t border-filet/60 px-6 py-8 text-center text-xs text-texte-3">
+        Frame of Legends ne remplace pas un avis médical.
       </footer>
     </main>
   );

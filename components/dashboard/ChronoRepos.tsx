@@ -45,7 +45,7 @@ export function ChronoRepos({ secondes, couleur }: { secondes: number; couleur: 
       <button
         type="button"
         onClick={lancer}
-        className="rounded-lg border border-nuit-600 px-3 py-1.5 text-xs text-brume transition hover:text-ivoire"
+        className="rounded-lg border border-filet px-3 py-1.5 text-xs text-texte-2 transition hover:text-texte"
       >
         Repos {formater(secondes)}
       </button>
@@ -57,7 +57,7 @@ export function ChronoRepos({ secondes, couleur }: { secondes: number; couleur: 
       type="button"
       onClick={() => setRestant(null)}
       className="rounded-lg border px-3 py-1.5 text-xs font-medium tabular-nums transition"
-      style={{ borderColor: couleur, color: restant === 0 ? "var(--color-succes)" : couleur }}
+      style={{ borderColor: couleur, color: restant === 0 ? "var(--color-positif)" : couleur }}
       aria-live="polite"
     >
       {restant === 0 ? "Reprends !" : formater(restant)}

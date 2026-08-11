@@ -3,11 +3,11 @@ import { jsonPrive, reponseEchec, valider } from "@/lib/api/reponse";
 import { schemaValidationSeanceApi, validerSeancePour } from "@/lib/seance";
 
 /**
- * Valide une séance et crédite les LP.
+ * Valide une séance et crédite les Δ.
  *
  * Le calcul reste entièrement serveur : l'app n'envoie que le statut de chaque
  * exercice et son ressenti. La séance est régénérée à partir de la même
- * graine, les LP en sont déduits, et rien de ce que le client annonce comme
+ * graine, les Δ en sont déduits, et rien de ce que le client annonce comme
  * gain n'est lu.
  *
  * Statuts : 409 si la séance du jour est déjà validée, 404 si le jour de plan

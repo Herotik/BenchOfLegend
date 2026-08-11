@@ -10,13 +10,13 @@ export default function Chargement() {
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-10" aria-busy="true">
       <span className="sr-only">Chargement en cours</span>
 
-      <div className="h-8 w-40 animate-pulse rounded-lg bg-nuit-800" />
-      <div className="mt-3 h-4 w-64 animate-pulse rounded bg-nuit-800/70" />
+      <div className="h-8 w-40 animate-pulse rounded-lg bg-fond-2" />
+      <div className="mt-3 h-4 w-64 animate-pulse rounded bg-fond-2/70" />
 
       <div className="surface mt-8 flex flex-col items-center gap-4 p-8">
-        <div className="size-32 animate-pulse rounded-full bg-nuit-800" />
-        <div className="h-6 w-32 animate-pulse rounded bg-nuit-800" />
-        <div className="h-1.5 w-56 animate-pulse rounded-full bg-nuit-800" />
+        <div className="size-32 animate-pulse rounded-full bg-fond-2" />
+        <div className="h-6 w-32 animate-pulse rounded bg-fond-2" />
+        <div className="h-1.5 w-56 animate-pulse rounded-full bg-fond-2" />
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-3">

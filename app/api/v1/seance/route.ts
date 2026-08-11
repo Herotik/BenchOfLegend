@@ -35,7 +35,7 @@ export async function GET(requete: Request) {
 
   // Une app fraîchement installée peut arriver ici avant d'avoir consulté le
   // plan : sans génération, elle ne trouverait aucun `planDayId` et ne
-  // pourrait valider sa séance qu'en bonus, à 8 LP au lieu de 20.
+  // pourrait valider sa séance qu'en bonus, à 8 Δ au lieu de 20.
   await assurerPlans(userId);
 
   const [seance, planDay, avertissement, sur7Jours, bonusDuJour] = await Promise.all([
@@ -57,7 +57,7 @@ export async function GET(requete: Request) {
     dejaValidee: planDay?.status === "FAIT",
     seance,
     avertissement,
-    // De quoi afficher un aperçu des LP avec le barème de `/api/v1/referentiel` :
+    // De quoi afficher un aperçu des Δ avec le barème de `/api/v1/referentiel` :
     // ce sont exactement les deux entrées que le calcul serveur consomme.
     seancesSur7Jours: sur7Jours,
     bonusDejaCompte: bonusDuJour > 0,

@@ -18,9 +18,9 @@ import { RESSENTIS } from "@/lib/difficulte";
  * et rien ici n'est personnel — ce sont les constantes de `lib/referentiel.ts`,
  * `lib/ranks.ts` et `lib/lp.ts`, servies telles quelles.
  *
- * Le barème en fait partie : sans lui, l'app afficherait « +20 LP » en dur et
+ * Le barème en fait partie : sans lui, l'app afficherait « +20 Δ » en dur et
  * se désynchroniserait du serveur à la première retouche. C'est exactement le
- * bug qu'avait connu l'aperçu web, qui annonçait 20 LP sur une séance bonus
+ * bug qu'avait connu l'aperçu web, qui annonçait 20 Δ sur une séance bonus
  * qui en rapporte 8.
  */
 export async function GET() {

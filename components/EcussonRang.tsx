@@ -6,10 +6,10 @@ import { rankProgressForLp, rankLabel } from "@/lib/ranks";
 import { Laurier, SeparateurLosange } from "@/components/ornements/Meandre";
 
 /**
- * Écusson du rang courant avec la barre de progression LP.
+ * Écusson du rang courant avec la barre de progression Δ.
  *
  * Composant client pour deux raisons : le halo « respire » derrière l'écusson,
- * et le compteur de LP monte plutôt que d'apparaître d'un coup — un chiffre
+ * et le compteur de Δ monte plutôt que d'apparaître d'un coup — un chiffre
  * qui grimpe se lit comme une progression, un chiffre posé comme un état.
  */
 export function EcussonRang({ lp, taille = 132 }: { lp: number; taille?: number }) {
@@ -18,7 +18,7 @@ export function EcussonRang({ lp, taille = 132 }: { lp: number; taille?: number 
   const [barre, setBarre] = useState(0);
 
   // La barre part de zéro au montage : on voit le remplissage, ce qui donne
-  // sa valeur au gain de LP qu'on vient d'obtenir.
+  // sa valeur au gain de Δ qu'on vient d'obtenir.
   useEffect(() => {
     const t = setTimeout(() => setBarre(progress), 120);
     return () => clearTimeout(t);
@@ -30,7 +30,7 @@ export function EcussonRang({ lp, taille = 132 }: { lp: number; taille?: number 
         {/* Halo à la couleur du rang : le rang colore sa propre lumière. */}
         <span
           aria-hidden
-          className="absolute rounded-full blur-2xl motion-safe:animate-[souffle_5s_ease-in-out_infinite]"
+          className="absolute rounded-full blur-2xl"
           style={{
             width: taille * 0.95,
             height: taille * 0.95,
@@ -48,7 +48,7 @@ export function EcussonRang({ lp, taille = 132 }: { lp: number; taille?: number 
           width={taille}
           height={taille}
           style={{ width: taille, height: taille }}
-          className="relative motion-safe:surgit"
+          className="relative motion-safe:apparait"
           preload
         />
       </div>
@@ -60,12 +60,12 @@ export function EcussonRang({ lp, taille = 132 }: { lp: number; taille?: number 
         >
           {rankLabel(lp)}
         </p>
-        <p className="mt-0.5 text-xs tracking-wide text-brume uppercase">{rank.subtitle}</p>
+        <p className="mt-0.5 text-xs tracking-wide text-texte-2 uppercase">{rank.subtitle}</p>
       </div>
 
       <div className="w-full max-w-60">
         <div
-          className="relative h-2 overflow-hidden rounded-full bg-nuit-800"
+          className="relative h-2 overflow-hidden rounded-full bg-fond-2"
           role="progressbar"
           aria-valuenow={Math.round(progress * 100)}
           aria-valuemin={0}
@@ -79,11 +79,11 @@ export function EcussonRang({ lp, taille = 132 }: { lp: number; taille?: number 
           {/* Éclat qui balaie la barre, comme la lumière sur du métal poli. */}
           <span
             aria-hidden
-            className="absolute inset-y-0 w-8 bg-white/20 blur-[2px] motion-safe:animate-[lueur_3.5s_ease-in-out_infinite]"
+            className="absolute inset-y-0 w-8 bg-white/20 blur-[2px]"
           />
         </div>
-        <p className="mt-2 text-center text-xs tabular-nums text-cendre">
-          {rank.divisions > 1 ? `${compteur} / ${lpToNextDivision} LP` : `${lp} LP`}
+        <p className="mt-2 text-center text-xs tabular-nums text-texte-3">
+          {rank.divisions > 1 ? `${compteur} / ${lpToNextDivision} Δ` : `${lp} Δ`}
         </p>
       </div>
 
@@ -91,7 +91,7 @@ export function EcussonRang({ lp, taille = 132 }: { lp: number; taille?: number 
         <SeparateurLosange couleur={rank.color} />
       </div>
 
-      <p className="max-w-xs text-center text-sm text-brume">{rank.description}</p>
+      <p className="max-w-xs text-center text-sm text-texte-2">{rank.description}</p>
     </div>
   );
 }

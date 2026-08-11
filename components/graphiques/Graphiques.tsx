@@ -19,8 +19,8 @@ import type { Stats } from "@/lib/stats";
 import { RANKS } from "@/lib/ranks";
 import { muscleGroupLabel } from "@/lib/referentiel";
 
-const GRILLE = "var(--color-nuit-700)";
-const AXE = { stroke: "var(--color-cendre)", fontSize: 11 };
+const GRILLE = "var(--color-filet)";
+const AXE = { stroke: "var(--color-texte-3)", fontSize: 11 };
 
 // Une teinte par groupe musculaire, stable d'un graphique à l'autre.
 const COULEURS_GROUPES: Record<string, string> = {
@@ -66,7 +66,7 @@ export function Graphiques({ stats }: { stats: Stats }) {
                 type="button"
                 onClick={() => setPeriode(p.cle)}
                 className={`rounded-md px-2.5 py-1 text-xs transition ${
-                  periode === p.cle ? "bg-or-500/15 text-or-400" : "text-cendre hover:text-brume"
+                  periode === p.cle ? "bg-accent/15 text-accent" : "text-texte-3 hover:text-texte-2"
                 }`}
               >
                 {p.label}
@@ -85,7 +85,7 @@ export function Graphiques({ stats }: { stats: Stats }) {
               type="monotone"
               dataKey="kg"
               name="Poids"
-              stroke="var(--color-or-500)"
+              stroke="var(--color-accent)"
               strokeWidth={2}
               dot={{ r: 2.5 }}
             />
@@ -93,7 +93,7 @@ export function Graphiques({ stats }: { stats: Stats }) {
               type="monotone"
               dataKey="tendance"
               name="Tendance 7 j"
-              stroke="var(--color-hextech-500)"
+              stroke="var(--color-accent)"
               strokeWidth={1.5}
               strokeDasharray="4 4"
               dot={false}
@@ -116,7 +116,7 @@ export function Graphiques({ stats }: { stats: Stats }) {
             <YAxis {...AXE} tickLine={false} width={44} />
             <Tooltip content={<Infobulle unite=" kg" />} />
             <ReferenceLine y={0} stroke={GRILLE} />
-            <Bar dataKey="delta" name="Variation" fill="var(--color-or-500)" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="delta" name="Variation" fill="var(--color-accent)" radius={[3, 3, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </Carte>
@@ -139,7 +139,7 @@ export function Graphiques({ stats }: { stats: Stats }) {
                 dataKey={`volume.${g}`}
                 name={muscleGroupLabel(g)}
                 stackId="volume"
-                fill={COULEURS_GROUPES[g] ?? "var(--color-brume)"}
+                fill={COULEURS_GROUPES[g] ?? "var(--color-texte-2)"}
               />
             ))}
           </BarChart>
@@ -147,7 +147,7 @@ export function Graphiques({ stats }: { stats: Stats }) {
 
         <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5">
           {stats.groupesUtilises.map((g) => (
-            <li key={g} className="flex items-center gap-1.5 text-xs text-brume">
+            <li key={g} className="flex items-center gap-1.5 text-xs text-texte-2">
               <span
                 aria-hidden
                 className="size-2.5 rounded-sm"
@@ -174,7 +174,7 @@ export function Graphiques({ stats }: { stats: Stats }) {
             <Bar
               dataKey="assiduite"
               name="Assiduité"
-              fill="var(--color-succes)"
+              fill="var(--color-positif)"
               radius={[3, 3, 0, 0]}
             />
           </BarChart>
@@ -182,7 +182,7 @@ export function Graphiques({ stats }: { stats: Stats }) {
       </Carte>
 
       <Carte
-        titre="Progression des LP"
+        titre="Progression des Δ"
         sousTitre="Cumul dans le temps, avec les seuils de rang."
         vide={stats.lp.length === 0}
         message="Chaque séance validée fera monter cette courbe."
@@ -191,14 +191,14 @@ export function Graphiques({ stats }: { stats: Stats }) {
           <AreaChart data={stats.lp} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
             <defs>
               <linearGradient id="degradeLp" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--color-or-500)" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="var(--color-or-500)" stopOpacity={0} />
+                <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid stroke={GRILLE} strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="date" tickFormatter={jourMois} {...AXE} tickLine={false} />
             <YAxis {...AXE} tickLine={false} width={44} />
-            <Tooltip content={<Infobulle unite=" LP" />} />
+            <Tooltip content={<Infobulle unite=" Δ" />} />
             {seuils.map((r) => (
               <ReferenceLine
                 key={r.slug}
@@ -212,8 +212,8 @@ export function Graphiques({ stats }: { stats: Stats }) {
             <Area
               type="monotone"
               dataKey="lp"
-              name="LP cumulés"
-              stroke="var(--color-or-500)"
+              name="Δ cumulés"
+              stroke="var(--color-accent)"
               strokeWidth={2}
               fill="url(#degradeLp)"
             />
@@ -243,14 +243,14 @@ function Carte({
     <section className="surface p-5">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold text-ivoire">{titre}</h2>
-          {sousTitre && <p className="mt-0.5 text-xs text-cendre">{sousTitre}</p>}
+          <h2 className="text-base font-semibold text-texte">{titre}</h2>
+          {sousTitre && <p className="mt-0.5 text-xs text-texte-3">{sousTitre}</p>}
         </div>
         {!vide && action}
       </header>
 
       <div className="mt-4">
-        {vide ? <p className="py-8 text-center text-sm text-brume">{message}</p> : children}
+        {vide ? <p className="py-8 text-center text-sm text-texte-2">{message}</p> : children}
       </div>
     </section>
   );
@@ -284,8 +284,8 @@ function Infobulle({
   if (lignes.length === 0) return null;
 
   return (
-    <div className="rounded-lg border border-nuit-600 bg-nuit-900/95 px-3 py-2 text-xs">
-      <p className="text-cendre">{label ? jourMois(label) : ""}</p>
+    <div className="rounded-lg border border-filet bg-fond/95 px-3 py-2 text-xs">
+      <p className="text-texte-3">{label ? jourMois(label) : ""}</p>
       {lignes.map((l, i) => (
         <p key={i} style={{ color: l.color }} className="mt-1">
           {l.name} : {l.value}

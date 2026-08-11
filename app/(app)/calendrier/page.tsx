@@ -53,7 +53,7 @@ export default async function CalendrierPage({ searchParams }: PageProps<"/calen
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-10">
       <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-ivoire">
+        <h1 className="text-2xl font-bold text-texte">
           {MOIS[base.getUTCMonth()]} {base.getUTCFullYear()}
         </h1>
         <div className="flex gap-2">
@@ -64,7 +64,7 @@ export default async function CalendrierPage({ searchParams }: PageProps<"/calen
 
       <div className="mt-8 grid grid-cols-7 gap-1.5">
         {JOURS_COURTS.map((j, i) => (
-          <div key={i} className="pb-1 text-center text-xs text-cendre">
+          <div key={i} className="pb-1 text-center text-xs text-texte-3">
             {j}
           </div>
         ))}
@@ -88,15 +88,15 @@ export default async function CalendrierPage({ searchParams }: PageProps<"/calen
             <div
               key={date.getTime()}
               className={`min-h-16 rounded-lg border p-1.5 ${
-                estAujourdhui ? "border-or-600/70" : "border-nuit-700/60"
+                estAujourdhui ? "border-accent/70" : "border-filet/60"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className={`text-xs ${estAujourdhui ? "text-or-400" : "text-cendre"}`}>
+                <span className={`text-xs ${estAujourdhui ? "text-accent" : "text-texte-3"}`}>
                   {date.getUTCDate()}
                 </span>
-                {statut === "fait" && <span className="text-xs text-succes">✓</span>}
-                {statut === "manque" && <span className="text-xs text-manque">·</span>}
+                {statut === "fait" && <span className="text-xs text-positif">✓</span>}
+                {statut === "manque" && <span className="text-xs text-negatif">·</span>}
               </div>
               <div className="mt-1 flex flex-col gap-0.5">
                 {seances.map((s) => (
@@ -104,10 +104,10 @@ export default async function CalendrierPage({ searchParams }: PageProps<"/calen
                     key={s.id}
                     className={`truncate text-[10px] leading-tight ${
                       s.status === "FAIT"
-                        ? "text-succes"
+                        ? "text-positif"
                         : s.status === "MANQUE"
-                          ? "text-cendre"
-                          : "text-brume"
+                          ? "text-texte-3"
+                          : "text-texte-2"
                     }`}
                   >
                     {muscleGroupLabel(s.muscleGroup)}
@@ -119,15 +119,15 @@ export default async function CalendrierPage({ searchParams }: PageProps<"/calen
         })}
       </div>
 
-      <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-xs text-cendre">
-        <li><span className="text-succes">✓</span> séance faite</li>
-        <li><span className="text-brume">—</span> séance prévue</li>
-        <li><span className="text-manque">·</span> non faite</li>
+      <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-xs text-texte-3">
+        <li><span className="text-positif">✓</span> séance faite</li>
+        <li><span className="text-texte-2">—</span> séance prévue</li>
+        <li><span className="text-negatif">·</span> non faite</li>
         <li>case vide : repos</li>
       </ul>
 
       {jours.length === 0 && (
-        <p className="surface mt-8 p-6 text-center text-sm text-brume">
+        <p className="surface mt-8 p-6 text-center text-sm text-texte-2">
           Rien encore sur ce mois. Ton plan se crée semaine par semaine, au premier passage sur
           le tableau de bord.
         </p>
@@ -141,7 +141,7 @@ function Lien({ href, libelle, children }: { href: string; libelle: string; chil
     <Link
       href={href}
       aria-label={libelle}
-      className="rounded-lg border border-nuit-600 px-3 py-1.5 text-sm text-brume transition hover:text-ivoire"
+      className="rounded-lg border border-filet px-3 py-1.5 text-sm text-texte-2 transition hover:text-texte"
     >
       {children}
     </Link>

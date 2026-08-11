@@ -42,7 +42,7 @@ export function SeanceDuJour({
   const total = seance.exercices.length;
 
   // Aperçu calculé par la **même** fonction que le serveur : une formule
-  // dupliquée ici annonçait 20 LP sur une séance bonus qui en rapporte 8.
+  // dupliquée ici annonçait 20 Δ sur une séance bonus qui en rapporte 8.
   const ratio = ratioComplete(statuts.map((statut) => ({ statut })));
   const apercu = calculerLp({
     ratioComplete: ratio,
@@ -84,10 +84,10 @@ export function SeanceDuJour({
   if (etape === "ressenti") {
     return (
       <section className="surface p-6">
-        <h2 className="text-lg font-semibold text-ivoire">C&apos;était comment ?</h2>
-        <p className="mt-1 text-sm text-brume">
+        <h2 className="text-lg font-semibold text-texte">C&apos;était comment ?</h2>
+        <p className="mt-1 text-sm text-texte-2">
           {statuts.filter((s) => s === "fait").length}/{total} exercices bouclés
-          {apercu.total > 0 ? ` · +${apercu.total} LP en jeu` : ""}. Ton ressenti ajuste la
+          {apercu.total > 0 ? ` · +${apercu.total} Δ en jeu` : ""}. Ton ressenti ajuste la
           difficulté des prochaines séances sur ce groupe.
         </p>
 
@@ -98,17 +98,17 @@ export function SeanceDuJour({
               type="button"
               disabled={enCours}
               onClick={() => valider(r.cle)}
-              className="rounded-lg border border-nuit-600 p-4 text-left transition hover:border-or-600/60 disabled:opacity-40 motion-safe:monte"
+              className="rounded-lg border border-filet p-4 text-left transition hover:border-accent/60 disabled:opacity-40 motion-safe:monte"
               style={{ animationDelay: `${i * 70}ms` }}
             >
-              <span className="block font-medium text-ivoire">{r.label}</span>
-              <span className="mt-0.5 block text-xs text-cendre">{r.aide}</span>
+              <span className="block font-medium text-texte">{r.label}</span>
+              <span className="mt-0.5 block text-xs text-texte-3">{r.aide}</span>
             </button>
           ))}
         </div>
 
         {erreur && (
-          <p role="alert" className="mt-4 text-sm text-manque">
+          <p role="alert" className="mt-4 text-sm text-negatif">
             {erreur}
           </p>
         )}
@@ -120,7 +120,7 @@ export function SeanceDuJour({
             setPosition(total - 1);
           }}
           disabled={enCours}
-          className="mt-4 text-sm text-cendre transition hover:text-brume"
+          className="mt-4 text-sm text-texte-3 transition hover:text-texte-2"
         >
           Revenir à la séance
         </button>
@@ -132,17 +132,17 @@ export function SeanceDuJour({
 
   return (
     <section className="surface overflow-hidden">
-      <header className="border-b border-nuit-700/60 p-5">
+      <header className="border-b border-filet/60 p-5">
         <div className="flex items-baseline justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-ivoire">
+            <h2 className="text-lg font-semibold text-texte">
               {isBonus ? "Séance bonus" : "Séance du jour"}
             </h2>
             <p className="mt-0.5 text-sm" style={{ color: couleur }}>
               {muscleGroupLabel(seance.muscleGroup)}
             </p>
           </div>
-          <p className="shrink-0 text-sm text-cendre tabular-nums">
+          <p className="shrink-0 text-sm text-texte-3 tabular-nums">
             {position < 0 ? "Échauffement" : `${position + 1} / ${total}`}
           </p>
         </div>
@@ -158,10 +158,10 @@ export function SeanceDuJour({
 
       {exo === null ? (
         <div className="p-6">
-          <p className="text-xs tracking-wide text-cendre uppercase">Avant de commencer</p>
+          <p className="text-xs tracking-wide text-texte-3 uppercase">Avant de commencer</p>
           <ul className="mt-3 flex flex-col gap-2">
             {seance.echauffement.map((e) => (
-              <li key={e} className="text-sm text-brume">
+              <li key={e} className="text-sm text-texte-2">
                 {e}
               </li>
             ))}
@@ -169,7 +169,7 @@ export function SeanceDuJour({
           <button
             type="button"
             onClick={() => setPosition(0)}
-            className="mt-6 w-full rounded-lg border border-or-600/60 bg-or-500/10 px-6 py-3 font-medium text-or-400 transition hover:bg-or-500/20"
+            className="mt-6 w-full rounded-lg border border-accent/60 bg-accent/10 px-6 py-3 font-medium text-accent transition hover:bg-accent/20"
           >
             Commencer
           </button>
@@ -179,22 +179,22 @@ export function SeanceDuJour({
         // animation au lieu de voir son texte se substituer sur place.
         <div key={position} className="p-6 motion-safe:apparait">
           <div className="flex flex-wrap items-baseline gap-x-3">
-            <h3 className="font-display text-xl font-bold text-ivoire">{exo.nom}</h3>
+            <h3 className="font-display text-xl font-bold text-texte">{exo.nom}</h3>
             {exo.finisher && (
-              <span className="text-xs tracking-wide text-or-500 uppercase">finisher</span>
+              <span className="text-xs tracking-wide text-accent uppercase">finisher</span>
             )}
           </div>
 
           <p className="mt-3 text-2xl font-semibold tabular-nums" style={{ color: couleur }}>
             {exo.duree ? `${exo.series} × ${exo.duree}` : `${exo.series} × ${exo.reps}`}
-            {!exo.duree && <span className="ml-2 text-base text-brume">répétitions</span>}
+            {!exo.duree && <span className="ml-2 text-base text-texte-2">répétitions</span>}
           </p>
 
-          <p className="mt-4 text-sm leading-relaxed text-brume">{exo.description}</p>
+          <p className="mt-4 text-sm leading-relaxed text-texte-2">{exo.description}</p>
 
           {exo.chargeRequise && (
             <div className="mt-5">
-              <label className="text-sm text-brume" htmlFor={`charge-${position}`}>
+              <label className="text-sm text-texte-2" htmlFor={`charge-${position}`}>
                 Charge utilisée
               </label>
               <div className="mt-1.5 flex items-center gap-2">
@@ -210,17 +210,17 @@ export function SeanceDuJour({
                     setCharges((c) => c.map((k, j) => (j === position ? v : k)));
                   }}
                   placeholder="—"
-                  className="w-28 rounded-lg border border-nuit-600 bg-nuit-900 px-3 py-2.5 text-lg tabular-nums text-ivoire"
+                  className="w-28 rounded-lg border border-filet bg-fond px-3 py-2.5 text-lg tabular-nums text-texte"
                 />
-                <span className="text-brume">kg</span>
+                <span className="text-texte-2">kg</span>
               </div>
               {exo.derniereCharge != null && (
-                <p className="mt-1.5 text-xs text-cendre">
+                <p className="mt-1.5 text-xs text-texte-3">
                   La dernière fois : {exo.derniereCharge} kg
                   {charges[position] != null && charges[position] !== exo.derniereCharge && (
                     <span
                       className="ml-2"
-                      style={{ color: charges[position]! > exo.derniereCharge ? "var(--color-succes)" : "var(--color-brume)" }}
+                      style={{ color: charges[position]! > exo.derniereCharge ? "var(--color-positif)" : "var(--color-texte-2)" }}
                     >
                       {charges[position]! > exo.derniereCharge ? "+" : ""}
                       {Math.round((charges[position]! - exo.derniereCharge) * 10) / 10} kg
@@ -247,7 +247,7 @@ export function SeanceDuJour({
             <button
               type="button"
               onClick={() => marquer("partiel")}
-              className="w-full rounded-lg border border-nuit-600 px-6 py-3 text-sm text-brume transition hover:text-ivoire"
+              className="w-full rounded-lg border border-filet px-6 py-3 text-sm text-texte-2 transition hover:text-texte"
             >
               Je n&apos;ai pas fini
             </button>
@@ -257,7 +257,7 @@ export function SeanceDuJour({
             <button
               type="button"
               onClick={() => setPosition(position - 1)}
-              className="mt-4 text-sm text-cendre transition hover:text-brume"
+              className="mt-4 text-sm text-texte-3 transition hover:text-texte-2"
             >
               ← Exercice précédent
             </button>
@@ -265,24 +265,24 @@ export function SeanceDuJour({
         </div>
       )}
 
-      <footer className="border-t border-nuit-700/60 p-5">
+      <footer className="border-t border-filet/60 p-5">
         {erreur && (
-          <p role="alert" className="mb-3 text-sm text-manque">
+          <p role="alert" className="mb-3 text-sm text-negatif">
             {erreur}
           </p>
         )}
-        <p className="mb-3 text-xs text-cendre">
+        <p className="mb-3 text-xs text-texte-3">
           {apercu.total > 0
-            ? `${apercu.details.map((d) => d.libelle).join(", ")} — +${apercu.total} LP.`
+            ? `${apercu.details.map((d) => d.libelle).join(", ")} — +${apercu.total} Δ.`
             : bonusDejaCompte && isBonus
-              ? "Tu as déjà validé une séance bonus aujourd'hui : celle-ci ne rapportera pas de LP."
+              ? "Tu as déjà validé une séance bonus aujourd'hui : celle-ci ne rapportera pas de Δ."
               : "Une série non finie compte pour moitié."}
         </p>
         <button
           type="button"
           onClick={() => setEtape("ressenti")}
           disabled={ratio < SEUIL_PARTIEL}
-          className="w-full rounded-lg border border-nuit-600 px-6 py-2.5 text-sm text-brume transition hover:border-or-600/60 hover:text-or-400 disabled:cursor-not-allowed disabled:opacity-40"
+          className="w-full rounded-lg border border-filet px-6 py-2.5 text-sm text-texte-2 transition hover:border-accent/60 hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
         >
           Terminer la séance maintenant
         </button>
@@ -319,7 +319,7 @@ function FilDAriane({
           aria-current={position === -1 ? "step" : undefined}
           className="block size-2.5 rotate-45 rounded-[2px] border transition"
           style={{
-            borderColor: position === -1 ? couleur : "var(--color-nuit-600)",
+            borderColor: position === -1 ? couleur : "var(--color-filet)",
             backgroundColor: position === -1 ? couleur : "transparent",
           }}
         />
@@ -328,7 +328,7 @@ function FilDAriane({
       {statuts.map((statut, i) => {
         const courant = i === position;
         const fond =
-          statut === "fait" ? couleur : statut === "partiel" ? "var(--color-manque)" : "transparent";
+          statut === "fait" ? couleur : statut === "partiel" ? "var(--color-negatif)" : "transparent";
         return (
           <li key={i} className="flex-1">
             <button
@@ -339,7 +339,7 @@ function FilDAriane({
               className="block h-1.5 w-full rounded-full border transition-all"
               style={{
                 backgroundColor: fond,
-                borderColor: courant ? couleur : "var(--color-nuit-700)",
+                borderColor: courant ? couleur : "var(--color-filet)",
                 transform: courant ? "scaleY(1.8)" : undefined,
               }}
             />
@@ -369,15 +369,15 @@ function Bilan({ resultat, couleur }: { resultat: ResultatValidation; couleur: s
           </p>
         )}
         <p
-          className="mt-2 text-5xl font-bold tabular-nums motion-safe:surgit"
+          className="mt-2 text-5xl font-bold tabular-nums motion-safe:apparait"
           style={{ color: couleur, textShadow: `0 0 28px ${couleur}55` }}
         >
-          +{resultat.lpEarned} LP
+          +{resultat.lpEarned} Δ
         </p>
-        <p className="mt-2 text-sm text-brume motion-safe:apparait">
+        <p className="mt-2 text-sm text-texte-2 motion-safe:apparait">
           {resultat.promoted
             ? `Te voilà ${resultat.newRank}.`
-            : `${resultat.newRank} · ${resultat.lpTotal} LP au total`}
+            : `${resultat.newRank} · ${resultat.lpTotal} Δ au total`}
         </p>
 
         <div className="mx-auto mt-5 max-w-xs">
@@ -388,21 +388,21 @@ function Bilan({ resultat, couleur }: { resultat: ResultatValidation; couleur: s
           {resultat.details.map((d, i) => (
             <li
               key={d.libelle}
-              className="flex justify-between text-brume motion-safe:monte"
+              className="flex justify-between text-texte-2 motion-safe:monte"
               // Les gains se posent l'un après l'autre : on lit d'où viennent
-              // les LP au lieu de voir un bloc apparaître.
+              // les Δ au lieu de voir un bloc apparaître.
               style={{ animationDelay: `${180 + i * 110}ms` }}
             >
               <span>{d.libelle}</span>
-              <span className="text-ivoire">+{d.lp}</span>
+              <span className="text-texte">+{d.lp}</span>
             </li>
           ))}
         </ul>
       </div>
 
       {proposition && !applique && (
-        <div className="relative mt-6 border-t border-nuit-700/60 pt-5">
-          <p className="text-sm leading-relaxed text-brume">{proposition.message}</p>
+        <div className="relative mt-6 border-t border-filet/60 pt-5">
+          <p className="text-sm leading-relaxed text-texte-2">{proposition.message}</p>
           <div className="mt-3 flex justify-center gap-3">
             <button
               type="button"
@@ -419,14 +419,14 @@ function Bilan({ resultat, couleur }: { resultat: ResultatValidation; couleur: s
                   }
                 })
               }
-              className="rounded-lg border border-or-600/60 bg-or-500/10 px-5 py-2.5 text-sm font-medium text-or-400 transition hover:bg-or-500/20 disabled:opacity-40"
+              className="rounded-lg border border-accent/60 bg-accent/10 px-5 py-2.5 text-sm font-medium text-accent transition hover:bg-accent/20 disabled:opacity-40"
             >
               D&apos;accord
             </button>
             <button
               type="button"
               onClick={() => setProposition(null)}
-              className="rounded-lg px-5 py-2.5 text-sm text-brume transition hover:text-ivoire"
+              className="rounded-lg px-5 py-2.5 text-sm text-texte-2 transition hover:text-texte"
             >
               Non, ça va
             </button>
@@ -434,7 +434,7 @@ function Bilan({ resultat, couleur }: { resultat: ResultatValidation; couleur: s
         </div>
       )}
 
-      {applique && <p className="relative mt-6 text-sm text-succes">{applique}</p>}
+      {applique && <p className="relative mt-6 text-sm text-positif">{applique}</p>}
 
       <div className="relative mt-6" style={{ color: couleur }}>
         <Meandre opacite={0.25} />
@@ -448,7 +448,7 @@ function Rayons({ couleur }: { couleur: string }) {
   return (
     <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
       <span
-        className="absolute top-0 left-1/2 size-72 -translate-x-1/2 -translate-y-1/3 rounded-full blur-3xl motion-safe:animate-[souffle_4s_ease-in-out_infinite]"
+        className="absolute top-0 left-1/2 size-72 -translate-x-1/2 -translate-y-1/3 rounded-full blur-3xl"
         style={{ backgroundColor: couleur, opacity: 0.3 }}
       />
       {[...Array(7)].map((_, i) => (

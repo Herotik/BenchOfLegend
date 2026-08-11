@@ -25,10 +25,10 @@ export default async function SeanceBonusPage({ searchParams }: PageProps<"/sean
   if (!choisi) {
     return (
       <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-10">
-        <h1 className="text-2xl font-bold text-ivoire">Séance bonus</h1>
-        <p className="mt-2 text-sm leading-relaxed text-brume">
+        <h1 className="text-2xl font-bold text-texte">Séance bonus</h1>
+        <p className="mt-2 text-sm leading-relaxed text-texte-2">
           Hors programme, quand tu veux. Choisis n&apos;importe quel groupe, même en dehors de
-          ceux que tu as sélectionnés. Une séance bonus rapporte 8 LP, une par jour comptabilisée.
+          ceux que tu as sélectionnés. Une séance bonus rapporte 8 Δ, une par jour comptabilisée.
         </p>
 
         <ul className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -36,7 +36,7 @@ export default async function SeanceBonusPage({ searchParams }: PageProps<"/sean
             <li key={g.id}>
               <Link
                 href={`/seance-bonus?groupe=${g.id}`}
-                className="surface block px-4 py-5 text-center text-sm text-ivoire transition hover:border-or-600/60"
+                className="surface block px-4 py-5 text-center text-sm text-texte transition hover:border-accent/60"
               >
                 {g.label}
               </Link>
@@ -64,17 +64,17 @@ export default async function SeanceBonusPage({ searchParams }: PageProps<"/sean
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-10">
-      <Link href="/seance-bonus" className="text-sm text-cendre transition hover:text-brume">
+      <Link href="/seance-bonus" className="text-sm text-texte-3 transition hover:text-texte-2">
         ← Changer de groupe
       </Link>
-      <h1 className="mt-3 text-2xl font-bold text-ivoire">
+      <h1 className="mt-3 text-2xl font-bold text-texte">
         Bonus — {muscleGroupLabel(choisi)}
       </h1>
 
       {avertissement && (
         <p
           role="status"
-          className="surface mt-5 border-manque/50 p-4 text-sm leading-relaxed text-brume"
+          className="surface mt-5 border-negatif/50 p-4 text-sm leading-relaxed text-texte-2"
         >
           {avertissement} Tu peux quand même la faire, mais garde-le en tête.
         </p>
@@ -90,7 +90,7 @@ export default async function SeanceBonusPage({ searchParams }: PageProps<"/sean
             bonusDejaCompte={bonusDuJour > 0}
           />
         ) : (
-          <p className="surface p-6 text-center text-sm text-brume">
+          <p className="surface p-6 text-center text-sm text-texte-2">
             Aucun exercice disponible pour ce groupe avec ton matériel et ton niveau.
           </p>
         )}

@@ -10,7 +10,7 @@ import { enregistrerPesee } from "@/app/actions/pesee";
  * Modale bloquante à la première connexion du jour. Le bouton « Passer »
  * n'apparaît qu'au bout de trois secondes : assez pour ne pas prendre en
  * otage quelqu'un qui n'a pas de balance sous la main, assez peu pour que le
- * geste par défaut reste la pesée. Seule la pesée validée rapporte 2 LP.
+ * geste par défaut reste la pesée. Seule la pesée validée rapporte 2 Δ.
  */
 export function ModalePesee({ dernierPoids }: { dernierPoids: number | null }) {
   const [valeur, setValeur] = useState(dernierPoids ? String(dernierPoids) : "");
@@ -61,13 +61,13 @@ export function ModalePesee({ dernierPoids }: { dernierPoids: number | null }) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="titre-pesee"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-nuit-950/90 p-5 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-fond/90 p-5 backdrop-blur-sm"
     >
       <div className="surface w-full max-w-sm p-6">
-        <h2 id="titre-pesee" className="text-lg font-semibold text-ivoire">
+        <h2 id="titre-pesee" className="text-lg font-semibold text-texte">
           Ton poids du jour
         </h2>
-        <p className="mt-2 text-sm text-brume">
+        <p className="mt-2 text-sm text-texte-2">
           {dernierPoids
             ? `Dernière pesée : ${dernierPoids} kg.`
             : "C'est le point de départ de ta courbe."}
@@ -83,13 +83,13 @@ export function ModalePesee({ dernierPoids }: { dernierPoids: number | null }) {
             onChange={(e) => setValeur(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && valider()}
             aria-label="Poids en kilogrammes"
-            className="w-full rounded-lg border border-nuit-600 bg-nuit-900 px-3 py-3 text-lg text-ivoire"
+            className="w-full rounded-lg border border-filet bg-fond px-3 py-3 text-lg text-texte"
           />
-          <span className="text-brume">kg</span>
+          <span className="text-texte-2">kg</span>
         </div>
 
         {erreur && (
-          <p role="alert" className="mt-3 text-sm text-manque">
+          <p role="alert" className="mt-3 text-sm text-negatif">
             {erreur}
           </p>
         )}
@@ -98,16 +98,16 @@ export function ModalePesee({ dernierPoids }: { dernierPoids: number | null }) {
           type="button"
           onClick={valider}
           disabled={enCours}
-          className="mt-5 w-full rounded-lg border border-or-600/60 bg-or-500/10 px-6 py-3 font-medium text-or-400 transition hover:bg-or-500/20 disabled:opacity-40"
+          className="mt-5 w-full rounded-lg border border-accent/60 bg-accent/10 px-6 py-3 font-medium text-accent transition hover:bg-accent/20 disabled:opacity-40"
         >
-          {enCours ? "Enregistrement…" : "Valider (+2 LP)"}
+          {enCours ? "Enregistrement…" : "Valider (+2 Δ)"}
         </button>
 
         {passable && (
           <button
             type="button"
             onClick={() => setFerme(true)}
-            className="mt-3 w-full text-xs text-cendre transition hover:text-brume"
+            className="mt-3 w-full text-xs text-texte-3 transition hover:text-texte-2"
           >
             Passer aujourd&apos;hui
           </button>

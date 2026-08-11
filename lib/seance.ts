@@ -14,7 +14,7 @@ import { echec, type EchecMetier } from "@/lib/erreurs";
  *
  * Extrait de `app/actions/seance.ts` : l'action web et la route `/api/v1` en
  * ont besoin toutes les deux, et une règle recopiée d'un appelant à l'autre
- * finit par diverger — l'aperçu des LP annonçait 20 sur une séance bonus qui
+ * finit par diverger — l'aperçu des Δ annonçait 20 sur une séance bonus qui
  * en rapporte 8, pour exactement cette raison. L'action et la route ne sont
  * plus que deux enveloppes autour de ce module.
  */
@@ -73,11 +73,11 @@ export type ResultatValidation = {
 };
 
 /**
- * Valide une séance et crédite les LP.
+ * Valide une séance et crédite les Δ.
  *
  * **Tout le calcul se fait ici.** Le client n'envoie que les statuts : la
  * séance est régénérée côté serveur à partir de la même graine, si bien qu'un
- * client modifié ne peut ni inventer des exercices, ni s'attribuer des LP, ni
+ * client modifié ne peut ni inventer des exercices, ni s'attribuer des Δ, ni
  * faire passer une séance partielle pour complète.
  */
 export async function validerSeancePour(
@@ -90,7 +90,7 @@ export async function validerSeancePour(
   }
   const d = parse.data;
 
-  // Les LP se calculent à partir du total en base, jamais d'un total porté par
+  // Les Δ se calculent à partir du total en base, jamais d'un total porté par
   // la session ou par le client : deux appareils connectés au même compte
   // partiraient sinon du même solde et l'un écraserait le gain de l'autre.
   const user = await prisma.user.findUniqueOrThrow({
@@ -107,7 +107,7 @@ export async function validerSeancePour(
   // Une seule validation de séance minimum par PlanDay, et seulement celle
   // du jour. Le plan est publié six semaines à l'avance et le calendrier en
   // expose les identifiants : sans le contrôle de date, un client bricolé
-  // encaissait d'un coup la trentaine de séances à venir, 20 LP pièce.
+  // encaissait d'un coup la trentaine de séances à venir, 20 Δ pièce.
   if (!d.isBonus) {
     if (!d.planDayId) {
       return echec("Séance du jour introuvable", "plan_day_requis", 422);
@@ -159,7 +159,7 @@ export async function validerSeancePour(
   const rangAvant = rankForLp(user.lp);
 
   // Transaction interactive : le PlanDay doit basculer dans le **même** atome
-  // que le crédit des LP. Séparés, un échec entre les deux laissait les LP
+  // que le crédit des Δ. Séparés, un échec entre les deux laissait les Δ
   // acquis et le jour encore rejouable.
   const lpTotal = await prisma.$transaction(async (tx) => {
     const workout = await tx.workoutLog.create({

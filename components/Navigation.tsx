@@ -17,7 +17,7 @@ export function Navigation() {
     <>
       <nav
         aria-label="Navigation principale"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-nuit-700/70 bg-nuit-950/95 backdrop-blur sm:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-filet/70 bg-fond/95 backdrop-blur sm:hidden"
       >
         <ul className="flex">
           {NAVIGATION.map((item) => (
@@ -26,7 +26,7 @@ export function Navigation() {
                 href={item.href}
                 aria-current={actif(item.href) ? "page" : undefined}
                 className={`flex flex-col items-center gap-1 py-2.5 text-[11px] transition ${
-                  actif(item.href) ? "text-or-400" : "text-cendre"
+                  actif(item.href) ? "text-accent" : "text-texte-3"
                 }`}
               >
                 <Icone nom={item.icone} />
@@ -39,13 +39,13 @@ export function Navigation() {
 
       <nav
         aria-label="Navigation principale"
-        className="fixed top-0 left-0 z-40 hidden h-full w-56 flex-col border-r border-nuit-700/70 px-4 py-8 sm:flex"
+        className="fixed top-0 left-0 z-40 hidden h-full w-56 flex-col border-r border-filet/70 px-4 py-8 sm:flex"
       >
         <Link
           href="/"
-          className="font-display px-3 text-lg font-bold text-ivoire transition hover:text-or-400"
+          className="font-display px-3 text-lg font-bold text-texte transition hover:text-accent"
         >
-          La Faille
+          Frame of Legends
         </Link>
         <ul className="mt-8 flex flex-col gap-1">
           {NAVIGATION.map((item) => (
@@ -55,8 +55,8 @@ export function Navigation() {
                 aria-current={actif(item.href) ? "page" : undefined}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
                   actif(item.href)
-                    ? "bg-or-500/10 text-or-400"
-                    : "text-brume hover:text-ivoire"
+                    ? "bg-accent/10 text-accent"
+                    : "text-texte-2 hover:text-texte"
                 }`}
               >
                 <Icone nom={item.icone} />

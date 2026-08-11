@@ -39,7 +39,7 @@ export function Meandre({
  * Séparateur de section : un losange encadré de deux filets, repris de la
  * planche de rangs d'origine où il sépare chaque écusson de son titre.
  */
-export function SeparateurLosange({ couleur = "var(--color-or-600)" }: { couleur?: string }) {
+export function SeparateurLosange({ couleur = "var(--color-accent)" }: { couleur?: string }) {
   return (
     <div className="flex items-center gap-3" aria-hidden>
       <span className="h-px flex-1" style={{ background: `linear-gradient(to right, transparent, ${couleur})` }} />
@@ -55,7 +55,7 @@ export function SeparateurLosange({ couleur = "var(--color-or-600)" }: { couleur
  * Couronne de laurier ouverte, posée derrière un contenu mis en avant.
  * Purement décorative, d'où l'`aria-hidden`.
  */
-export function Laurier({ couleur = "var(--color-or-600)" }: { couleur?: string }) {
+export function Laurier({ couleur = "var(--color-accent)" }: { couleur?: string }) {
   const feuille = (x: number, y: number, rotation: number, echelle: number) => (
     <ellipse
       key={`${x}-${y}`}

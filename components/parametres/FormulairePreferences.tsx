@@ -69,27 +69,27 @@ export function FormulairePreferences({ initial }: { initial: PreferencesInitial
   return (
     <div className="flex flex-col gap-6">
       <section className="surface p-5">
-        <h2 className="text-base font-semibold text-ivoire">Profil</h2>
+        <h2 className="text-base font-semibold text-texte">Profil</h2>
 
         <label className="mt-4 block max-w-40">
-          <span className="text-sm text-brume">Taille (cm)</span>
+          <span className="text-sm text-texte-2">Taille (cm)</span>
           <input
             type="number"
             inputMode="numeric"
             value={heightCm}
             onChange={(e) => setHeightCm(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-nuit-600 bg-nuit-900 px-3 py-2.5 text-ivoire"
+            className="mt-1 w-full rounded-lg border border-filet bg-fond px-3 py-2.5 text-texte"
           />
         </label>
 
         <fieldset className="mt-5">
-          <legend className="text-sm text-brume">Niveau</legend>
+          <legend className="text-sm text-texte-2">Niveau</legend>
           <div className="mt-2 flex flex-col gap-2">
             {(Object.keys(LEVEL_LABELS) as Level[]).map((n) => (
               <label
                 key={n}
                 className={`cursor-pointer rounded-lg border p-3 transition ${
-                  level === n ? "border-or-600 bg-or-500/10" : "border-nuit-600"
+                  level === n ? "border-accent bg-accent/10" : "border-filet"
                 }`}
               >
                 <input
@@ -99,8 +99,8 @@ export function FormulairePreferences({ initial }: { initial: PreferencesInitial
                   checked={level === n}
                   onChange={() => setLevel(n)}
                 />
-                <span className="block text-sm font-medium text-ivoire">{LEVEL_LABELS[n]}</span>
-                <span className="mt-0.5 block text-xs text-cendre">{LEVEL_HINTS[n]}</span>
+                <span className="block text-sm font-medium text-texte">{LEVEL_LABELS[n]}</span>
+                <span className="mt-0.5 block text-xs text-texte-3">{LEVEL_HINTS[n]}</span>
               </label>
             ))}
           </div>
@@ -108,8 +108,8 @@ export function FormulairePreferences({ initial }: { initial: PreferencesInitial
       </section>
 
       <section className="surface p-5">
-        <h2 className="text-base font-semibold text-ivoire">Matériel</h2>
-        <p className="mt-1 text-xs text-cendre">
+        <h2 className="text-base font-semibold text-texte">Matériel</h2>
+        <p className="mt-1 text-xs text-texte-3">
           Rien de coché : séances 100 % au poids de corps.
         </p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -119,7 +119,7 @@ export function FormulairePreferences({ initial }: { initial: PreferencesInitial
               <label
                 key={eq.id}
                 className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${
-                  actif ? "border-or-600 bg-or-500/10" : "border-nuit-600"
+                  actif ? "border-accent bg-accent/10" : "border-filet"
                 }`}
               >
                 <input
@@ -131,12 +131,12 @@ export function FormulairePreferences({ initial }: { initial: PreferencesInitial
                 <span
                   aria-hidden
                   className={`flex size-5 shrink-0 items-center justify-center rounded border text-xs ${
-                    actif ? "border-or-500 text-or-400" : "border-nuit-600 text-transparent"
+                    actif ? "border-accent text-accent" : "border-filet text-transparent"
                   }`}
                 >
                   ✓
                 </span>
-                <span className="text-sm text-ivoire">{eq.label}</span>
+                <span className="text-sm text-texte">{eq.label}</span>
               </label>
             );
           })}
@@ -144,11 +144,11 @@ export function FormulairePreferences({ initial }: { initial: PreferencesInitial
       </section>
 
       <section className="surface p-5">
-        <h2 className="text-base font-semibold text-ivoire">Objectifs</h2>
+        <h2 className="text-base font-semibold text-texte">Objectifs</h2>
 
         <fieldset className="mt-4">
-          <legend className="text-sm text-brume">Groupes musculaires</legend>
-          <p className="mt-1 text-xs text-cendre">
+          <legend className="text-sm text-texte-2">Groupes musculaires</legend>
+          <p className="mt-1 text-xs text-texte-3">
             Touche une deuxième fois un groupe sélectionné pour en faire un point fort : il passera
             devant les autres les semaines où il y a plus de groupes que de créneaux.
           </p>
@@ -169,10 +169,10 @@ export function FormulairePreferences({ initial }: { initial: PreferencesInitial
                   }}
                   className={`rounded-full border px-4 py-2 text-sm transition ${
                     fort
-                      ? "border-or-500 bg-or-500/20 text-or-400"
+                      ? "border-accent bg-accent/20 text-accent"
                       : actif
-                        ? "border-or-600 bg-or-500/10 text-or-400"
-                        : "border-nuit-600 text-brume"
+                        ? "border-accent bg-accent/10 text-accent"
+                        : "border-filet text-texte-2"
                   }`}
                 >
                   {g.label}
@@ -184,15 +184,15 @@ export function FormulairePreferences({ initial }: { initial: PreferencesInitial
         </fieldset>
 
         <fieldset className="mt-5">
-          <legend className="text-sm text-brume">Objectif global</legend>
+          <legend className="text-sm text-texte-2">Objectif global</legend>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {(Object.keys(GOAL_LABELS) as Goal[]).map((o) => (
               <label
                 key={o}
                 className={`cursor-pointer rounded-lg border p-3 text-sm transition ${
                   goal === o
-                    ? "border-or-600 bg-or-500/10 text-or-400"
-                    : "border-nuit-600 text-ivoire"
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "border-filet text-texte"
                 }`}
               >
                 <input
@@ -209,8 +209,8 @@ export function FormulairePreferences({ initial }: { initial: PreferencesInitial
         </fieldset>
 
         <div className="mt-5">
-          <label htmlFor="jours" className="text-sm text-brume">
-            Séances par semaine : <span className="font-medium text-ivoire">{daysPerWeek}</span>
+          <label htmlFor="jours" className="text-sm text-texte-2">
+            Séances par semaine : <span className="font-medium text-texte">{daysPerWeek}</span>
           </label>
           <input
             id="jours"
@@ -220,7 +220,7 @@ export function FormulairePreferences({ initial }: { initial: PreferencesInitial
             step={1}
             value={daysPerWeek}
             onChange={(e) => setDaysPerWeek(Number(e.target.value))}
-            className="mt-3 w-full accent-[var(--color-or-500)]"
+            className="mt-3 w-full accent-[var(--color-accent)]"
           />
         </div>
       </section>
@@ -228,7 +228,7 @@ export function FormulairePreferences({ initial }: { initial: PreferencesInitial
       {message && (
         <p
           role="status"
-          className={`text-sm ${message.type === "ok" ? "text-succes" : "text-manque"}`}
+          className={`text-sm ${message.type === "ok" ? "text-positif" : "text-negatif"}`}
         >
           {message.texte}
         </p>
@@ -238,7 +238,7 @@ export function FormulairePreferences({ initial }: { initial: PreferencesInitial
         type="button"
         onClick={enregistrer}
         disabled={enCours || muscleGroups.length === 0}
-        className="rounded-lg border border-or-600/60 bg-or-500/10 px-6 py-3 font-medium text-or-400 transition hover:bg-or-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+        className="rounded-lg border border-accent/60 bg-accent/10 px-6 py-3 font-medium text-accent transition hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
       >
         {enCours ? "Enregistrement…" : "Enregistrer"}
       </button>

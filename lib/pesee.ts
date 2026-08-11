@@ -44,7 +44,7 @@ export async function enregistrerPeseePour(
     where: { userId_date: { userId, date: aujourdhui } },
   });
 
-  // Les LP ne sont accordés qu'à la première pesée du jour : corriger sa
+  // Les Δ ne sont accordés qu'à la première pesée du jour : corriger sa
   // valeur ensuite ne doit pas rapporter deux fois.
   const lpGagnes = deja ? 0 : BAREME.pesee;
 

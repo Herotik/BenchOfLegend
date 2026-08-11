@@ -1,8 +1,8 @@
 /**
- * Barème des LP (spec §6). Fonction pure : le calcul se fait toujours côté
+ * Barème des Δ (spec §6). Fonction pure : le calcul se fait toujours côté
  * serveur, jamais d'après une valeur envoyée par le client.
  *
- * Principe directeur : **aucune perte de LP**, jamais. Une semaine manquée
+ * Principe directeur : **aucune perte de Δ**, jamais. Une semaine manquée
  * n'enlève rien — la seule sanction est l'absence de gain. C'est ce qui rend
  * le compteur toujours motivant.
  */
@@ -62,7 +62,7 @@ export function calculerLp(entree: EntreeLp): ResultatLp {
   }
 
   // Rien d'autre ne se cumule sur une séance qui n'a pas atteint le seuil :
-  // sinon cocher un seul exercice rapporterait des LP.
+  // sinon cocher un seul exercice rapporterait des Δ.
   if (details.length === 0) return { total: 0, details };
 
   if (entree.finisherComplete) {

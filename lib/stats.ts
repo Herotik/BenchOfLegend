@@ -102,7 +102,7 @@ export async function chargerStats(userId: string): Promise<Stats> {
     }[];
 
     // Une série non terminée compte pour moitié dans le volume, comme dans le
-    // calcul des LP — sinon la courbe de volume punirait l'honnêteté.
+    // calcul des Δ — sinon la courbe de volume punirait l'honnêteté.
     const series = exercices.reduce((total, e) => {
       const statut = e.statut ?? (e.done ? "fait" : "non_fait");
       if (statut === "fait") return total + e.sets;
@@ -130,7 +130,7 @@ export async function chargerStats(userId: string): Promise<Stats> {
     s.assiduite = s.prevues > 0 ? Math.round((s.faites / s.prevues) * 100) : null;
   }
 
-  // --- LP cumulés ---
+  // --- Δ cumulés ---
   let cumul = 0;
   const lp: PointLp[] = [];
   for (const w of seances) {

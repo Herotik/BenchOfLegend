@@ -10,11 +10,11 @@ export default async function GraphiquesPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-10">
-      <h1 className="text-2xl font-bold text-ivoire">Courbes</h1>
-      <p className="mt-2 text-sm text-brume">
+      <h1 className="text-2xl font-bold text-texte">Courbes</h1>
+      <p className="mt-2 text-sm text-texte-2">
         {aucuneDonnee
           ? "Tes graphiques se remplissent au fil des pesées et des séances validées."
-          : "Poids, volume, assiduité et progression des LP."}
+          : "Poids, volume, assiduité et progression des Δ."}
       </p>
 
       <div className="mt-8">

@@ -6,7 +6,7 @@ import { enregistrerPeseePour, schemaPesee } from "@/lib/pesee";
  * Pesée du jour.
  *
  * Idempotente dans la journée : rappeler la route corrige la valeur sans
- * recréditer les 2 LP. Les LP récompensent le suivi, pas le nombre
+ * recréditer les 2 Δ. Les Δ récompensent le suivi, pas le nombre
  * d'allers-retours.
  */
 export async function POST(requete: Request) {

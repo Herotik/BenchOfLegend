@@ -11,15 +11,15 @@ const base = (over: Partial<EntreeLp> = {}): EntreeLp => ({
 });
 
 describe("calculerLp", () => {
-  it("accorde 20 LP à une séance complète", () => {
+  it("accorde 20 Δ à une séance complète", () => {
     expect(calculerLp(base()).total).toBe(BAREME.seanceComplete);
   });
 
-  it("accorde 20 LP dès 80 % des exercices cochés", () => {
+  it("accorde 20 Δ dès 80 % des exercices cochés", () => {
     expect(calculerLp(base({ ratioComplete: 0.8 })).total).toBe(BAREME.seanceComplete);
   });
 
-  it("accorde 12 LP entre 50 et 79 %", () => {
+  it("accorde 12 Δ entre 50 et 79 %", () => {
     expect(calculerLp(base({ ratioComplete: 0.5 })).total).toBe(BAREME.seancePartielle);
     expect(calculerLp(base({ ratioComplete: 0.79 })).total).toBe(BAREME.seancePartielle);
   });
@@ -30,7 +30,7 @@ describe("calculerLp", () => {
   });
 
   it("ne cumule ni finisher ni régularité sur une séance sous le seuil", () => {
-    // Sinon cocher un seul exercice et son finisher rapporterait des LP.
+    // Sinon cocher un seul exercice et son finisher rapporterait des Δ.
     const r = calculerLp(base({ ratioComplete: 0.2, finisherComplete: true, seancesSur7Jours: 5 }));
     expect(r.total).toBe(0);
     expect(r.details).toHaveLength(0);
@@ -49,7 +49,7 @@ describe("calculerLp", () => {
     );
   });
 
-  it("accorde 8 LP à une séance bonus", () => {
+  it("accorde 8 Δ à une séance bonus", () => {
     expect(calculerLp(base({ isBonus: true })).total).toBe(BAREME.seanceBonus);
   });
 
@@ -64,7 +64,7 @@ describe("calculerLp", () => {
     }
   });
 
-  it("détaille les LP pour pouvoir les afficher", () => {
+  it("détaille les Δ pour pouvoir les afficher", () => {
     const r = calculerLp(base({ finisherComplete: true, seancesSur7Jours: 3 }));
     expect(r.details.map((d) => d.libelle)).toEqual([
       "Séance du jour validée",

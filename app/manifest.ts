@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "La Faille — entraînement classé",
-    short_name: "La Faille",
+    name: "Frame of Legends — entraînement classé",
+    short_name: "Frame of Legends",
     description:
       "Ton programme de musculation hebdomadaire, tes séances validées et ta progression d'Hoplite à Dieu de l'Olympe.",
     lang: "fr",

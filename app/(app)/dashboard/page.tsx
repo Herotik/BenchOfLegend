@@ -53,8 +53,8 @@ export default async function DashboardPage() {
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-10">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-ivoire">Salut {prenom}</h1>
-          <p className="mt-1 text-sm text-brume">
+          <h1 className="text-2xl font-bold text-texte">Salut {prenom}</h1>
+          <p className="mt-1 text-sm text-texte-2">
             {duJour.length > 0
               ? `Au programme : ${duJour.map((p) => muscleGroupLabel(p.muscleGroup)).join(" et ")}.`
               : "Jour de repos. La récupération fait partie de la progression."}
@@ -63,7 +63,7 @@ export default async function DashboardPage() {
         <form action={deconnexion}>
           <button
             type="submit"
-            className="shrink-0 rounded-lg border border-nuit-600 px-3 py-1.5 text-sm text-brume transition hover:text-ivoire"
+            className="shrink-0 rounded-lg border border-filet px-3 py-1.5 text-sm text-texte-2 transition hover:text-texte"
           >
             Déconnexion
           </button>
@@ -84,7 +84,7 @@ export default async function DashboardPage() {
         {seances.map(({ planDay, seance }) =>
           planDay.status === "FAIT" ? (
             <section key={planDay.id} className="surface p-5 text-center">
-              <p className="text-sm text-succes">
+              <p className="text-sm text-positif">
                 {muscleGroupLabel(planDay.muscleGroup)} — séance validée. À demain.
               </p>
             </section>
@@ -102,7 +102,7 @@ export default async function DashboardPage() {
 
         {duJour.length === 0 && (
           <section className="surface p-6 text-center">
-            <p className="text-sm text-brume">
+            <p className="text-sm text-texte-2">
               Rien de prévu aujourd&apos;hui — ton plan te fait récupérer.
             </p>
           </section>
@@ -110,7 +110,7 @@ export default async function DashboardPage() {
 
         <Link
           href="/seance-bonus"
-          className="rounded-lg border border-nuit-600 px-6 py-3 text-center text-sm text-brume transition hover:border-or-600/60 hover:text-or-400"
+          className="rounded-lg border border-filet px-6 py-3 text-center text-sm text-texte-2 transition hover:border-accent/60 hover:text-accent"
         >
           {duJour.length === 0 ? "Faire une séance bonus quand même" : "Ajouter une séance bonus"}
         </Link>
@@ -122,8 +122,8 @@ export default async function DashboardPage() {
 function Stat({ terme, valeur }: { terme: string; valeur: string }) {
   return (
     <div className="surface p-3 text-center">
-      <dt className="text-xs text-cendre">{terme}</dt>
-      <dd className="mt-1 text-lg font-medium text-ivoire">{valeur}</dd>
+      <dt className="text-xs text-texte-3">{terme}</dt>
+      <dd className="mt-1 text-lg font-medium text-texte">{valeur}</dd>
     </div>
   );
 }

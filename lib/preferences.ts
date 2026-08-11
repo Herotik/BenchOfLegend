@@ -99,7 +99,7 @@ export async function appliquerPreferences(
 
     // Le plan à venir est régénéré, jamais le passé (spec §4.2). Les séances
     // déjà validées sont préservées : elles font partie de l'historique et
-    // ont rapporté des LP. Les jours restants sont supprimés, la génération
+    // ont rapporté des Δ. Les jours restants sont supprimés, la génération
     // les recrée au prochain chargement avec les nouvelles préférences.
     prisma.planDay.deleteMany({
       where: { userId, date: { gte: jourUTC() }, status: { not: "FAIT" } },

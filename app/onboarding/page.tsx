@@ -12,9 +12,9 @@ export default async function OnboardingPage() {
 
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-6 py-12">
-      <p className="font-display text-xs tracking-[0.3em] text-or-500 uppercase">Bienvenue</p>
-      <h1 className="mt-3 text-3xl font-bold text-ivoire">Quatre étapes, {prenom}</h1>
-      <p className="mt-3 text-sm leading-relaxed text-brume">
+      <p className="font-display text-xs tracking-[0.3em] text-accent uppercase">Bienvenue</p>
+      <h1 className="mt-3 text-3xl font-bold text-texte">Quatre étapes, {prenom}</h1>
+      <p className="mt-3 text-sm leading-relaxed text-texte-2">
         On construit ton programme à partir de ce que tu as sous la main et de ce que tu veux
         travailler. Deux minutes, et ta première semaine est prête.
       </p>
