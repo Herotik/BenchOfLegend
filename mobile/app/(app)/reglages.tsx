@@ -8,6 +8,7 @@ import { useReferentiel } from "../../src/donnees/referentiel";
 import { Bouton } from "../../src/composants/Bouton";
 import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
 import { Chargement } from "../../src/composants/Etats";
+import { Marque } from "../../src/composants/Logo";
 import { jourEnFrancais } from "../../src/outils/dates";
 import { POLICE_TEXTE_MOYEN, POLICE_TEXTE, POLICE_TITRE, type Couleurs } from "../../src/theme/couleurs";
 import { useStyles, useTheme, type ChoixTheme } from "../../src/theme/theme";
@@ -124,7 +125,11 @@ export default function Reglages() {
         enCours={enCours}
       />
 
-      <Text style={styles.mention}>Serveur : {BASE_API}</Text>
+      <View style={styles.signature}>
+        <Marque taille={44} />
+        <Text style={styles.signatureNom}>FRAME OF LEGENDS</Text>
+        <Text style={styles.mention}>Serveur : {BASE_API}</Text>
+      </View>
     </ScrollView>
   );
 }
@@ -276,6 +281,17 @@ const creerStyles = (c: Couleurs) => StyleSheet.create({
   },
   ornement: {
     marginVertical: 16,
+  },
+  signature: {
+    alignItems: "center",
+    gap: 8,
+    marginTop: 26,
+  },
+  signatureNom: {
+    fontFamily: POLICE_TITRE,
+    color: c.texte2,
+    fontSize: 12,
+    letterSpacing: 2.4,
   },
   mention: {
     fontFamily: POLICE_TEXTE,

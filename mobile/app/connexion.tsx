@@ -1,13 +1,14 @@
 import { useCallback, useState } from "react";
 import { Redirect } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BASE_API } from "../src/api/client";
 import { useSession } from "../src/auth/session";
 import { ConnexionAnnulee } from "../src/auth/relais";
 import { Bouton } from "../src/composants/Bouton";
 import { Carte, Ornement } from "../src/composants/Carte";
-import { POLICE_TEXTE_MOYEN, POLICE_TEXTE, POLICE_TITRE, type Couleurs } from "../src/theme/couleurs";
+import { Logotype } from "../src/composants/Logo";
+import { POLICE_TEXTE_MOYEN, POLICE_TEXTE, type Couleurs } from "../src/theme/couleurs";
 import { useStyles } from "../src/theme/theme";
 
 /**
@@ -53,12 +54,7 @@ export default function Connexion() {
         { paddingTop: marges.top + 48, paddingBottom: marges.bottom + 32 },
       ]}
     >
-      <View style={styles.emblemeCadre}>
-        <Equerres />
-        <Text style={styles.emblemeLettre}>Δ</Text>
-      </View>
-
-      <Text style={styles.titre}>FRAME OF LEGENDS</Text>
+      <Logotype taille={124} style={styles.logotype} />
       <Ornement style={styles.ornement} />
       <Text style={styles.accroche}>
         Chaque répétition te rapproche de l&apos;Olympe. Gagne des Δ, monte les rangs, tiens la
@@ -89,24 +85,6 @@ export default function Connexion() {
   );
 }
 
-/**
- * Les quatre équerres de l'identité.
- *
- * Elles ne se rejoignent jamais et sont toujours quatre : c'est ce qui les
- * distingue d'un cadre, lequel enfermerait la marque au lieu de la désigner.
- * Aucun halo, aucune ombre — l'identité ne connaît que des traits.
- */
-function Equerres() {
-  const styles = useStyles(creerStyles);
-  return (
-    <>
-      <View style={[styles.equerre, styles.equerreHG]} />
-      <View style={[styles.equerre, styles.equerreHD]} />
-      <View style={[styles.equerre, styles.equerreBG]} />
-      <View style={[styles.equerre, styles.equerreBD]} />
-    </>
-  );
-}
 
 const creerStyles = (c: Couleurs) => StyleSheet.create({
   page: {
@@ -118,34 +96,8 @@ const creerStyles = (c: Couleurs) => StyleSheet.create({
     alignItems: "center",
     gap: 16,
   },
-  emblemeCadre: {
-    width: 132,
-    height: 132,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  equerre: {
-    position: "absolute",
-    width: 22,
-    height: 22,
-    borderColor: c.accent,
-  },
-  equerreHG: { top: 0, left: 0, borderTopWidth: 2, borderLeftWidth: 2 },
-  equerreHD: { top: 0, right: 0, borderTopWidth: 2, borderRightWidth: 2 },
-  equerreBG: { bottom: 0, left: 0, borderBottomWidth: 2, borderLeftWidth: 2 },
-  equerreBD: { bottom: 0, right: 0, borderBottomWidth: 2, borderRightWidth: 2 },
-  emblemeLettre: {
-    color: c.texte,
-    fontFamily: POLICE_TITRE,
-    fontSize: 62,
-    lineHeight: 74,
-  },
-  titre: {
-    color: c.texte,
-    fontFamily: POLICE_TITRE,
-    fontSize: 25,
-    letterSpacing: 3.5,
-    textAlign: "center",
+  logotype: {
+    marginBottom: 4,
   },
   ornement: {
     marginTop: -4,

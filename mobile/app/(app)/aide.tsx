@@ -4,6 +4,7 @@ import { useSession } from "../../src/auth/session";
 import { useReferentiel } from "../../src/donnees/referentiel";
 import { ecussonDuRang } from "../../src/donnees/ecussons";
 import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
+import { Logotype } from "../../src/composants/Logo";
 import { Chargement } from "../../src/composants/Etats";
 import {
   POLICE_TEXTE,
@@ -39,6 +40,7 @@ export default function Aide() {
       style={styles.page}
       contentContainerStyle={[styles.contenu, { paddingTop: marges.top + 16, paddingBottom: 40 }]}
     >
+      <Logotype taille={96} style={styles.logotype} />
       <Text style={styles.titre}>Aide</Text>
 
       <TitreSection>Le principe</TitreSection>
@@ -201,6 +203,11 @@ const creerStyles = (c: Couleurs) => StyleSheet.create({
   contenu: {
     paddingHorizontal: 18,
     gap: 8,
+  },
+  logotype: {
+    alignSelf: "center",
+    marginBottom: 22,
+    marginTop: 8,
   },
   titre: {
     color: c.texte,

@@ -2,11 +2,12 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FournisseurSession } from "../src/auth/session";
 import { FournisseurReferentiel } from "../src/donnees/referentiel";
 import { FournisseurTheme, useTheme } from "../src/theme/theme";
 import { usePolices } from "../src/theme/polices";
+import { Ouverture } from "../src/composants/Ouverture";
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   /* Déjà masqué : rien à faire. */
@@ -45,6 +46,8 @@ export default function Racine() {
 function Coquille() {
   const { couleurs, sombre } = useTheme();
   const polices = usePolices();
+  const [ouvert, setOuvert] = useState(false);
+  const finirOuverture = useCallback(() => setOuvert(true), []);
 
   useEffect(() => {
     if (polices) SplashScreen.hideAsync().catch(() => {});
@@ -61,6 +64,11 @@ function Coquille() {
           contentStyle: { backgroundColor: couleurs.fond },
         }}
       />
+      {/* Posée par-dessus plutôt qu'à la place : l'app se monte et charge son
+          profil pendant l'animation, si bien qu'au lever du voile l'écran est
+          déjà prêt. La remplacer ferait payer les deux temps l'un après
+          l'autre. */}
+      {ouvert ? null : <Ouverture onFini={finirOuverture} />}
     </>
   );
 }
