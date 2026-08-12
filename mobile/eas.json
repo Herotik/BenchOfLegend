@@ -11,18 +11,15 @@
         "simulator": true
       }
     },
-    "developpement": {
-      "developmentClient": true,
+    "appareil": {
       "distribution": "internal",
-      "channel": "developpement"
+      "environment": "preview"
     },
     "apercu": {
-      "distribution": "internal",
-      "channel": "apercu"
+      "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true,
-      "channel": "production"
+      "autoIncrement": true
     }
   },
   "submit": {
