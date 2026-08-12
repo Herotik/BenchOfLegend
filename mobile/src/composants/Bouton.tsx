@@ -7,7 +7,8 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { COULEURS, OPACITE_INACTIF } from "../theme/couleurs";
+import { POLICE_TEXTE_MOYEN, POLICE_TEXTE, OPACITE_INACTIF, type Couleurs } from "../theme/couleurs";
+import { useCouleurs, useStyles } from "../theme/theme";
 
 /**
  * Bouton unique de l'app, décliné en trois intentions.
@@ -38,6 +39,8 @@ export function Bouton({
   desactive = false,
   style,
 }: Props) {
+  const styles = useStyles(creerStyles);
+  const c = useCouleurs();
   const inactif = desactive || enCours;
 
   return (
@@ -59,7 +62,7 @@ export function Bouton({
       <View style={styles.contenu}>
         {enCours ? (
           <ActivityIndicator
-            color={intention === "or" ? COULEURS.nuit950 : COULEURS.or500}
+            color={intention === "or" ? c.fond : c.accent}
             size="small"
           />
         ) : (
@@ -73,7 +76,7 @@ export function Bouton({
   );
 }
 
-const styles = StyleSheet.create({
+const creerStyles = (c: Couleurs) => StyleSheet.create({
   base: {
     borderRadius: 12,
     borderWidth: 1,
@@ -83,12 +86,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   or: {
-    backgroundColor: COULEURS.or500,
-    borderColor: COULEURS.or400,
+    backgroundColor: c.accent,
+    borderColor: c.accent,
   },
   sombre: {
-    backgroundColor: COULEURS.nuit800,
-    borderColor: COULEURS.nuit600,
+    backgroundColor: c.fond2,
+    borderColor: c.filet,
   },
   discret: {
     backgroundColor: "transparent",
@@ -106,16 +109,18 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   titre: {
-    color: COULEURS.ivoire,
+    fontFamily: POLICE_TEXTE_MOYEN,
+    color: c.texte,
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",
   },
   titreOr: {
-    color: COULEURS.nuit950,
+    color: c.fond,
   },
   aide: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 12,
     textAlign: "center",
   },

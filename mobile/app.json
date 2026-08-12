@@ -1,21 +1,21 @@
 {
   "expo": {
-    "name": "La Faille",
-    "slug": "la-faille",
+    "name": "Frame of Legends",
+    "slug": "frame-of-legends",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "lafaille",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#05080d",
+    "scheme": "frameoflegends",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#f4f4f1",
     "ios": {
-      "bundleIdentifier": "com.herotik.benchoflegend",
+      "bundleIdentifier": "com.frameoflegends.app",
       "supportsTablet": true
     },
     "android": {
-      "package": "com.herotik.benchoflegend",
+      "package": "com.frameoflegends.app",
       "adaptiveIcon": {
-        "backgroundColor": "#05080d",
+        "backgroundColor": "#f4f4f1",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -35,9 +35,14 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 180,
           "resizeMode": "contain",
-          "backgroundColor": "#05080d"
+          "backgroundColor": "#f4f4f1",
+          "dark": {
+            "image": "./assets/splash-icon-sombre.png",
+            "backgroundColor": "#1a1c1e"
+          }
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }

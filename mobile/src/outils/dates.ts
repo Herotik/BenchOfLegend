@@ -1,7 +1,7 @@
 /**
  * Dates de l'app.
  *
- * Toutes les dates « jour » de La Faille (pesées, jours de plan, séances) sont
+ * Toutes les dates « jour » de Frame of Legends (pesées, jours de plan, séances) sont
  * stockées à minuit UTC — mais **à partir des composantes civiles locales**,
  * pas d'une conversion de fuseau : `lib/dates.ts` à la racine construit
  * `Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())`. Un Français

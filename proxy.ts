@@ -16,7 +16,45 @@ import { NextResponse, type NextRequest } from "next/server";
 // Auth.js v5 préfixe le cookie de `__Secure-` dès que la connexion est en HTTPS.
 const COOKIES_SESSION = ["authjs.session-token", "__Secure-authjs.session-token"];
 
+/**
+ * Origines autorisées à appeler l'API depuis un navigateur, **en développement
+ * seulement**.
+ *
+ * L'app mobile native n'est pas soumise au CORS : `fetch` en React Native
+ * n'envoie pas d'`Origin` et le navigateur n'arbitre rien. Ces en-têtes ne
+ * servent donc qu'à une chose — prévisualiser les écrans de l'app dans un
+ * navigateur, où Expo sert le bundle sur un autre port que l'API. En
+ * production, `EN_DEV` est faux et rien n'est ajouté : l'API reste fermée aux
+ * requêtes inter-origines.
+ */
+const EN_DEV = process.env.NODE_ENV !== "production";
+const ORIGINES_APERCU = /^http:\/\/localhost:\d+$/;
+
+function apercuAutorise(origine: string | null): boolean {
+  return EN_DEV && origine !== null && ORIGINES_APERCU.test(origine);
+}
+
 export function proxy(request: NextRequest) {
+  const origine = request.headers.get("origin");
+
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    if (!apercuAutorise(origine)) return NextResponse.next();
+
+    // Le contrôle préalable ne doit pas atteindre la route : celle-ci
+    // n'exporte pas `OPTIONS` et répondrait 405, ce que le navigateur lit
+    // comme un refus.
+    const reponse =
+      request.method === "OPTIONS"
+        ? new NextResponse(null, { status: 204 })
+        : NextResponse.next();
+
+    reponse.headers.set("Access-Control-Allow-Origin", origine!);
+    reponse.headers.set("Access-Control-Allow-Headers", "Authorization, Content-Type");
+    reponse.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    reponse.headers.set("Vary", "Origin");
+    return reponse;
+  }
+
   const connecte = COOKIES_SESSION.some((nom) => request.cookies.has(nom));
   if (connecte) return NextResponse.next();
 
@@ -34,11 +72,13 @@ export const config = {
    *
    * À tenir à jour en ajoutant toute nouvelle route protégée.
    *
-   * Les routes `/api/*` sont volontairement absentes : les rediriger vers la
-   * landing renverrait du HTML à un appel JSON. Chaque route handler appelle
-   * `auth()` et répond 401 lui-même.
+   * `/api/*` figure ici pour les seuls en-têtes CORS de développement — la
+   * fonction s'en va aussitôt sans toucher à l'autorisation. Rediriger un
+   * appel d'API vers la landing renverrait du HTML à un appel JSON : chaque
+   * route handler appelle `auth()` et répond 401 lui-même.
    */
   matcher: [
+    "/api/:path*",
     "/dashboard/:path*",
     "/onboarding/:path*",
     "/seance-bonus/:path*",

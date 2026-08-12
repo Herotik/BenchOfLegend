@@ -1,5 +1,6 @@
 import { Image, StyleSheet, Text, View } from "react-native";
-import { COULEURS, POLICE_TITRE } from "../theme/couleurs";
+import { POLICE_TEXTE, POLICE_TITRE, type Couleurs } from "../theme/couleurs";
+import { useStyles } from "../theme/theme";
 import { ecussonDuRang } from "../donnees/ecussons";
 import type { RangCourant } from "../api/types";
 
@@ -10,6 +11,7 @@ import type { RangCourant } from "../api/types";
  * ne connaît que le fichier image associé au slug.
  */
 export function Ecusson({ rang, taille = 132 }: { rang: RangCourant; taille?: number }) {
+  const styles = useStyles(creerStyles);
   const source = ecussonDuRang(rang.slug);
 
   return (
@@ -44,6 +46,7 @@ export function Ecusson({ rang, taille = 132 }: { rang: RangCourant; taille?: nu
 
 /** Nom du rang et division, en sérif, sous l'écusson. */
 export function LibelleRang({ rang }: { rang: RangCourant }) {
+  const styles = useStyles(creerStyles);
   return (
     <View style={styles.libelle}>
       <Text style={[styles.nom, { color: rang.couleur }]}>{rang.libelle}</Text>
@@ -52,7 +55,7 @@ export function LibelleRang({ rang }: { rang: RangCourant }) {
   );
 }
 
-const styles = StyleSheet.create({
+const creerStyles = (c: Couleurs) => StyleSheet.create({
   cadre: {
     alignItems: "center",
     justifyContent: "center",
@@ -85,7 +88,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   sousTitre: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 13,
   },
 });

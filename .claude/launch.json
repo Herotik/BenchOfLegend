@@ -12,6 +12,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "mobile", "run", "start", "--", "--clear"],
       "port": 8081
+    },
+    {
+      "name": "apercu-mobile",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "mobile", "run", "start", "--", "--web", "--port", "8082"],
+      "port": 8082
     }
   ]
 }

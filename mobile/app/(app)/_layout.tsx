@@ -3,7 +3,8 @@ import { Tabs } from "expo-router/js-tabs";
 import { StyleSheet, View, type ColorValue } from "react-native";
 import { useSession } from "../../src/auth/session";
 import { Chargement } from "../../src/composants/Etats";
-import { COULEURS } from "../../src/theme/couleurs";
+import { POLICE_TEXTE, type Couleurs } from "../../src/theme/couleurs";
+import { useCouleurs, useStyles } from "../../src/theme/theme";
 
 /**
  * Navigation par onglets, et garde d'accès.
@@ -15,6 +16,8 @@ import { COULEURS } from "../../src/theme/couleurs";
  * hériterait sinon d'un accès non contrôlé.
  */
 export default function DispositionOnglets() {
+  const styles = useStyles(creerStyles);
+  const c = useCouleurs();
   const { etat } = useSession();
 
   if (etat === "chargement") {
@@ -31,10 +34,10 @@ export default function DispositionOnglets() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        sceneStyle: { backgroundColor: COULEURS.nuit950 },
+        sceneStyle: { backgroundColor: c.fond },
         tabBarStyle: styles.barre,
-        tabBarActiveTintColor: COULEURS.or500,
-        tabBarInactiveTintColor: COULEURS.cendre,
+        tabBarActiveTintColor: c.accent,
+        tabBarInactiveTintColor: c.texte3,
         tabBarLabelStyle: styles.etiquette,
       }}
     >
@@ -64,10 +67,12 @@ export default function DispositionOnglets() {
  * formes géométriques suffisent, et le losange reprend l'ornement du thème.
  */
 function Losange({ couleur }: { couleur: ColorValue }) {
+  const styles = useStyles(creerStyles);
   return <View style={[styles.losange, { backgroundColor: couleur }]} />;
 }
 
 function Curseurs({ couleur }: { couleur: ColorValue }) {
+  const styles = useStyles(creerStyles);
   return (
     <View style={styles.curseurs}>
       <View style={[styles.curseur, { backgroundColor: couleur, width: 20 }]} />
@@ -77,17 +82,18 @@ function Curseurs({ couleur }: { couleur: ColorValue }) {
   );
 }
 
-const styles = StyleSheet.create({
+const creerStyles = (c: Couleurs) => StyleSheet.create({
   attente: {
     flex: 1,
-    backgroundColor: COULEURS.nuit950,
+    backgroundColor: c.fond,
   },
   barre: {
-    backgroundColor: COULEURS.nuit900,
-    borderTopColor: COULEURS.nuit700,
+    backgroundColor: c.fond,
+    borderTopColor: c.fond3,
     borderTopWidth: 1,
   },
   etiquette: {
+    fontFamily: POLICE_TEXTE,
     fontSize: 11,
     letterSpacing: 0.5,
   },

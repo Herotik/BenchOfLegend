@@ -21,16 +21,19 @@ import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
 import { Ecusson, LibelleRang } from "../../src/composants/Ecusson";
 import { Chargement, EcranErreur } from "../../src/composants/Etats";
 import { jourCivilISO, jourEnFrancais, lundiCivilISO } from "../../src/outils/dates";
-import { COULEURS, POLICE_TITRE } from "../../src/theme/couleurs";
+import { POLICE_TEXTE_MOYEN, POLICE_TEXTE_GRAS, POLICE_TEXTE, POLICE_TITRE, type Couleurs } from "../../src/theme/couleurs";
+import { useCouleurs, useStyles } from "../../src/theme/theme";
 
 /**
  * Écran « Aujourd'hui ».
  *
  * Tout ce qui s'y affiche vient du serveur : le rang et la progression de
  * `GET /me`, les séances du jour de `GET /plan`, les agrégats de `GET /stats`.
- * L'app ne calcule ni LP, ni rang, ni assiduité.
+ * L'app ne calcule ni Δ, ni rang, ni assiduité.
  */
 export default function Aujourdhui() {
+  const styles = useStyles(creerStyles);
+  const c = useCouleurs();
   const { moi, erreurProfil, rafraichirProfil } = useSession();
   const { libelleGroupe } = useReferentiel();
   const router = useRouter();
@@ -82,7 +85,7 @@ export default function Aujourdhui() {
   }, [jour]);
 
   // Rechargement à chaque retour sur l'onglet : une séance validée change le
-  // rang, les LP et le statut du jour de plan. Sans cela, l'écran mentirait
+  // rang, les Δ et le statut du jour de plan. Sans cela, l'écran mentirait
   // jusqu'au prochain démarrage.
   useFocusEffect(
     useCallback(() => {
@@ -134,8 +137,8 @@ export default function Aujourdhui() {
         <RefreshControl
           refreshing={rafraichit}
           onRefresh={relancer}
-          tintColor={COULEURS.or500}
-          colors={[COULEURS.or500]}
+          tintColor={c.accent}
+          colors={[c.accent]}
         />
       }
     >
@@ -150,18 +153,18 @@ export default function Aujourdhui() {
         <Carte style={styles.carteRang}>
           <Ecusson rang={moi.rang} />
           <LibelleRang rang={moi.rang} />
-          <Text style={styles.lp}>{moi.lp} LP</Text>
+          <Text style={styles.lp}>{moi.lp} Δ</Text>
           <BarreProgression
             part={moi.rang.progression}
             couleur={moi.rang.couleur}
-            gauche={`${moi.rang.lpDansDivision} / ${moi.rang.lpProchaineDivision} LP`}
+            gauche={`${moi.rang.lpDansDivision} / ${moi.rang.lpProchaineDivision} Δ`}
             droite={
               moi.rang.division === null
                 ? "Rang final"
                 : `Encore ${Math.max(
                     moi.rang.lpProchaineDivision - moi.rang.lpDansDivision,
                     0,
-                  )} LP`
+                  )} Δ`
             }
           />
         </Carte>
@@ -241,6 +244,7 @@ export default function Aujourdhui() {
 }
 
 function Tuile({ valeur, legende }: { valeur: string; legende: string }) {
+  const styles = useStyles(creerStyles);
   return (
     <View style={styles.tuile}>
       <Text style={styles.tuileValeur}>{valeur}</Text>
@@ -251,12 +255,13 @@ function Tuile({ valeur, legende }: { valeur: string; legende: string }) {
 
 /** Le profil se remplit sur le web : l'app n'embarque pas l'onboarding. */
 function CarteOnboarding() {
+  const styles = useStyles(creerStyles);
   return (
     <Carte style={styles.carteAlerte}>
       <Text style={styles.alerteTitre}>Profil à compléter</Text>
       <Text style={styles.alerteTexte}>
         Ton compte existe, mais le questionnaire d&apos;entrée — niveau, matériel, groupes,
-        objectif — n&apos;a pas encore été rempli. Ouvre La Faille dans un navigateur pour le
+        objectif — n&apos;a pas encore été rempli. Ouvre Frame of Legends dans un navigateur pour le
         terminer, puis reviens ici : plan, séances et statistiques s&apos;afficheront.
       </Text>
     </Carte>
@@ -266,10 +271,12 @@ function CarteOnboarding() {
 /**
  * Pesée du jour.
  *
- * Elle rapporte des LP la première fois seulement (`BAREME.pesee`), et la route
+ * Elle rapporte des Δ la première fois seulement (`BAREME.pesee`), et la route
  * est idempotente dans la journée : corriger sa valeur ne recrédite rien.
  */
 function CartePesee({ onEnregistree }: { onEnregistree: () => void }) {
+  const styles = useStyles(creerStyles);
+  const c = useCouleurs();
   const [saisie, setSaisie] = useState("");
   const [enCours, setEnCours] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -289,7 +296,7 @@ function CartePesee({ onEnregistree }: { onEnregistree: () => void }) {
       .then((resultat) => {
         setMessage(
           resultat.lpGagnes > 0
-            ? `Pesée enregistrée · +${resultat.lpGagnes} LP${
+            ? `Pesée enregistrée · +${resultat.lpGagnes} Δ${
                 resultat.promotion ? ` · ${resultat.rang} !` : ""
               }`
             : "Pesée mise à jour.",
@@ -305,14 +312,14 @@ function CartePesee({ onEnregistree }: { onEnregistree: () => void }) {
   return (
     <Carte style={styles.cartePesee}>
       <Text style={styles.peseeTitre}>Tu ne t&apos;es pas pesé aujourd&apos;hui</Text>
-      <Text style={styles.peseeTexte}>Une pesée par jour suffit, et elle rapporte des LP.</Text>
+      <Text style={styles.peseeTexte}>Une pesée par jour suffit, et elle rapporte des Δ.</Text>
       <View style={styles.peseeLigne}>
         <TextInput
           value={saisie}
           onChangeText={setSaisie}
           keyboardType="decimal-pad"
           placeholder="78,4"
-          placeholderTextColor={COULEURS.cendre}
+          placeholderTextColor={c.texte3}
           style={styles.champ}
           accessibilityLabel="Poids du jour en kilos"
           returnKeyType="done"
@@ -340,6 +347,7 @@ function SeancesBonus({
   groupes: string[];
   dejaPrevus: string[];
 }) {
+  const styles = useStyles(creerStyles);
   const { libelleGroupe } = useReferentiel();
   const router = useRouter();
 
@@ -378,23 +386,24 @@ function legendeStatut(statut: JourPlan["statut"]): string {
   }
 }
 
-const styles = StyleSheet.create({
+const creerStyles = (c: Couleurs) => StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: COULEURS.nuit950,
+    backgroundColor: c.fond,
   },
   contenu: {
     paddingHorizontal: 18,
     gap: 12,
   },
   date: {
-    color: COULEURS.or500,
+    fontFamily: POLICE_TEXTE_GRAS,
+    color: c.accent,
     fontSize: 11,
     letterSpacing: 2.5,
     fontWeight: "700",
   },
   salutation: {
-    color: COULEURS.ivoire,
+    color: c.texte,
     fontFamily: POLICE_TITRE,
     fontSize: 28,
     marginBottom: 4,
@@ -404,13 +413,15 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   lp: {
-    color: COULEURS.or400,
+    fontFamily: POLICE_TEXTE_GRAS,
+    color: c.accent,
     fontSize: 18,
     fontWeight: "700",
     letterSpacing: 1,
   },
   avertissement: {
-    color: COULEURS.manque,
+    fontFamily: POLICE_TEXTE,
+    color: c.negatif,
     fontSize: 13,
   },
   tuiles: {
@@ -421,8 +432,8 @@ const styles = StyleSheet.create({
   tuile: {
     flexGrow: 1,
     flexBasis: "46%",
-    backgroundColor: COULEURS.nuit850,
-    borderColor: COULEURS.nuit700,
+    backgroundColor: c.fond2,
+    borderColor: c.fond3,
     borderWidth: 1,
     borderRadius: 12,
     paddingVertical: 14,
@@ -430,25 +441,29 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   tuileValeur: {
-    color: COULEURS.ivoire,
+    fontFamily: POLICE_TEXTE_GRAS,
+    color: c.texte,
     fontSize: 22,
     fontWeight: "700",
   },
   tuileLegende: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 12,
   },
   carteAlerte: {
-    borderColor: COULEURS.or600,
+    borderColor: c.accent,
     gap: 8,
   },
   alerteTitre: {
-    color: COULEURS.or400,
+    fontFamily: POLICE_TEXTE_GRAS,
+    color: c.accent,
     fontSize: 16,
     fontWeight: "700",
   },
   alerteTexte: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 13,
     lineHeight: 20,
   },
@@ -456,12 +471,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   peseeTitre: {
-    color: COULEURS.ivoire,
+    fontFamily: POLICE_TEXTE_MOYEN,
+    color: c.texte,
     fontSize: 16,
     fontWeight: "600",
   },
   peseeTexte: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 13,
   },
   peseeLigne: {
@@ -470,10 +487,15 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   champ: {
+    fontFamily: POLICE_TEXTE,
     flex: 1,
-    color: COULEURS.ivoire,
-    backgroundColor: COULEURS.nuit900,
-    borderColor: COULEURS.nuit600,
+    // Un champ de saisie se donne une largeur naturelle d'une vingtaine de
+    // caractères. Sans plancher à zéro, il refuse de descendre en dessous et
+    // pousse le bouton hors de la carte.
+    minWidth: 0,
+    color: c.texte,
+    backgroundColor: c.fond,
+    borderColor: c.filet,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 12,
@@ -481,21 +503,24 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   unite: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 15,
   },
   peseeBouton: {
     paddingHorizontal: 22,
+    flexShrink: 0,
   },
   peseeMessage: {
-    color: COULEURS.or400,
+    fontFamily: POLICE_TEXTE,
+    color: c.accent,
     fontSize: 13,
   },
   seance: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COULEURS.nuit850,
-    borderColor: COULEURS.nuit700,
+    backgroundColor: c.fond2,
+    borderColor: c.fond3,
     borderWidth: 1,
     borderRadius: 14,
     paddingVertical: 16,
@@ -509,27 +534,32 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   seanceGroupe: {
-    color: COULEURS.ivoire,
+    fontFamily: POLICE_TEXTE_MOYEN,
+    color: c.texte,
     fontSize: 18,
     fontWeight: "600",
   },
   seanceStatut: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 13,
   },
   chevron: {
-    color: COULEURS.or500,
+    fontFamily: POLICE_TEXTE,
+    color: c.accent,
     fontSize: 28,
     lineHeight: 30,
   },
   reposTitre: {
-    color: COULEURS.ivoire,
+    fontFamily: POLICE_TEXTE_MOYEN,
+    color: c.texte,
     fontSize: 17,
     fontWeight: "600",
     marginBottom: 6,
   },
   reposTexte: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 13,
     lineHeight: 20,
   },
@@ -538,7 +568,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   bonusTitre: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE_GRAS,
+    color: c.texte2,
     fontSize: 12,
     letterSpacing: 2,
     fontWeight: "700",
@@ -549,15 +580,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   pastille: {
-    borderColor: COULEURS.nuit600,
+    borderColor: c.filet,
     borderWidth: 1,
     borderRadius: 999,
     paddingVertical: 8,
     paddingHorizontal: 14,
-    backgroundColor: COULEURS.nuit900,
+    backgroundColor: c.fond,
   },
   pastilleTexte: {
-    color: COULEURS.ivoire,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte,
     fontSize: 13,
   },
   pied: {

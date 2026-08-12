@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
-import { COULEURS } from "../theme/couleurs";
+import { POLICE_TEXTE_MOYEN, type Couleurs } from "../theme/couleurs";
+import { useCouleurs, useStyles } from "../theme/theme";
 import type { StatutExercice } from "../api/types";
 
 /**
@@ -19,6 +20,8 @@ export function FilAriane({
   courant: number;
   statuts: (StatutExercice | undefined)[];
 }) {
+  const styles = useStyles(creerStyles);
+  const c = useCouleurs();
   return (
     <View style={styles.bloc}>
       <View style={styles.segments}>
@@ -28,7 +31,7 @@ export function FilAriane({
             style={[
               styles.segment,
               index === courant && styles.segmentCourant,
-              { backgroundColor: couleurSegment(statuts[index], index === courant) },
+              { backgroundColor: couleurSegment(c, statuts[index], index === courant) },
             ]}
           />
         ))}
@@ -44,14 +47,18 @@ export function FilAriane({
  * Le rouge est proscrit : la spec interdit de culpabiliser. Un exercice non
  * fait reste neutre, un exercice entamé sans être bouclé prend l'or terni.
  */
-function couleurSegment(statut: StatutExercice | undefined, courant: boolean): string {
-  if (statut === "fait") return COULEURS.succes;
-  if (statut === "partiel") return COULEURS.or600;
-  if (statut === "non_fait") return COULEURS.nuit600;
-  return courant ? COULEURS.or500 : COULEURS.nuit700;
+function couleurSegment(
+  c: Couleurs,
+  statut: StatutExercice | undefined,
+  courant: boolean,
+): string {
+  if (statut === "fait") return c.positif;
+  if (statut === "partiel") return c.accent;
+  if (statut === "non_fait") return c.filet;
+  return courant ? c.accent : c.fond3;
 }
 
-const styles = StyleSheet.create({
+const creerStyles = (c: Couleurs) => StyleSheet.create({
   bloc: {
     gap: 8,
   },
@@ -69,7 +76,8 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   compteur: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE_MOYEN,
+    color: c.texte2,
     fontSize: 12,
     letterSpacing: 1.5,
     fontWeight: "600",

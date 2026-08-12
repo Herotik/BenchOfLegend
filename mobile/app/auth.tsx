@@ -4,7 +4,7 @@ import { View } from "react-native";
 import { useSession } from "../src/auth/session";
 import { echangerCode } from "../src/auth/relais";
 import { Chargement, EcranErreur } from "../src/composants/Etats";
-import { COULEURS } from "../src/theme/couleurs";
+import { useCouleurs } from "../src/theme/theme";
 
 /**
  * Retour du relais navigateur.
@@ -23,6 +23,7 @@ export default function RetourAuth() {
   const { etat, adopterEchange } = useSession();
   const [erreur, setErreur] = useState<string | null>(null);
   const [fini, setFini] = useState(false);
+  const c = useCouleurs();
 
   useEffect(() => {
     if (!code) {
@@ -50,7 +51,7 @@ export default function RetourAuth() {
 
   if (erreur) {
     return (
-      <View style={{ flex: 1, backgroundColor: COULEURS.nuit950 }}>
+      <View style={{ flex: 1, backgroundColor: c.fond }}>
         <EcranErreur message={erreur} />
       </View>
     );
@@ -58,7 +59,7 @@ export default function RetourAuth() {
 
   if (!fini) {
     return (
-      <View style={{ flex: 1, backgroundColor: COULEURS.nuit950 }}>
+      <View style={{ flex: 1, backgroundColor: c.fond }}>
         <Chargement message="Ouverture de la session…" />
       </View>
     );

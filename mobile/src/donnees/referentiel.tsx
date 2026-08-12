@@ -13,10 +13,10 @@ import type { Referentiel } from "../api/types";
 /**
  * Référentiels servis par `GET /api/v1/referentiel`.
  *
- * **Rien n'est recopié en dur dans l'app** : noms de rangs, seuils de LP,
+ * **Rien n'est recopié en dur dans l'app** : noms de rangs, seuils de Δ,
  * libellés de matériel, d'objectifs et de ressentis viennent tous du serveur.
  * C'est la règle qui évite le bug qu'avait connu l'aperçu web, lequel annonçait
- * 20 LP sur une séance bonus qui en rapporte 8.
+ * 20 Δ sur une séance bonus qui en rapporte 8.
  *
  * La route est publique et déclarée cachable une heure : un seul chargement au
  * démarrage suffit.

@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import { COULEURS, POLICE_TITRE } from "../theme/couleurs";
+import { POLICE_TEXTE_GRAS, POLICE_TITRE, type Couleurs } from "../theme/couleurs";
+import { useStyles } from "../theme/theme";
 
 /**
  * Surface de contenu, équivalent natif de l'utilitaire `surface` du web
@@ -12,11 +13,13 @@ export function Carte({
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
+  const styles = useStyles(creerStyles);
   return <View style={[styles.carte, style]}>{children}</View>;
 }
 
 /** Intitulé de section : petites capitales espacées, filet doré. */
 export function TitreSection({ children }: { children: string }) {
+  const styles = useStyles(creerStyles);
   return (
     <View style={styles.titreLigne}>
       <Text style={styles.titreTexte}>{children.toUpperCase()}</Text>
@@ -27,6 +30,7 @@ export function TitreSection({ children }: { children: string }) {
 
 /** Grand titre en sérif, comme les h1/h2 du web. */
 export function Titre({ children, style }: { children: string; style?: StyleProp<ViewStyle> }) {
+  const styles = useStyles(creerStyles);
   return (
     <View style={style}>
       <Text style={styles.grandTitre}>{children}</Text>
@@ -39,6 +43,7 @@ export function Titre({ children, style }: { children: string; style?: StyleProp
  * Sert à séparer les grands moments — bilan de séance, écran de connexion.
  */
 export function Ornement({ style }: { style?: StyleProp<ViewStyle> }) {
+  const styles = useStyles(creerStyles);
   return (
     <View style={[styles.ornement, style]}>
       <View style={styles.ornementTrait} />
@@ -48,10 +53,10 @@ export function Ornement({ style }: { style?: StyleProp<ViewStyle> }) {
   );
 }
 
-const styles = StyleSheet.create({
+const creerStyles = (c: Couleurs) => StyleSheet.create({
   carte: {
-    backgroundColor: COULEURS.nuit850,
-    borderColor: COULEURS.nuit700,
+    backgroundColor: c.fond2,
+    borderColor: c.fond3,
     borderWidth: 1,
     borderRadius: 14,
     padding: 16,
@@ -63,7 +68,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   titreTexte: {
-    color: COULEURS.or500,
+    fontFamily: POLICE_TEXTE_GRAS,
+    color: c.accent,
     fontSize: 12,
     letterSpacing: 2,
     fontWeight: "700",
@@ -71,10 +77,10 @@ const styles = StyleSheet.create({
   filet: {
     flex: 1,
     height: 1,
-    backgroundColor: COULEURS.nuit700,
+    backgroundColor: c.fond3,
   },
   grandTitre: {
-    color: COULEURS.ivoire,
+    color: c.texte,
     fontFamily: POLICE_TITRE,
     fontSize: 30,
     letterSpacing: 1,
@@ -88,13 +94,13 @@ const styles = StyleSheet.create({
   ornementTrait: {
     height: 1,
     width: 48,
-    backgroundColor: COULEURS.or600,
+    backgroundColor: c.accent,
     opacity: 0.7,
   },
   ornementLosange: {
     width: 8,
     height: 8,
-    backgroundColor: COULEURS.or500,
+    backgroundColor: c.accent,
     transform: [{ rotate: "45deg" }],
   },
 });

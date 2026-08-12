@@ -21,7 +21,7 @@ import { connecterParNavigateur } from "./relais";
 /**
  * État de connexion, partagé par toute l'app.
  *
- * Le profil (`moi`) vit ici plutôt que dans chaque écran : le rang et les LP
+ * Le profil (`moi`) vit ici plutôt que dans chaque écran : le rang et les Δ
  * changent à chaque validation de séance et à chaque pesée, et deux écrans qui
  * les rechargeraient chacun de leur côté finiraient par afficher deux totaux
  * différents.

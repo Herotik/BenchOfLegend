@@ -2,7 +2,7 @@ import { Redirect } from "expo-router";
 import { View } from "react-native";
 import { useSession } from "../src/auth/session";
 import { Chargement } from "../src/composants/Etats";
-import { COULEURS } from "../src/theme/couleurs";
+import { useCouleurs } from "../src/theme/theme";
 
 /**
  * Aiguillage d'entrée.
@@ -14,11 +14,12 @@ import { COULEURS } from "../src/theme/couleurs";
  */
 export default function Aiguillage() {
   const { etat } = useSession();
+  const c = useCouleurs();
 
   if (etat === "chargement") {
     return (
-      <View style={{ flex: 1, backgroundColor: COULEURS.nuit950 }}>
-        <Chargement message="Ouverture de la Faille…" />
+      <View style={{ flex: 1, backgroundColor: c.fond }}>
+        <Chargement message="Ouverture…" />
       </View>
     );
   }

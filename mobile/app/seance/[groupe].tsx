@@ -26,7 +26,8 @@ import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
 import { ChronoRepos } from "../../src/composants/Chrono";
 import { Chargement, EcranErreur } from "../../src/composants/Etats";
 import { FilAriane } from "../../src/composants/FilAriane";
-import { COULEURS, POLICE_TITRE } from "../../src/theme/couleurs";
+import { POLICE_TEXTE_MOYEN, POLICE_TEXTE_GRAS, POLICE_TEXTE, POLICE_TITRE, type Couleurs } from "../../src/theme/couleurs";
+import { useCouleurs, useStyles } from "../../src/theme/theme";
 
 /**
  * Séance guidée — l'écran central de l'app.
@@ -35,7 +36,7 @@ import { COULEURS, POLICE_TITRE } from "../../src/theme/couleurs";
  * s'entraîne, le téléphone posé au sol, et il faut pouvoir lire la consigne et
  * répondre d'un appui.
  *
- * Aucune règle métier ici : la séance vient de `GET /seance`, les LP et le rang
+ * Aucune règle métier ici : la séance vient de `GET /seance`, les Δ et le rang
  * de `POST /seance/valider`. L'app n'envoie que trois choses — le statut de
  * chaque exercice, la charge utilisée, et le ressenti final.
  */
@@ -53,6 +54,7 @@ const CHARGE_MIN = 0;
 const CHARGE_MAX = 500;
 
 export default function SeanceGuidee() {
+  const styles = useStyles(creerStyles);
   const { groupe } = useLocalSearchParams<{ groupe: string }>();
   const router = useRouter();
   const marges = useSafeAreaInsets();
@@ -155,7 +157,7 @@ export default function SeanceGuidee() {
         .then((resultat) => {
           setBilan(resultat);
           setPhase("bilan");
-          // Le rang et les LP viennent de changer : l'onglet « Aujourd'hui »
+          // Le rang et les Δ viennent de changer : l'onglet « Aujourd'hui »
           // doit repartir du nouveau total, pas de celui d'avant la séance.
           void rafraichirProfil();
         })
@@ -178,16 +180,16 @@ export default function SeanceGuidee() {
     const bareme = referentiel.lp.bareme;
 
     if (bonus && donnees.bonusDejaCompte) {
-      return "Un bonus a déjà été compté aujourd'hui : celle-ci ne rapportera pas de LP.";
+      return "Un bonus a déjà été compté aujourd'hui : celle-ci ne rapportera pas de Δ.";
     }
 
     const base = bonus
-      ? `Séance bonus · +${bareme.seanceBonus} LP`
-      : `Séance du jour · jusqu'à +${bareme.seanceComplete} LP`;
+      ? `Séance bonus · +${bareme.seanceBonus} Δ`
+      : `Séance du jour · jusqu'à +${bareme.seanceComplete} Δ`;
 
     const regularite =
       donnees.seancesSur7Jours >= referentiel.lp.seancesAvantRegularite
-        ? ` · +${bareme.regularite} LP de régularité`
+        ? ` · +${bareme.regularite} Δ de régularité`
         : "";
 
     return `${base}${regularite}`;
@@ -293,6 +295,8 @@ function EtapeExercice({
   onInachevee: () => void;
   onPassee: () => void;
 }) {
+  const styles = useStyles(creerStyles);
+  const c = useCouleurs();
   return (
     <>
       {premier ? (
@@ -349,7 +353,7 @@ function EtapeExercice({
               onChangeText={onCharge}
               keyboardType="decimal-pad"
               placeholder="0"
-              placeholderTextColor={COULEURS.cendre}
+              placeholderTextColor={c.texte3}
               style={styles.champ}
               accessibilityLabel={`Charge utilisée sur ${exercice.nom}, en kilos`}
               returnKeyType="done"
@@ -405,6 +409,7 @@ function EtapeRessenti({
   envoi: boolean;
   onChoisir: (ressenti: Ressenti) => void;
 }) {
+  const styles = useStyles(creerStyles);
   const { referentiel, chargement, recharger } = useReferentiel();
 
   if (!referentiel) {
@@ -444,6 +449,7 @@ function EtapeRessenti({
 // ---------------------------------------------------------------------------
 
 function EtapeBilan({ bilan, onFini }: { bilan: ReponseValidation; onFini: () => void }) {
+  const styles = useStyles(creerStyles);
   const [proposition, setProposition] = useState(bilan.proposition);
   const [ajustement, setAjustement] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -466,7 +472,7 @@ function EtapeBilan({ bilan, onFini }: { bilan: ReponseValidation; onFini: () =>
   return (
     <View style={styles.fin}>
       <Ornement />
-      <Text style={styles.gain}>+{bilan.lpGagnes} LP</Text>
+      <Text style={styles.gain}>+{bilan.lpGagnes} Δ</Text>
       <Text style={styles.finTexte}>
         {bilan.promotion ? `Nouveau palier : ${bilan.rang}` : bilan.rang}
       </Text>
@@ -474,7 +480,7 @@ function EtapeBilan({ bilan, onFini }: { bilan: ReponseValidation; onFini: () =>
       <Carte style={styles.detail}>
         {bilan.details.length === 0 ? (
           <Text style={styles.detailVide}>
-            Pas assez d&apos;exercices bouclés pour créditer des LP cette fois. Aucune perte : le
+            Pas assez d&apos;exercices bouclés pour créditer des Δ cette fois. Aucune perte : le
             compteur ne recule jamais.
           </Text>
         ) : (
@@ -487,7 +493,7 @@ function EtapeBilan({ bilan, onFini }: { bilan: ReponseValidation; onFini: () =>
         )}
         <View style={styles.detailTotal}>
           <Text style={styles.detailLibelle}>Total du compte</Text>
-          <Text style={styles.detailLp}>{bilan.lpTotal} LP</Text>
+          <Text style={styles.detailLp}>{bilan.lpTotal} Δ</Text>
         </View>
       </Carte>
 
@@ -528,16 +534,16 @@ function nombreOuNull(valeur: string | undefined): number | null {
   return nombre >= CHARGE_MIN && nombre <= CHARGE_MAX ? nombre : null;
 }
 
-const styles = StyleSheet.create({
+const creerStyles = (c: Couleurs) => StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: COULEURS.nuit950,
+    backgroundColor: c.fond,
   },
   entete: {
     paddingHorizontal: 18,
     paddingBottom: 14,
     gap: 12,
-    borderBottomColor: COULEURS.nuit800,
+    borderBottomColor: c.fond2,
     borderBottomWidth: 1,
   },
   enteteLigne: {
@@ -546,11 +552,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   retour: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 15,
   },
   groupe: {
-    color: COULEURS.or500,
+    fontFamily: POLICE_TEXTE_GRAS,
+    color: c.accent,
     fontSize: 12,
     letterSpacing: 2,
     fontWeight: "700",
@@ -562,15 +570,17 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   carteAlerte: {
-    borderColor: COULEURS.or600,
+    borderColor: c.accent,
   },
   alerteTexte: {
-    color: COULEURS.or400,
+    fontFamily: POLICE_TEXTE,
+    color: c.accent,
     fontSize: 13,
     lineHeight: 20,
   },
   apercu: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 13,
     textAlign: "center",
   },
@@ -578,31 +588,35 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   echauffementTitre: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE_GRAS,
+    color: c.texte2,
     fontSize: 11,
     letterSpacing: 2,
     fontWeight: "700",
     marginBottom: 4,
   },
   echauffementLigne: {
-    color: COULEURS.ivoire,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte,
     fontSize: 13,
     lineHeight: 20,
   },
   nom: {
-    color: COULEURS.ivoire,
+    color: c.texte,
     fontFamily: POLICE_TITRE,
     fontSize: 30,
     lineHeight: 38,
   },
   prescription: {
-    color: COULEURS.or400,
+    fontFamily: POLICE_TEXTE_MOYEN,
+    color: c.accent,
     fontSize: 17,
     fontWeight: "600",
     marginTop: -6,
   },
   finisher: {
-    color: COULEURS.hextech400,
+    fontFamily: POLICE_TEXTE_GRAS,
+    color: c.accent,
     fontSize: 12,
     letterSpacing: 2,
     fontWeight: "700",
@@ -611,19 +625,22 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   consigneTexte: {
-    color: COULEURS.ivoire,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte,
     fontSize: 14,
     lineHeight: 22,
   },
   progression: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 12,
   },
   charge: {
     gap: 8,
   },
   chargeTitre: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE_GRAS,
+    color: c.texte2,
     fontSize: 11,
     letterSpacing: 2,
     fontWeight: "700",
@@ -634,10 +651,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   champ: {
+    fontFamily: POLICE_TEXTE,
     flex: 1,
-    color: COULEURS.ivoire,
-    backgroundColor: COULEURS.nuit900,
-    borderColor: COULEURS.nuit600,
+    color: c.texte,
+    backgroundColor: c.fond,
+    borderColor: c.filet,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 12,
@@ -645,15 +663,18 @@ const styles = StyleSheet.create({
     fontSize: 22,
   },
   unite: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 16,
   },
   chargeAide: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 12,
   },
   chargeErreur: {
-    color: COULEURS.manque,
+    fontFamily: POLICE_TEXTE,
+    color: c.negatif,
     fontSize: 12,
   },
   actions: {
@@ -665,18 +686,19 @@ const styles = StyleSheet.create({
     alignItems: "stretch",
   },
   finTitre: {
-    color: COULEURS.ivoire,
+    color: c.texte,
     fontFamily: POLICE_TITRE,
     fontSize: 30,
     textAlign: "center",
   },
   finTexte: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 15,
     textAlign: "center",
   },
   gain: {
-    color: COULEURS.or400,
+    color: c.accent,
     fontFamily: POLICE_TITRE,
     fontSize: 46,
     textAlign: "center",
@@ -691,26 +713,30 @@ const styles = StyleSheet.create({
   detailTotal: {
     flexDirection: "row",
     justifyContent: "space-between",
-    borderTopColor: COULEURS.nuit700,
+    borderTopColor: c.fond3,
     borderTopWidth: 1,
     paddingTop: 10,
   },
   detailLibelle: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 14,
   },
   detailLp: {
-    color: COULEURS.or400,
+    fontFamily: POLICE_TEXTE_GRAS,
+    color: c.accent,
     fontSize: 14,
     fontWeight: "700",
   },
   detailVide: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 13,
     lineHeight: 20,
   },
   erreurTexte: {
-    color: COULEURS.manque,
+    fontFamily: POLICE_TEXTE,
+    color: c.negatif,
     fontSize: 13,
     textAlign: "center",
   },

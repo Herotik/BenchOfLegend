@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BASE_API } from "../../src/api/client";
 import { useSession } from "../../src/auth/session";
@@ -8,7 +8,8 @@ import { Bouton } from "../../src/composants/Bouton";
 import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
 import { Chargement } from "../../src/composants/Etats";
 import { jourEnFrancais } from "../../src/outils/dates";
-import { COULEURS, POLICE_TITRE } from "../../src/theme/couleurs";
+import { POLICE_TEXTE_MOYEN, POLICE_TEXTE, POLICE_TITRE, type Couleurs } from "../../src/theme/couleurs";
+import { useStyles, useTheme, type ChoixTheme } from "../../src/theme/theme";
 
 /**
  * Réglages : profil en lecture seule, et déconnexion.
@@ -18,6 +19,7 @@ import { COULEURS, POLICE_TITRE } from "../../src/theme/couleurs";
  * les montre telles que le serveur les renvoie.
  */
 export default function Reglages() {
+  const styles = useStyles(creerStyles);
   const { moi, seDeconnecter } = useSession();
   const { libelleGroupe, libelleMateriel, libelleNiveau, libelleObjectif } = useReferentiel();
   const marges = useSafeAreaInsets();
@@ -48,7 +50,7 @@ export default function Reglages() {
         <Ligne etiquette="Adresse" valeur={utilisateur.email ?? "—"} />
         <Ligne etiquette="Inscrit le" valeur={jourEnFrancais(utilisateur.inscritLe.slice(0, 10))} />
         <Ligne etiquette="Rang" valeur={`${rang.libelle} · ${rang.sousTitre}`} />
-        <Ligne etiquette="LP" valeur={`${moi.lp}`} />
+        <Ligne etiquette="Δ" valeur={`${moi.lp}`} />
       </Carte>
 
       <TitreSection>Entraînement</TitreSection>
@@ -97,6 +99,11 @@ export default function Reglages() {
         </>
       ) : null}
 
+      <TitreSection>Apparence</TitreSection>
+      <Carte style={styles.carte}>
+        <ChoixApparence />
+      </Carte>
+
       <Ornement style={styles.ornement} />
 
       <Bouton
@@ -112,7 +119,45 @@ export default function Reglages() {
   );
 }
 
+const APPARENCES: { valeur: ChoixTheme; libelle: string }[] = [
+  { valeur: "systeme", libelle: "Système" },
+  { valeur: "clair", libelle: "Clair" },
+  { valeur: "sombre", libelle: "Sombre" },
+];
+
+/**
+ * Le thème est un réglage d'appareil, pas une préférence de compte : il ne
+ * passe donc pas par `PUT /me/preferences`. Quelqu'un peut vouloir son iPhone
+ * en sombre et son iPad en clair.
+ */
+function ChoixApparence() {
+  const styles = useStyles(creerStyles);
+  const { choix, definirChoix } = useTheme();
+
+  return (
+    <View style={styles.segments}>
+      {APPARENCES.map((option) => {
+        const actif = option.valeur === choix;
+        return (
+          <Pressable
+            key={option.valeur}
+            onPress={() => definirChoix(option.valeur)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: actif }}
+            style={[styles.segment, actif && styles.segmentActif]}
+          >
+            <Text style={[styles.segmentTexte, actif && styles.segmentTexteActif]}>
+              {option.libelle}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 function Ligne({ etiquette, valeur }: { etiquette: string; valeur: string }) {
+  const styles = useStyles(creerStyles);
   return (
     <View style={styles.ligne}>
       <Text style={styles.etiquette}>{etiquette}</Text>
@@ -131,17 +176,17 @@ function legendeDecalage(decalage: number): string {
   return "Calibrage standard";
 }
 
-const styles = StyleSheet.create({
+const creerStyles = (c: Couleurs) => StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: COULEURS.nuit950,
+    backgroundColor: c.fond,
   },
   contenu: {
     paddingHorizontal: 18,
     gap: 10,
   },
   titre: {
-    color: COULEURS.ivoire,
+    color: c.texte,
     fontFamily: POLICE_TITRE,
     fontSize: 30,
     marginBottom: 8,
@@ -156,11 +201,13 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   etiquette: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 13,
   },
   valeur: {
-    color: COULEURS.ivoire,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte,
     fontSize: 14,
     flexShrink: 1,
     textAlign: "right",
@@ -174,24 +221,55 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   groupeNom: {
-    color: COULEURS.ivoire,
+    fontFamily: POLICE_TEXTE_MOYEN,
+    color: c.texte,
     fontSize: 15,
     fontWeight: "600",
   },
   groupeAide: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 12,
   },
   vide: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
     fontSize: 13,
     lineHeight: 20,
+  },
+  segments: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: 9,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: c.filet,
+    backgroundColor: c.fond,
+  },
+  // Le choix actif se marque au filet et à la couleur du texte, pas à un
+  // aplat d'accent : le porphyre ne porte que l'identité, jamais l'état.
+  segmentActif: {
+    borderColor: c.filetFort,
+    backgroundColor: c.fond3,
+  },
+  segmentTexte: {
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
+    fontSize: 13,
+  },
+  segmentTexteActif: {
+    fontFamily: POLICE_TEXTE_MOYEN,
+    color: c.texte,
   },
   ornement: {
     marginVertical: 16,
   },
   mention: {
-    color: COULEURS.cendre,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte3,
     fontSize: 11,
     textAlign: "center",
     marginTop: 12,

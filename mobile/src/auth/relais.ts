@@ -51,7 +51,7 @@ function nomAppareil(): string {
  * Adresse de retour de l'app.
  *
  * En développement sous Expo Go : `exp://192.168.x.y:8081/--/auth`.
- * En build autonome : `lafaille://auth`.
+ * En build autonome : `frameoflegends://auth`.
  *
  * Les deux schémas figurent dans la liste blanche de `retourAutorise`
  * (`lib/api/relais.ts`) — sans quoi le serveur refuse en `retour_invalide`,

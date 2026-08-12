@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
 /**
@@ -9,8 +10,8 @@ import * as SecureStore from "expo-secure-store";
  * débridé. Un jeton de rafraîchissement vaut soixante jours d'accès au compte.
  */
 
-const CLE_ACCES = "lafaille.jeton_acces";
-const CLE_RAFRAICHISSEMENT = "lafaille.jeton_rafraichissement";
+const CLE_ACCES = "fol.jeton_acces";
+const CLE_RAFRAICHISSEMENT = "fol.jeton_rafraichissement";
 
 /**
  * `AFTER_FIRST_UNLOCK` plutôt que `WHEN_UNLOCKED` : les jetons doivent rester
@@ -21,6 +22,39 @@ const OPTIONS: SecureStore.SecureStoreOptions = {
   keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
 };
 
+/**
+ * Sur le web, `expo-secure-store` n'existe pas — il n'y a pas de trousseau
+ * dans un navigateur. On retombe sur `localStorage`, en sachant ce que cela
+ * vaut : le stockage est lisible par tout script de la page.
+ *
+ * Cette branche ne sert qu'à **prévisualiser les écrans** dans un navigateur
+ * pendant le développement ; les cibles de l'app sont iOS et Android, où le
+ * trousseau s'applique. Si le web devenait un jour une cible réelle, il
+ * faudrait des cookies `HttpOnly` posés par le serveur, pas ce repli.
+ */
+const web = Platform.OS === "web";
+
+async function lire(cle: string): Promise<string | null> {
+  if (web) return globalThis.localStorage?.getItem(cle) ?? null;
+  return SecureStore.getItemAsync(cle, OPTIONS);
+}
+
+async function ecrire(cle: string, valeur: string): Promise<void> {
+  if (web) {
+    globalThis.localStorage?.setItem(cle, valeur);
+    return;
+  }
+  await SecureStore.setItemAsync(cle, valeur, OPTIONS);
+}
+
+async function effacer(cle: string): Promise<void> {
+  if (web) {
+    globalThis.localStorage?.removeItem(cle);
+    return;
+  }
+  await SecureStore.deleteItemAsync(cle, OPTIONS);
+}
+
 export interface Jetons {
   accessToken: string;
   refreshToken: string;
@@ -28,8 +62,8 @@ export interface Jetons {
 
 export async function lireJetons(): Promise<Jetons | null> {
   const [accessToken, refreshToken] = await Promise.all([
-    SecureStore.getItemAsync(CLE_ACCES, OPTIONS),
-    SecureStore.getItemAsync(CLE_RAFRAICHISSEMENT, OPTIONS),
+    lire(CLE_ACCES),
+    lire(CLE_RAFRAICHISSEMENT),
   ]);
 
   // Les deux ou rien : un jeton d'accès seul expire en quinze minutes et
@@ -41,14 +75,11 @@ export async function lireJetons(): Promise<Jetons | null> {
 
 export async function ecrireJetons(jetons: Jetons): Promise<void> {
   await Promise.all([
-    SecureStore.setItemAsync(CLE_ACCES, jetons.accessToken, OPTIONS),
-    SecureStore.setItemAsync(CLE_RAFRAICHISSEMENT, jetons.refreshToken, OPTIONS),
+    ecrire(CLE_ACCES, jetons.accessToken),
+    ecrire(CLE_RAFRAICHISSEMENT, jetons.refreshToken),
   ]);
 }
 
 export async function effacerJetons(): Promise<void> {
-  await Promise.all([
-    SecureStore.deleteItemAsync(CLE_ACCES, OPTIONS),
-    SecureStore.deleteItemAsync(CLE_RAFRAICHISSEMENT, OPTIONS),
-  ]);
+  await Promise.all([effacer(CLE_ACCES), effacer(CLE_RAFRAICHISSEMENT)]);
 }

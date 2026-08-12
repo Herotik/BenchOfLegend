@@ -61,7 +61,7 @@ export async function consommerCodeRelais(code: string): Promise<string | null> 
 export function retourAutorise(url: string): boolean {
   try {
     const schema = new URL(url).protocol.replace(":", "").toLowerCase();
-    return ["exp", "exps", "com.herotik.benchoflegend", "lafaille"].includes(schema);
+    return ["exp", "exps", "com.frameoflegends.app", "frameoflegends"].includes(schema);
   } catch {
     return false;
   }

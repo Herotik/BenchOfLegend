@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { COULEURS } from "../theme/couleurs";
+import { POLICE_TEXTE_GRAS, POLICE_TEXTE, type Couleurs } from "../theme/couleurs";
+import { useCouleurs, useStyles } from "../theme/theme";
 import { chronoEnTexte } from "../outils/dates";
 import { BarreProgression } from "./BarreProgression";
 
@@ -14,6 +15,8 @@ import { BarreProgression } from "./BarreProgression";
  * le temps réellement écoulé.
  */
 export function ChronoRepos({ secondes }: { secondes: number }) {
+  const styles = useStyles(creerStyles);
+  const c = useCouleurs();
   const [restant, setRestant] = useState(secondes);
   const [enMarche, setEnMarche] = useState(false);
   const echeance = useRef<number | null>(null);
@@ -67,7 +70,7 @@ export function ChronoRepos({ secondes }: { secondes: number }) {
       </View>
       <BarreProgression
         part={secondes > 0 ? 1 - restant / secondes : 1}
-        couleur={COULEURS.hextech500}
+        couleur={c.accent}
       />
       <Text style={styles.aide}>
         {enMarche ? "Touche pour arrêter" : termine ? "Repos terminé" : "Touche pour lancer"}
@@ -76,10 +79,10 @@ export function ChronoRepos({ secondes }: { secondes: number }) {
   );
 }
 
-const styles = StyleSheet.create({
+const creerStyles = (c: Couleurs) => StyleSheet.create({
   bloc: {
-    backgroundColor: COULEURS.nuit900,
-    borderColor: COULEURS.nuit700,
+    backgroundColor: c.fond,
+    borderColor: c.fond3,
     borderWidth: 1,
     borderRadius: 12,
     padding: 14,
@@ -91,21 +94,24 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   etiquette: {
-    color: COULEURS.brume,
+    fontFamily: POLICE_TEXTE_GRAS,
+    color: c.texte2,
     fontSize: 12,
     letterSpacing: 2,
     fontWeight: "700",
   },
   valeur: {
-    color: COULEURS.ivoire,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte,
     fontSize: 26,
     fontVariant: ["tabular-nums"],
   },
   valeurActive: {
-    color: COULEURS.hextech400,
+    color: c.accent,
   },
   aide: {
-    color: COULEURS.cendre,
+    fontFamily: POLICE_TEXTE,
+    color: c.texte3,
     fontSize: 12,
   },
 });

@@ -4,7 +4,7 @@ import type { ImageSourcePropType } from "react-native";
  * Écussons de rang, copiés de `public/ranks/` à la racine du dépôt.
  *
  * Ce fichier ne contient **aucune règle métier** : ni nom, ni couleur, ni seuil
- * de LP — tout cela vient de `GET /api/v1/referentiel` et de `GET /api/v1/me`.
+ * de Δ — tout cela vient de `GET /api/v1/referentiel` et de `GET /api/v1/me`.
  * Il ne fait qu'associer un slug à un fichier embarqué, ce que `require` impose
  * de faire avec un chemin littéral : le bundler doit connaître les images à
  * l'avance, une chaîne calculée ne se résoudrait pas.
