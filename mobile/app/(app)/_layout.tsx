@@ -18,7 +18,7 @@ import { useCouleurs, useStyles } from "../../src/theme/theme";
 export default function DispositionOnglets() {
   const styles = useStyles(creerStyles);
   const c = useCouleurs();
-  const { etat } = useSession();
+  const { etat, moi } = useSession();
 
   if (etat === "chargement") {
     return (
@@ -29,6 +29,20 @@ export default function DispositionOnglets() {
   }
 
   if (etat === "deconnecte") return <Redirect href="/connexion" />;
+
+  // Le profil arrive après la session : tant qu'il manque, on attend plutôt
+  // que de laisser voir un tableau de bord sans plan ni préférences.
+  if (!moi) {
+    return (
+      <View style={styles.attente}>
+        <Chargement message="Chargement du profil…" />
+      </View>
+    );
+  }
+
+  // Sans préférences, il n'y a ni plan à afficher ni séance à proposer :
+  // l'onglet « Aujourd'hui » n'aurait rien à montrer.
+  if (!moi.utilisateur.onboarded) return <Redirect href="/onboarding" />;
 
   return (
     <Tabs

@@ -87,6 +87,33 @@ export interface PreferencesApi {
   groupesMusculaires: { groupe: string; priorite: number; decalageNiveau: number }[];
 }
 
+export type Niveau = "DEBUTANT" | "INTERMEDIAIRE" | "AVANCE";
+export type Objectif = "HYPERTROPHIE" | "FORCE" | "ENDURANCE" | "PERTE_DE_POIDS";
+
+/**
+ * Corps de `POST /me/onboarding`.
+ *
+ * Le serveur attend le bloc **entier** : il remplace les préférences plutôt
+ * que de les fusionner, et un envoi partiel effacerait des groupes sans le
+ * dire. Le poids ne s'y trouve que parce que l'onboarding pose la première
+ * pesée, point de départ de la courbe.
+ */
+export interface CorpsOnboarding {
+  tailleCm: number;
+  niveau: Niveau;
+  materiel: string[];
+  groupesMusculaires: string[];
+  pointsForts: string[];
+  objectif: Objectif;
+  joursParSemaine: number;
+  poidsKg: number;
+}
+
+export interface ReponseOnboarding {
+  onboarded: true;
+  preferences: PreferencesApi;
+}
+
 /** Rang et position dans l'échelle, calculés par le serveur. */
 export interface RangCourant {
   slug: string;

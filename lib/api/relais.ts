@@ -60,8 +60,23 @@ export async function consommerCodeRelais(code: string): Promise<string | null> 
  */
 export function retourAutorise(url: string): boolean {
   try {
-    const schema = new URL(url).protocol.replace(":", "").toLowerCase();
-    return ["exp", "exps", "com.frameoflegends.app", "frameoflegends"].includes(schema);
+    const cible = new URL(url);
+    const schema = cible.protocol.replace(":", "").toLowerCase();
+    if (["exp", "exps", "com.frameoflegends.app", "frameoflegends"].includes(schema)) {
+      return true;
+    }
+
+    // En développement seulement, l'app rendue par `react-native-web` sert sur
+    // `http://localhost:<port>` et n'a pas de schéma d'application. Sans cette
+    // ouverture, il n'y aurait aucun moyen de se connecter pour éprouver les
+    // écrans dans un navigateur. Le couple `http` + `localhost` est exigé :
+    // « localhost » ne se résout que sur la machine elle-même, ce qui ne
+    // rouvre pas la redirection ouverte que ce filtre existe pour empêcher.
+    return (
+      process.env.NODE_ENV !== "production" &&
+      schema === "http" &&
+      cible.hostname === "localhost"
+    );
   } catch {
     return false;
   }

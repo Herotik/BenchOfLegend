@@ -1,10 +1,12 @@
 import { appelApi } from "./client";
 import type {
+  CorpsOnboarding,
   CorpsValidation,
   PageHistorique,
   Referentiel,
   ReponseDifficulte,
   ReponseMoi,
+  ReponseOnboarding,
   ReponsePesee,
   ReponsePlan,
   ReponseSeance,
@@ -24,6 +26,13 @@ export const chargerReferentiel = () =>
   appelApi<Referentiel>("/referentiel", { publique: true });
 
 export const chargerMoi = () => appelApi<ReponseMoi>("/me");
+
+/**
+ * Termine l'onboarding. Refusé en 409 si le profil est déjà rempli — le
+ * rejouer écraserait des préférences choisies et la pesée du jour.
+ */
+export const terminerOnboarding = (corps: CorpsOnboarding) =>
+  appelApi<ReponseOnboarding>("/me/onboarding", { methode: "POST", corps });
 
 export const chargerPlan = (debut: string, fin: string) =>
   appelApi<ReponsePlan>("/plan", { parametres: { debut, fin } });
