@@ -1,7 +1,7 @@
 import "server-only";
 import { Prisma, PlanStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { jourUTC } from "@/lib/dates";
+import { jourUTC, midiLocal } from "@/lib/dates";
 import { debutSemaineUTC, grainesSemaine, joursDeLaSemaine } from "@/lib/semaine";
 import { genererPlanSemaine, genererSeance } from "@/lib/engine";
 import type { ExerciceDisponible, ProfilEntrainement, Seance } from "@/lib/engine";
@@ -141,6 +141,13 @@ export async function planSurPlage(userId: string, debut: Date, fin: Date) {
  * Non persistée : elle est régénérée à chaque affichage. La graine combine
  * semaine et jour, si bien qu'un rechargement rend exactement la même séance,
  * mais que les deux séances hebdomadaires d'un même groupe diffèrent.
+ *
+ * `date` désigne un **jour**, pas un instant : quelle que soit l'heure passée,
+ * la graine est celle de midi. Sans cette normalisation, la graine changeait au
+ * passage de minuit UTC — soit 2 h du matin en France : une séance commencée à
+ * 1 h 50 se régénérait autrement à la validation, et les statuts envoyés se
+ * rattachaient à d'autres exercices. C'est aussi ce qui permet de rejouer une
+ * séance faite hier, restée dans la file d'attente hors ligne.
  */
 export async function seanceDuJour(
   userId: string,
@@ -149,7 +156,8 @@ export async function seanceDuJour(
 ): Promise<Seance> {
   const { profil } = await chargerProfil(userId);
   const catalogue = await chargerCatalogue();
-  const graine = grainesSemaine(date) + Math.floor(date.getTime() / 86_400_000);
+  const reference = midiLocal(jourUTC(date));
+  const graine = grainesSemaine(reference) + Math.floor(reference.getTime() / 86_400_000);
   const seance = genererSeance(profil, muscleGroup, catalogue, graine);
 
   // Le moteur reste pur et ignore l'historique : c'est ici qu'on rattache la

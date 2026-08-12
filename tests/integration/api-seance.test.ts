@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest
 import { POST as postValider } from "@/app/api/v1/seance/valider/route";
 import { POST as postDifficulte } from "@/app/api/v1/difficulte/route";
 import { seanceDuJour } from "@/lib/plan-hebdo";
-import { jourUTC } from "@/lib/dates";
+import { jourUTC, midiLocal } from "@/lib/dates";
 import { BAREME } from "@/lib/lp";
 import { creerUtilisateur, nettoyerBase, prisma, reponseJson, requeteApi } from "./aide";
 
@@ -318,6 +318,168 @@ describe("POST /api/v1/seance/valider", () => {
 
     expect(statut).toBe(400);
     expect(await prisma.workoutLog.count()).toBe(0);
+  });
+});
+
+/**
+ * Séances remontées de la file d'attente hors ligne.
+ *
+ * Le cas courant : séance du soir dans une salle sans réseau, app rouverte le
+ * lendemain matin. Sans date déclarée, elle serait refusée en « séance passée »
+ * et la salle aurait été faite pour rien.
+ */
+describe("POST /api/v1/seance/valider — séance différée", () => {
+  const HIER = new Date(jourUTC().getTime() - 86_400_000);
+  const iso = (jour: Date) => jour.toISOString().slice(0, 10);
+
+  /** Jour de plan d'hier, resté au programme, et la séance qui allait avec. */
+  async function seanceDHier() {
+    const user = await creerUtilisateur({ muscleGroups: [{ id: GROUPE }, { id: "dos" }] });
+    const planDay = await prisma.planDay.create({
+      data: { userId: user.id, date: HIER, muscleGroup: GROUPE, status: "PREVU" },
+    });
+    return { user, planDay, seance: await seanceDuJour(user.id, GROUPE, midiLocal(HIER)) };
+  }
+
+  it("date la séance du jour où elle a été faite, et solde ce jour-là", async () => {
+    const { user, planDay, seance } = await seanceDHier();
+    const aUnFinisher = seance.exercices.some((e) => e.finisher);
+
+    const { statut, corps } = await valider(user.id, {
+      planDayId: planDay.id,
+      groupe: GROUPE,
+      bonus: false,
+      statuts: tousFaits(seance.exercices.length),
+      ressenti: "juste",
+      faiteLe: iso(HIER),
+    });
+
+    expect(statut).toBe(201);
+    expect(corps.lpGagnes).toBe(BAREME.seanceComplete + (aUnFinisher ? BAREME.finisher : 0));
+
+    const workout = await prisma.workoutLog.findFirstOrThrow({ where: { userId: user.id } });
+    expect(workout.date).toEqual(HIER);
+    expect((await prisma.planDay.findUniqueOrThrow({ where: { id: planDay.id } })).status).toBe(
+      "FAIT",
+    );
+  });
+
+  it("rejoue les exercices d'hier, pas ceux d'aujourd'hui", async () => {
+    // Le fond du sujet : la séance est régénérée à partir d'une graine du jour.
+    // Prise sur celle d'aujourd'hui, elle sortirait d'autres exercices et les
+    // statuts envoyés se rattacheraient à des mouvements jamais faits.
+    const { user, planDay, seance } = await seanceDHier();
+
+    await valider(user.id, {
+      planDayId: planDay.id,
+      groupe: GROUPE,
+      bonus: false,
+      statuts: tousFaits(seance.exercices.length),
+      ressenti: "juste",
+      faiteLe: iso(HIER),
+    });
+
+    const workout = await prisma.workoutLog.findFirstOrThrow({ where: { userId: user.id } });
+    const noms = (workout.exercises as { name: string }[]).map((e) => e.name);
+    expect(noms).toEqual(seance.exercices.map((e) => e.nom));
+  });
+
+  it("refuse une séance d'avant-hier", async () => {
+    const { user, planDay, seance } = await seanceDHier();
+
+    const { statut, corps } = await valider(user.id, {
+      planDayId: planDay.id,
+      groupe: GROUPE,
+      bonus: false,
+      statuts: tousFaits(seance.exercices.length),
+      ressenti: "juste",
+      faiteLe: iso(new Date(HIER.getTime() - 86_400_000)),
+    });
+
+    expect(statut).toBe(422);
+    expect(corps.code).toBe("date_hors_bornes");
+    expect(await prisma.workoutLog.count()).toBe(0);
+  });
+
+  it("refuse une date à venir", async () => {
+    const { user, planDay, seance } = await seanceDHier();
+
+    const { statut, corps } = await valider(user.id, {
+      planDayId: planDay.id,
+      groupe: GROUPE,
+      bonus: false,
+      statuts: tousFaits(seance.exercices.length),
+      ressenti: "juste",
+      faiteLe: iso(new Date(jourUTC().getTime() + 86_400_000)),
+    });
+
+    expect(statut).toBe(422);
+    expect(corps.code).toBe("date_hors_bornes");
+    expect(await prisma.workoutLog.count()).toBe(0);
+  });
+
+  it("refuse une date qui n'existe pas au calendrier", async () => {
+    const { user, planDay, seance } = await seanceDHier();
+
+    const { statut, corps } = await valider(user.id, {
+      planDayId: planDay.id,
+      groupe: GROUPE,
+      bonus: false,
+      statuts: tousFaits(seance.exercices.length),
+      ressenti: "juste",
+      faiteLe: "2026-02-31",
+    });
+
+    expect(statut).toBe(400);
+    expect(corps.code).toBe("date_invalide");
+    expect(await prisma.workoutLog.count()).toBe(0);
+  });
+
+  it("refuse toujours de solder hier sans date déclarée", async () => {
+    // La règle d'origine tient : sans `faiteLe`, un jour passé reste
+    // irrattrapable. Le rattrapage rétroactif d'un jour manqué n'est pas
+    // ouvert, seul l'envoi différé d'une séance réellement faite l'est.
+    const { user, planDay, seance } = await seanceDHier();
+
+    const { statut, corps } = await valider(user.id, {
+      planDayId: planDay.id,
+      groupe: GROUPE,
+      bonus: false,
+      statuts: tousFaits(seance.exercices.length),
+      ressenti: "juste",
+    });
+
+    expect(statut).toBe(422);
+    expect(corps.code).toBe("seance_passee");
+    expect(await prisma.workoutLog.count()).toBe(0);
+  });
+
+  it("compte une séance bonus d'hier sur les bonus d'hier", async () => {
+    // Le barème se lit au jour de la séance : un bonus déjà compté hier reste
+    // compté, et un bonus d'hier ne consomme pas celui d'aujourd'hui.
+    const { user } = await seanceDHier();
+    const seance = await seanceDuJour(user.id, "dos", midiLocal(HIER));
+    await prisma.workoutLog.create({
+      data: {
+        userId: user.id,
+        date: HIER,
+        muscleGroup: GROUPE,
+        isBonus: true,
+        lpEarned: BAREME.seanceBonus,
+        exercises: [],
+      },
+    });
+
+    const { statut, corps } = await valider(user.id, {
+      groupe: "dos",
+      bonus: true,
+      statuts: tousFaits(seance.exercices.length),
+      ressenti: "juste",
+      faiteLe: iso(HIER),
+    });
+
+    expect(statut).toBe(201);
+    expect(corps.lpGagnes).toBe(0);
   });
 });
 

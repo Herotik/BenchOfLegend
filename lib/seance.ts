@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { jourUTC } from "@/lib/dates";
+import { jourDepuisIso, jourUTC, midiLocal } from "@/lib/dates";
 import { calculerLp, ratioComplete, type StatutExercice } from "@/lib/lp";
 import { rankForLp, rankLabel } from "@/lib/ranks";
 import { seanceDuJour, seancesSur7Jours } from "@/lib/plan-hebdo";
@@ -21,6 +21,16 @@ import { echec, type EchecMetier } from "@/lib/erreurs";
 
 const idsGroupe = MUSCLE_GROUPS.map((g) => g.id) as [string, ...string[]];
 
+/**
+ * De combien de jours une séance peut être antidatée.
+ *
+ * Un seul : c'est ce qu'il faut pour qu'une séance du soir restée hors ligne
+ * parte le lendemain matin, à la première ouverture de l'app. Au-delà, on
+ * ouvrirait la porte à un rattrapage rétroactif de jours manqués, que le
+ * calendrier refuse délibérément.
+ */
+const RECUL_MAX_JOURS = 1;
+
 export const schemaValidationSeance = z.object({
   planDayId: z.string().optional(),
   muscleGroup: z.enum(idsGroupe),
@@ -31,6 +41,18 @@ export const schemaValidationSeance = z.object({
   charges: z.array(z.number().min(0).max(500).nullable()).default([]),
   ressenti: z.enum(["facile", "juste", "difficile"]),
   durationMin: z.number().int().min(1).max(600).optional(),
+  /**
+   * Jour où la séance a été faite, `AAAA-MM-JJ`. Absent : aujourd'hui.
+   *
+   * Sert aux validations différées de l'app mobile — une séance terminée en
+   * salle sans réseau part de la file d'attente au réveil suivant, parfois le
+   * lendemain matin. Sans cette date, elle serait refusée en « séance passée »
+   * et la salle aurait été faite pour rien.
+   */
+  faiteLe: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date de séance invalide")
+    .optional(),
 });
 
 export type EntreeValidationSeance = z.input<typeof schemaValidationSeance>;
@@ -49,6 +71,7 @@ export const schemaValidationSeanceApi = z
     charges: schemaValidationSeance.shape.charges,
     ressenti: schemaValidationSeance.shape.ressenti,
     dureeMin: schemaValidationSeance.shape.durationMin,
+    faiteLe: schemaValidationSeance.shape.faiteLe,
   })
   .transform(
     (d): EntreeValidationSeance => ({
@@ -59,6 +82,7 @@ export const schemaValidationSeanceApi = z
       charges: d.charges,
       ressenti: d.ressenti,
       durationMin: d.dureeMin,
+      faiteLe: d.faiteLe,
     }),
   );
 
@@ -98,16 +122,34 @@ export async function validerSeancePour(
     select: { lp: true },
   });
 
+  // Jour porté par la séance. Le client ne peut reculer que d'une journée, et
+  // seulement sur un jour de plan qui lui était réellement prévu et qu'il n'a
+  // pas déjà soldé : de quoi remonter une séance restée dans la file d'attente
+  // hors ligne, pas de quoi rattraper une semaine oubliée.
   const aujourdhui = jourUTC();
-  const seance = await seanceDuJour(userId, d.muscleGroup);
+  const jourSeance = d.faiteLe ? jourDepuisIso(d.faiteLe) : aujourdhui;
+  if (!jourSeance) {
+    return echec("Date de séance invalide", "date_invalide", 400);
+  }
+  const reculJours = (aujourdhui.getTime() - jourSeance.getTime()) / 86_400_000;
+  if (reculJours < 0 || reculJours > RECUL_MAX_JOURS) {
+    return echec("Cette séance est trop ancienne pour être envoyée", "date_hors_bornes", 422);
+  }
+
+  // La séance est régénérée à partir de la graine de **son** jour : rejouée
+  // avec celle d'aujourd'hui, elle sortirait d'autres exercices, et les statuts
+  // envoyés — qui sont rangés dans l'ordre de la séance affichée — se
+  // rattacheraient à des mouvements jamais faits.
+  const instantSeance = midiLocal(jourSeance);
+  const seance = await seanceDuJour(userId, d.muscleGroup, instantSeance);
   if (seance.exercices.length === 0) {
     return echec("Aucune séance à valider", "aucune_seance", 422);
   }
 
-  // Une seule validation de séance minimum par PlanDay, et seulement celle
-  // du jour. Le plan est publié six semaines à l'avance et le calendrier en
-  // expose les identifiants : sans le contrôle de date, un client bricolé
-  // encaissait d'un coup la trentaine de séances à venir, 20 Δ pièce.
+  // Une seule validation de séance minimum par PlanDay, et seulement celui qui
+  // tombe le jour déclaré. Le plan est publié six semaines à l'avance et le
+  // calendrier en expose les identifiants : sans le contrôle de date, un client
+  // bricolé encaissait d'un coup la trentaine de séances à venir, 20 Δ pièce.
   if (!d.isBonus) {
     if (!d.planDayId) {
       return echec("Séance du jour introuvable", "plan_day_requis", 422);
@@ -122,10 +164,10 @@ export async function validerSeancePour(
     if (planDay.status === "FAIT") {
       return echec("Cette séance est déjà validée", "deja_validee", 409);
     }
-    if (planDay.date.getTime() > aujourdhui.getTime()) {
+    if (planDay.date.getTime() > jourSeance.getTime()) {
       return echec("Cette séance est prévue pour plus tard", "seance_future", 422);
     }
-    if (planDay.date.getTime() < aujourdhui.getTime()) {
+    if (planDay.date.getTime() < jourSeance.getTime()) {
       return echec("Cette séance est passée. Fais-la en séance bonus.", "seance_passee", 422);
     }
     // Sans ça, on solderait le jour « dos » en présentant une séance de
@@ -144,15 +186,19 @@ export async function validerSeancePour(
   }));
 
   const finisher = exercices.find((e) => e.finisher);
+  // Les deux compteurs du barème se lisent au jour de la séance, pas au jour de
+  // l'envoi : une séance d'hier remontée ce matin doit rapporter ce qu'elle
+  // aurait rapporté hier soir, ni plus — un bonus déjà compté hier reste
+  // compté — ni moins.
   const bonusDuJour = await prisma.workoutLog.count({
-    where: { userId, date: aujourdhui, isBonus: true },
+    where: { userId, date: jourSeance, isBonus: true },
   });
 
   const lp = calculerLp({
     ratioComplete: ratioComplete(exercices),
     isBonus: d.isBonus,
     finisherComplete: finisher?.statut === "fait",
-    seancesSur7Jours: await seancesSur7Jours(userId),
+    seancesSur7Jours: await seancesSur7Jours(userId, instantSeance),
     bonusDejaCompteAujourdhui: bonusDuJour > 0,
   });
 
@@ -165,7 +211,7 @@ export async function validerSeancePour(
     const workout = await tx.workoutLog.create({
       data: {
         userId,
-        date: aujourdhui,
+        date: jourSeance,
         muscleGroup: d.muscleGroup,
         isBonus: d.isBonus,
         lpEarned: lp.total,
