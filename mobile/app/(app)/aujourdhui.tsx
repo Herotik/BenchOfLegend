@@ -14,6 +14,8 @@ import { ErreurApi } from "../../src/api/client";
 import { chargerPlan, chargerStats, enregistrerPesee } from "../../src/api/routes";
 import type { JourPlan, Stats } from "../../src/api/types";
 import { useSession } from "../../src/auth/session";
+import { useFileEnAttente } from "../../src/donnees/envoi-differe";
+import { envoyerLaFile } from "../../src/donnees/file-attente";
 import { useReferentiel } from "../../src/donnees/referentiel";
 import { BarreProgression } from "../../src/composants/BarreProgression";
 import { Bouton } from "../../src/composants/Bouton";
@@ -45,6 +47,7 @@ export default function Aujourdhui() {
   const [onboardingRequis, setOnboardingRequis] = useState(false);
   const [rafraichit, setRafraichit] = useState(false);
   const dejaCharge = useRef(false);
+  const enAttente = useFileEnAttente();
 
   const jour = jourCivilISO();
 
@@ -149,6 +152,8 @@ export default function Aujourdhui() {
 
       {onboardingRequis ? <CarteOnboarding /> : null}
 
+      {enAttente > 0 ? <CarteEnAttente nombre={enAttente} onEnvoyee={relancer} /> : null}
+
       {moi ? (
         <Carte style={styles.carteRang}>
           <Ecusson rang={moi.rang} />
@@ -245,6 +250,56 @@ function Tuile({ valeur, legende }: { valeur: string; legende: string }) {
       <Text style={styles.tuileValeur}>{valeur}</Text>
       <Text style={styles.tuileLegende}>{legende}</Text>
     </View>
+  );
+}
+
+/**
+ * Séances faites hors ligne, en attente d'envoi.
+ *
+ * L'app les renvoie déjà toute seule à chaque ouverture. La carte n'est donc
+ * pas là pour réclamer un geste, mais pour que la séance d'hier soir ne
+ * paraisse pas oubliée tant que le compteur de Δ ne l'a pas prise en compte —
+ * et pour offrir une relance immédiate quand on sait, soi, que le réseau est
+ * revenu.
+ */
+function CarteEnAttente({ nombre, onEnvoyee }: { nombre: number; onEnvoyee: () => void }) {
+  const styles = useStyles(creerStyles);
+  const [enCours, setEnCours] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const envoyer = useCallback(() => {
+    setEnCours(true);
+    setMessage(null);
+
+    void envoyerLaFile()
+      .then((bilan) => {
+        const perdue = bilan.abandonnees.find((a) => !a.dejaConnue);
+        if (perdue) {
+          // Le seul cas où l'on annonce une perte. Elle est dite en clair, avec
+          // son jour : une séance qui disparaît sans un mot serait pire que
+          // tout, et c'est bien celle du calendrier qu'on perd.
+          setMessage(`Séance du ${jourEnFrancais(perdue.jour)} : ${perdue.raison}`);
+        } else if (bilan.restantes > 0) {
+          setMessage("Toujours pas de réseau. La séance reste gardée.");
+        }
+        if (bilan.envoyees.length > 0 || bilan.abandonnees.length > 0) onEnvoyee();
+      })
+      .finally(() => setEnCours(false));
+  }, [onEnvoyee]);
+
+  return (
+    <Carte style={styles.carteAlerte}>
+      <Text style={styles.alerteTitre}>
+        {nombre > 1 ? `${nombre} séances à envoyer` : "Séance à envoyer"}
+      </Text>
+      <Text style={styles.alerteTexte}>
+        {nombre > 1 ? "Elles ont été faites" : "Elle a été faite"} sans réseau et
+        {nombre > 1 ? " attendent" : " attend"} sur le téléphone. Les Δ seront comptés à
+        l&apos;envoi.
+      </Text>
+      <Bouton titre="Envoyer maintenant" onPress={envoyer} enCours={enCours} />
+      {message ? <Text style={styles.alerteTexte}>{message}</Text> : null}
+    </Carte>
   );
 }
 

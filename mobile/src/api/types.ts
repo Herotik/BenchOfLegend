@@ -226,6 +226,15 @@ export interface CorpsValidation {
   charges: (number | null)[];
   ressenti: Ressenti;
   dureeMin?: number;
+  /**
+   * Jour où la séance a été faite, AAAA-MM-JJ — celui que `GET /seance` a
+   * renvoyé, jamais recalculé ici.
+   *
+   * Absent, le serveur retient aujourd'hui. C'est ce qui permet d'envoyer le
+   * lendemain matin une séance restée en file d'attente hors ligne ; au-delà
+   * d'un jour de recul, le serveur la refuse.
+   */
+  faiteLe?: string;
 }
 
 export interface ReponseValidation {

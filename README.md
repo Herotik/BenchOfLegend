@@ -31,11 +31,37 @@ Pour la mettre en ligne : [DEPLOIEMENT.md](DEPLOIEMENT.md).
 > fichier local d'un PC. Le script `scripts/migration-sqlite-postgres.ts`
 > transfère les données d'une base existante.
 
+## Séance hors ligne
+
+Une salle en sous-sol n'a pas de réseau, et c'est précisément là que l'app
+sert. L'app mobile tient donc une séance entière sans serveur :
+
+- la séance du jour et le référentiel sont gardés sur le téléphone dès qu'ils
+  arrivent, et relus si le serveur ne répond pas ;
+- une séance validée sans réseau part en **file d'attente**, et se renvoie
+  toute seule à la prochaine ouverture de l'app qui trouve du signal.
+
+La validation différée porte sa date (`faiteLe`) : la séance est enregistrée au
+jour où elle a été faite, pas au jour de l'envoi — sinon une séance du soir
+remontée le lendemain matin serait refusée, et la salle aurait été faite pour
+rien. Le serveur n'accepte **qu'un jour** de recul (`RECUL_MAX_JOURS` dans
+[`lib/seance.ts`](lib/seance.ts)) : au-delà, on ouvrirait un rattrapage
+rétroactif des jours manqués, que le calendrier refuse délibérément.
+
+Les Δ restent calculés par le serveur, à l'envoi. L'app ne les annonce jamais
+d'avance sur une séance en attente : le barème dépend de la régularité et des
+bonus déjà comptés ce jour-là, qu'elle ne connaît pas.
+
+> Le stockage local passe par `@react-native-async-storage/async-storage`, un
+> **module natif** : une build EAS antérieure à son ajout ne l'embarque pas. Il
+> faut donc reconstruire l'app (`npx eas-cli build`) — un rechargement de Metro
+> ne suffit pas.
+
 ## Tests
 
 ```bash
-npm test                   # 54 tests unitaires — moteur, barème LP, difficulté. Aucune base.
-npm run test:integration   # 157 tests sur une base PostgreSQL dédiée
+npm test                   # 56 tests unitaires — moteur, barème LP, difficulté. Aucune base.
+npm run test:integration   # 164 tests sur une base PostgreSQL dédiée
 ```
 
 Les tests d'intégration recréent la base `lafaille_test` à chaque exécution et

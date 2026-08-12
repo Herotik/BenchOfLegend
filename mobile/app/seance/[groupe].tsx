@@ -11,8 +11,10 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ErreurReseau } from "../../src/api/client";
 import { ajusterDifficulte, chargerSeance, validerSeance } from "../../src/api/routes";
 import type {
+  CorpsValidation,
   ExercicePrescrit,
   ReponseSeance,
   ReponseValidation,
@@ -20,6 +22,8 @@ import type {
   StatutExercice,
 } from "../../src/api/types";
 import { useSession } from "../../src/auth/session";
+import { memoriserSeance, seanceEnCache } from "../../src/donnees/cache";
+import { mettreEnFile } from "../../src/donnees/file-attente";
 import { useReferentiel } from "../../src/donnees/referentiel";
 import { Bouton } from "../../src/composants/Bouton";
 import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
@@ -69,6 +73,10 @@ export default function SeanceGuidee() {
   const [charges, setCharges] = useState<string[]>([]);
   const [envoi, setEnvoi] = useState(false);
   const [bilan, setBilan] = useState<ReponseValidation | null>(null);
+  /** Séance ouverte depuis le cache : le serveur n'a pas répondu. */
+  const [horsLigne, setHorsLigne] = useState(false);
+  /** Séance terminée que le réseau n'a pas laissé partir : elle attend. */
+  const [enAttente, setEnAttente] = useState(false);
 
   /** Début de séance, pour renseigner `dureeMin` à la validation. */
   const depart = useRef(Date.now());
@@ -77,24 +85,40 @@ export default function SeanceGuidee() {
     if (!groupe) return;
     let vivant = true;
 
+    const installer = (reponse: ReponseSeance, duCache: boolean) => {
+      setDonnees(reponse);
+      setHorsLigne(duCache);
+      setStatuts(new Array<StatutExercice | undefined>(reponse.seance.exercices.length));
+      // Charge pré-remplie avec la dernière utilisée : c'est le poids de
+      // travail, on ne devrait pas avoir à le rechercher dans son journal.
+      setCharges(
+        reponse.seance.exercices.map((e) =>
+          e.derniereCharge !== null && e.derniereCharge !== undefined
+            ? String(e.derniereCharge)
+            : "",
+        ),
+      );
+      depart.current = Date.now();
+    };
+
     chargerSeance(groupe)
       .then((reponse) => {
-        if (!vivant) return;
-        setDonnees(reponse);
-        setStatuts(new Array<StatutExercice | undefined>(reponse.seance.exercices.length));
-        // Charge pré-remplie avec la dernière utilisée : c'est le poids de
-        // travail, on ne devrait pas avoir à le rechercher dans son journal.
-        setCharges(
-          reponse.seance.exercices.map((e) =>
-            e.derniereCharge !== null && e.derniereCharge !== undefined
-              ? String(e.derniereCharge)
-              : "",
-          ),
-        );
-        depart.current = Date.now();
+        // Gardée avant tout affichage : c'est le passage suivant, en salle et
+        // sans réseau, qui en a besoin.
+        void memoriserSeance(reponse);
+        if (vivant) installer(reponse, false);
       })
-      .catch((cause: unknown) => {
-        if (vivant) setErreur(cause instanceof Error ? cause.message : "Séance indisponible");
+      .catch(async (cause: unknown) => {
+        // Repli sur la séance du jour déjà reçue. Elle est identique à ce que
+        // le serveur régénérerait — même graine, même jour — donc les statuts
+        // cochés ici resteront valables à la validation.
+        const gardee = await seanceEnCache(groupe);
+        if (!vivant) return;
+        if (gardee) {
+          installer(gardee, true);
+          return;
+        }
+        setErreur(cause instanceof Error ? cause.message : "Séance indisponible");
       });
 
     return () => {
@@ -141,7 +165,7 @@ export default function SeanceGuidee() {
         Math.max(1, Math.round((Date.now() - depart.current) / 60_000)),
       );
 
-      void validerSeance({
+      const corps: CorpsValidation = {
         // Absent en bonus : le serveur refuse un `planDayId` d'un autre jour,
         // et n'en attend aucun pour une séance libre.
         planDayId: bonus ? undefined : (donnees.planDayId ?? undefined),
@@ -153,7 +177,13 @@ export default function SeanceGuidee() {
         charges: exercices.map((e, i) => (e.chargeRequise ? nombreOuNull(charges[i]) : null)),
         ressenti,
         dureeMin,
-      })
+        // Le jour de la séance affichée, calculé par le serveur en la servant.
+        // Il ne sert que si l'envoi est différé — mais il doit être posé
+        // maintenant : demain matin, « aujourd'hui » désignera un autre jour.
+        faiteLe: donnees.date,
+      };
+
+      void validerSeance(corps)
         .then((resultat) => {
           setBilan(resultat);
           setPhase("bilan");
@@ -161,9 +191,19 @@ export default function SeanceGuidee() {
           // doit repartir du nouveau total, pas de celui d'avant la séance.
           void rafraichirProfil();
         })
-        .catch((cause: unknown) => {
-          setErreur(cause instanceof Error ? cause.message : "Validation impossible");
-          setPhase("ressenti");
+        .catch(async (cause: unknown) => {
+          // Un refus du serveur se corrige — l'écran le montre et laisse
+          // recommencer. Une absence de réseau, non : la séance est faite, et
+          // la redemander serait absurde. Elle part en file d'attente.
+          if (!(cause instanceof ErreurReseau)) {
+            setErreur(cause instanceof Error ? cause.message : "Validation impossible");
+            setPhase("ressenti");
+            return;
+          }
+
+          await mettreEnFile(corps);
+          setEnAttente(true);
+          setPhase("bilan");
         })
         .finally(() => setEnvoi(false));
     },
@@ -232,6 +272,14 @@ export default function SeanceGuidee() {
           courant={phase === "exercices" ? index : exercices.length}
           statuts={statuts}
         />
+        {/* Visible d'un bout à l'autre de la séance, et non sur le seul premier
+            exercice : c'est en la terminant qu'on a besoin de savoir que le
+            téléphone travaille sans réseau. */}
+        {horsLigne ? (
+          <Text style={styles.horsLigne}>
+            Hors ligne · séance en mémoire, l&apos;envoi se fera au retour du réseau
+          </Text>
+        ) : null}
       </View>
 
       <ScrollView
@@ -260,6 +308,10 @@ export default function SeanceGuidee() {
 
         {phase === "bilan" && bilan ? (
           <EtapeBilan bilan={bilan} onFini={quitter} />
+        ) : null}
+
+        {phase === "bilan" && !bilan && enAttente ? (
+          <EtapeEnAttente onFini={quitter} />
         ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -445,6 +497,42 @@ function EtapeRessenti({
 }
 
 // ---------------------------------------------------------------------------
+// Étape : bilan différé
+// ---------------------------------------------------------------------------
+
+/**
+ * Séance faite, mais pas encore envoyée.
+ *
+ * **Aucun chiffre de Δ ici.** Le barème est serveur — régularité, bonus déjà
+ * compté, finisher — et l'annoncer de mémoire reviendrait à promettre un gain
+ * que la validation pourrait démentir. On dit ce qui est certain : la séance
+ * est enregistrée, elle partira toute seule.
+ */
+function EtapeEnAttente({ onFini }: { onFini: () => void }) {
+  const styles = useStyles(creerStyles);
+
+  return (
+    <View style={styles.fin}>
+      <Ornement />
+      <Text style={styles.finTitre}>Séance enregistrée</Text>
+      <Text style={styles.finTexte}>
+        Le réseau manquait : elle est gardée sur le téléphone et partira à la prochaine
+        ouverture de l&apos;app avec du signal.
+      </Text>
+
+      <Carte style={styles.consigne}>
+        <Text style={styles.consigneTexte}>
+          Sa date part avec elle : les Δ seront comptés sur aujourd&apos;hui, et le calendrier
+          marquera le bon jour. Passé demain soir, le serveur ne l&apos;acceptera plus.
+        </Text>
+      </Carte>
+
+      <Bouton titre="Terminer" intention="sombre" onPress={onFini} style={styles.terminer} />
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Étape : bilan
 // ---------------------------------------------------------------------------
 
@@ -563,6 +651,12 @@ const creerStyles = (c: Couleurs) => StyleSheet.create({
     letterSpacing: 2,
     fontWeight: "700",
     textTransform: "uppercase",
+  },
+  horsLigne: {
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
+    fontSize: 11.5,
+    lineHeight: 16,
   },
   contenu: {
     paddingHorizontal: 18,

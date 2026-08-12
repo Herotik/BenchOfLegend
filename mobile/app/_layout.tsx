@@ -3,7 +3,8 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect, useState } from "react";
-import { FournisseurSession } from "../src/auth/session";
+import { FournisseurSession, useSession } from "../src/auth/session";
+import { useEnvoiAutomatique } from "../src/donnees/envoi-differe";
 import { FournisseurReferentiel } from "../src/donnees/referentiel";
 import { FournisseurTheme, useTheme } from "../src/theme/theme";
 import { usePolices } from "../src/theme/polices";
@@ -46,8 +47,15 @@ export default function Racine() {
 function Coquille() {
   const { couleurs, sombre } = useTheme();
   const polices = usePolices();
+  const { etat, rafraichirProfil } = useSession();
   const [ouvert, setOuvert] = useState(false);
   const finirOuverture = useCallback(() => setOuvert(true), []);
+
+  // Séances terminées hors ligne : elles repartent d'ici, une fois pour toute
+  // l'app. Le faire dans un écran les laisserait en plan tant qu'on n'y passe
+  // pas — or on rouvre souvent l'app ailleurs qu'à l'endroit qu'on a quitté.
+  const rattraper = useCallback(() => void rafraichirProfil(), [rafraichirProfil]);
+  useEnvoiAutomatique(etat === "connecte", rattraper);
 
   useEffect(() => {
     if (polices) SplashScreen.hideAsync().catch(() => {});
