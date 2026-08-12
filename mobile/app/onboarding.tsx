@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { Redirect, router } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { terminerOnboarding } from "../src/api/routes";
 import type { CorpsOnboarding, Niveau, Objectif } from "../src/api/types";
@@ -10,13 +10,14 @@ import { BarreProgression } from "../src/composants/BarreProgression";
 import { Bouton } from "../src/composants/Bouton";
 import { Carte } from "../src/composants/Carte";
 import { Chargement, EcranErreur } from "../src/composants/Etats";
+import { GrilleNombres, Mesure, Option, nombreOuNull } from "../src/composants/Choix";
 import {
   POLICE_TEXTE,
   POLICE_TEXTE_MOYEN,
   POLICE_TITRE,
   type Couleurs,
 } from "../src/theme/couleurs";
-import { useCouleurs, useStyles } from "../src/theme/theme";
+import { useStyles } from "../src/theme/theme";
 
 /**
  * Questionnaire d'entrée.
@@ -63,12 +64,6 @@ const VIDE: Brouillon = {
   tailleCm: "",
   poidsKg: "",
 };
-
-/** Accepte la virgule : c'est ce que propose le clavier décimal français. */
-function nombreOuNull(valeur: string): number | null {
-  const n = Number(valeur.replace(",", "."));
-  return Number.isFinite(n) ? n : null;
-}
 
 export default function Onboarding() {
   const styles = useStyles(creerStyles);
@@ -148,21 +143,11 @@ export default function Onboarding() {
         aide: "Choisis ce que tu tiendras vraiment. Une semaine manquée ne retire jamais de Δ — mais elle n'en rapporte pas.",
         valide: d.joursParSemaine !== null,
         rendu: (
-          <View style={styles.jours}>
-            {JOURS_POSSIBLES.map((n) => (
-              <Pressable
-                key={n}
-                onPress={() => modifier("joursParSemaine", n)}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: d.joursParSemaine === n }}
-                style={[styles.jour, d.joursParSemaine === n && styles.jourActif]}
-              >
-                <Text style={[styles.jourChiffre, d.joursParSemaine === n && styles.jourChiffreActif]}>
-                  {n}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+          <GrilleNombres
+            valeurs={JOURS_POSSIBLES}
+            choisi={d.joursParSemaine}
+            onChoisir={(n) => modifier("joursParSemaine", n)}
+          />
         ),
       },
       {
@@ -344,85 +329,7 @@ export default function Onboarding() {
 const libelleDe = (liste: { id: string; label: string }[] | undefined, id: string) =>
   liste?.find((x) => x.id === id)?.label ?? id;
 
-/**
- * Une réponse possible.
- *
- * `multiple` ne change que le rôle d'accessibilité et la forme de la marque —
- * carré pour un choix cumulable, rond pour un choix exclusif. C'est la seule
- * indication qu'on peut en cocher plusieurs, et elle doit être lisible avant
- * d'avoir essayé.
- */
-function Option({
-  titre,
-  aide,
-  actif,
-  multiple = false,
-  onPress,
-}: {
-  titre: string;
-  aide?: string;
-  actif: boolean;
-  multiple?: boolean;
-  onPress: () => void;
-}) {
-  const styles = useStyles(creerStyles);
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole={multiple ? "checkbox" : "radio"}
-      accessibilityState={{ checked: actif, selected: actif }}
-      style={[styles.option, actif && styles.optionActive]}
-    >
-      <View
-        style={[
-          styles.marque,
-          multiple ? styles.marqueCarree : styles.marqueRonde,
-          actif && styles.marqueActive,
-        ]}
-      />
-      <View style={styles.optionTexte}>
-        <Text style={[styles.optionTitre, actif && styles.optionTitreActif]}>{titre}</Text>
-        {aide ? <Text style={styles.optionAide}>{aide}</Text> : null}
-      </View>
-    </Pressable>
-  );
-}
 
-function Mesure({
-  etiquette,
-  unite,
-  valeur,
-  onChange,
-  exemple,
-}: {
-  etiquette: string;
-  unite: string;
-  valeur: string;
-  onChange: (v: string) => void;
-  exemple: string;
-}) {
-  const styles = useStyles(creerStyles);
-  const c = useCouleurs();
-  return (
-    <View style={styles.mesure}>
-      <Text style={styles.mesureEtiquette}>{etiquette}</Text>
-      <View style={styles.mesureLigne}>
-        <TextInput
-          value={valeur}
-          onChangeText={onChange}
-          keyboardType="decimal-pad"
-          placeholder={exemple}
-          // Sans cela, l'indication reste au gris du système et disparaît
-          // dans le fond en thème sombre.
-          placeholderTextColor={c.texte3}
-          style={styles.mesureChamp}
-          accessibilityLabel={`${etiquette} en ${unite}`}
-        />
-        <Text style={styles.mesureUnite}>{unite}</Text>
-      </View>
-    </View>
-  );
-}
 
 const creerStyles = (c: Couleurs) => StyleSheet.create({
   page: {
@@ -457,116 +364,10 @@ const creerStyles = (c: Couleurs) => StyleSheet.create({
   champs: {
     gap: 8,
   },
-  option: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: c.filet,
-    backgroundColor: c.fond2,
-  },
   // L'état choisi se marque au filet, jamais à un aplat d'accent : le
   // porphyre ne porte que l'identité.
-  optionActive: {
-    borderColor: c.filetFort,
-    backgroundColor: c.fond3,
-  },
-  marque: {
-    width: 18,
-    height: 18,
-    marginTop: 2,
-    borderWidth: 1.5,
-    borderColor: c.texte3,
-  },
-  marqueRonde: {
-    borderRadius: 9,
-  },
-  marqueCarree: {
-    borderRadius: 3,
-  },
-  marqueActive: {
-    borderColor: c.accent,
-    backgroundColor: c.accent,
-  },
-  optionTexte: {
-    flex: 1,
-    gap: 3,
-  },
-  optionTitre: {
-    fontFamily: POLICE_TEXTE,
-    color: c.texte,
-    fontSize: 15,
-  },
-  optionTitreActif: {
-    fontFamily: POLICE_TEXTE_MOYEN,
-    fontWeight: "600",
-  },
-  optionAide: {
-    fontFamily: POLICE_TEXTE,
-    color: c.texte2,
-    fontSize: 12.5,
-    lineHeight: 18,
-  },
-  jours: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  jour: {
-    flex: 1,
-    aspectRatio: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: c.filet,
-    backgroundColor: c.fond2,
-  },
-  jourActif: {
-    borderColor: c.filetFort,
-    backgroundColor: c.fond3,
-  },
-  jourChiffre: {
-    fontFamily: POLICE_TITRE,
-    color: c.texte2,
-    fontSize: 22,
-  },
-  jourChiffreActif: {
-    color: c.accent,
-  },
   mesures: {
     gap: 14,
-  },
-  mesure: {
-    gap: 6,
-  },
-  mesureEtiquette: {
-    fontFamily: POLICE_TEXTE,
-    color: c.texte2,
-    fontSize: 13,
-  },
-  mesureLigne: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  mesureChamp: {
-    fontFamily: POLICE_TEXTE,
-    flex: 1,
-    minWidth: 0,
-    color: c.texte,
-    backgroundColor: c.fond2,
-    borderColor: c.filet,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 18,
-  },
-  mesureUnite: {
-    fontFamily: POLICE_TEXTE,
-    color: c.texte2,
-    fontSize: 15,
-    width: 24,
   },
   pied: {
     paddingHorizontal: 22,

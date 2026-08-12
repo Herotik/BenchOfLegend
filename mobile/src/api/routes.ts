@@ -1,8 +1,10 @@
 import { appelApi } from "./client";
 import type {
   CorpsOnboarding,
+  CorpsPreferences,
   CorpsValidation,
   PageHistorique,
+  PreferencesApi,
   Referentiel,
   ReponseDifficulte,
   ReponseMoi,
@@ -33,6 +35,14 @@ export const chargerMoi = () => appelApi<ReponseMoi>("/me");
  */
 export const terminerOnboarding = (corps: CorpsOnboarding) =>
   appelApi<ReponseOnboarding>("/me/onboarding", { methode: "POST", corps });
+
+/**
+ * Remplace les préférences. Le serveur attend le bloc **entier** : il ne
+ * fusionne pas, un envoi partiel effacerait des groupes sans le dire. Le plan
+ * à venir est régénéré, le passé jamais.
+ */
+export const modifierPreferences = (corps: CorpsPreferences) =>
+  appelApi<{ preferences: PreferencesApi }>("/me/preferences", { methode: "PUT", corps });
 
 export const chargerPlan = (debut: string, fin: string) =>
   appelApi<ReponsePlan>("/plan", { parametres: { debut, fin } });

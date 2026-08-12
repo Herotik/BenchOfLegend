@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BASE_API } from "../../src/api/client";
@@ -12,11 +13,12 @@ import { POLICE_TEXTE_MOYEN, POLICE_TEXTE, POLICE_TITRE, type Couleurs } from ".
 import { useStyles, useTheme, type ChoixTheme } from "../../src/theme/theme";
 
 /**
- * Réglages : profil en lecture seule, et déconnexion.
+ * Réglages : profil, apparence, et sortie.
  *
- * Les préférences se **modifient** sur le web (`PUT /me/preferences` attend le
- * bloc entier : un envoi partiel effacerait des groupes sans le dire). L'app
- * les montre telles que le serveur les renvoie.
+ * Le profil est montré tel que le serveur le renvoie ; sa modification a son
+ * propre écran, `/preferences`, parce que `PUT /me/preferences` remplace le
+ * bloc entier et régénère le plan à venir — ce n'est pas un réglage qu'on
+ * change en passant.
  */
 export default function Reglages() {
   const styles = useStyles(creerStyles);
@@ -75,7 +77,8 @@ export default function Reglages() {
       ) : (
         <Carte style={styles.carte}>
           <Text style={styles.vide}>
-            Profil non complété. Le questionnaire d&apos;entrée se remplit sur la version web.
+            Profil non complété. Le questionnaire d&apos;entrée reprendra à la prochaine
+            ouverture.
           </Text>
         </Carte>
       )}
@@ -105,6 +108,13 @@ export default function Reglages() {
       </Carte>
 
       <Ornement style={styles.ornement} />
+
+      <Bouton
+        titre="Modifier mes préférences"
+        aide="Le plan à venir sera régénéré ; les séances validées ne bougent pas"
+        intention="sombre"
+        onPress={() => router.push("/preferences")}
+      />
 
       <Bouton
         titre="Se déconnecter"

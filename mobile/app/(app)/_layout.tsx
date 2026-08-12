@@ -63,6 +63,20 @@ export default function DispositionOnglets() {
         }}
       />
       <Tabs.Screen
+        name="calendrier"
+        options={{
+          title: "Calendrier",
+          tabBarIcon: ({ color }) => <Quadrillage couleur={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="progres"
+        options={{
+          title: "Progrès",
+          tabBarIcon: ({ color }) => <Colonnes couleur={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="reglages"
         options={{
           title: "Réglages",
@@ -83,6 +97,28 @@ export default function DispositionOnglets() {
 function Losange({ couleur }: { couleur: ColorValue }) {
   const styles = useStyles(creerStyles);
   return <View style={[styles.losange, { backgroundColor: couleur }]} />;
+}
+
+function Quadrillage({ couleur }: { couleur: ColorValue }) {
+  const styles = useStyles(creerStyles);
+  return (
+    <View style={styles.quadrillage}>
+      {[0, 1, 2, 3].map((i) => (
+        <View key={i} style={[styles.carreau, { backgroundColor: couleur }]} />
+      ))}
+    </View>
+  );
+}
+
+function Colonnes({ couleur }: { couleur: ColorValue }) {
+  const styles = useStyles(creerStyles);
+  return (
+    <View style={styles.colonnes}>
+      {[8, 14, 11, 18].map((h, i) => (
+        <View key={i} style={[styles.colonne, { backgroundColor: couleur, height: h }]} />
+      ))}
+    </View>
+  );
 }
 
 function Curseurs({ couleur }: { couleur: ColorValue }) {
@@ -115,6 +151,25 @@ const creerStyles = (c: Couleurs) => StyleSheet.create({
     width: 15,
     height: 15,
     transform: [{ rotate: "45deg" }],
+  },
+  quadrillage: {
+    width: 18,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 2,
+  },
+  carreau: {
+    width: 8,
+    height: 8,
+  },
+  colonnes: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 2,
+    height: 18,
+  },
+  colonne: {
+    width: 3,
   },
   curseurs: {
     gap: 3,

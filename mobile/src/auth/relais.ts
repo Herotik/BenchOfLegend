@@ -104,6 +104,19 @@ export async function connecterParNavigateur(): Promise<ReponseEchange> {
   const retour = adresseDeRetour();
   const depart = `${BASE_API}/auth/mobile/demarrer?retour=${encodeURIComponent(retour)}`;
 
+  // Sur le web, l'app **est** déjà dans un navigateur : en ouvrir un second
+  // n'a pas de sens. `openAuthSessionAsync` y retombe sur une fenêtre
+  // surgissante qu'il surveille, mais l'adresse de retour est une page de
+  // l'app elle-même — la fenêtre fille la charge, s'y installe, et c'est elle
+  // qui se retrouve connectée pendant que la fenêtre d'origine continue
+  // d'attendre. On navigue donc sur place : le retour revient dans le même
+  // onglet, où `app/auth.tsx` échange le code. La promesse ne se résout
+  // jamais, la page étant déchargée entre-temps.
+  if (Platform.OS === "web") {
+    globalThis.location?.assign(depart);
+    return new Promise<ReponseEchange>(() => {});
+  }
+
   const resultat = await WebBrowser.openAuthSessionAsync(depart, retour);
 
   if (resultat.type === "cancel" || resultat.type === "dismiss") {

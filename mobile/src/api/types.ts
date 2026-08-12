@@ -114,6 +114,9 @@ export interface ReponseOnboarding {
   preferences: PreferencesApi;
 }
 
+/** Corps de `PUT /me/preferences` : l'onboarding sans le poids de départ. */
+export type CorpsPreferences = Omit<CorpsOnboarding, "poidsKg">;
+
 /** Rang et position dans l'échelle, calculés par le serveur. */
 export interface RangCourant {
   slug: string;
