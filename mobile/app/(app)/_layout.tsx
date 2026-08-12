@@ -1,8 +1,15 @@
 import { Redirect } from "expo-router";
 import { Tabs } from "expo-router/js-tabs";
-import { StyleSheet, View, type ColorValue } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useSession } from "../../src/auth/session";
 import { Chargement } from "../../src/composants/Etats";
+import {
+  IconeAide,
+  IconeAujourdhui,
+  IconeCalendrier,
+  IconeProgres,
+  IconeReglages,
+} from "../../src/composants/Icones";
 import { POLICE_TEXTE, type Couleurs } from "../../src/theme/couleurs";
 import { useCouleurs, useStyles } from "../../src/theme/theme";
 
@@ -59,78 +66,44 @@ export default function DispositionOnglets() {
         name="aujourdhui"
         options={{
           title: "Aujourd'hui",
-          tabBarIcon: ({ color }) => <Losange couleur={color} />,
+          tabBarIcon: ({ color }) => <IconeAujourdhui couleur={color} />,
         }}
       />
       <Tabs.Screen
         name="calendrier"
         options={{
           title: "Calendrier",
-          tabBarIcon: ({ color }) => <Quadrillage couleur={color} />,
+          tabBarIcon: ({ color }) => <IconeCalendrier couleur={color} />,
         }}
       />
       <Tabs.Screen
         name="progres"
         options={{
           title: "Progrès",
-          tabBarIcon: ({ color }) => <Colonnes couleur={color} />,
+          tabBarIcon: ({ color }) => <IconeProgres couleur={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="aide"
+        options={{
+          title: "Aide",
+          tabBarIcon: ({ color }) => <IconeAide couleur={color} />,
         }}
       />
       <Tabs.Screen
         name="reglages"
         options={{
           title: "Réglages",
-          tabBarIcon: ({ color }) => <Curseurs couleur={color} />,
+          tabBarIcon: ({ color }) => <IconeReglages couleur={color} />,
         }}
       />
     </Tabs>
   );
 }
 
-/**
- * Icônes dessinées à la main.
- *
- * `@expo/vector-icons` n'est pas une dépendance de ce projet, et l'ajouter pour
- * deux pictogrammes reviendrait à embarquer plusieurs polices d'icônes. Deux
- * formes géométriques suffisent, et le losange reprend l'ornement du thème.
- */
-function Losange({ couleur }: { couleur: ColorValue }) {
-  const styles = useStyles(creerStyles);
-  return <View style={[styles.losange, { backgroundColor: couleur }]} />;
-}
 
-function Quadrillage({ couleur }: { couleur: ColorValue }) {
-  const styles = useStyles(creerStyles);
-  return (
-    <View style={styles.quadrillage}>
-      {[0, 1, 2, 3].map((i) => (
-        <View key={i} style={[styles.carreau, { backgroundColor: couleur }]} />
-      ))}
-    </View>
-  );
-}
 
-function Colonnes({ couleur }: { couleur: ColorValue }) {
-  const styles = useStyles(creerStyles);
-  return (
-    <View style={styles.colonnes}>
-      {[8, 14, 11, 18].map((h, i) => (
-        <View key={i} style={[styles.colonne, { backgroundColor: couleur, height: h }]} />
-      ))}
-    </View>
-  );
-}
 
-function Curseurs({ couleur }: { couleur: ColorValue }) {
-  const styles = useStyles(creerStyles);
-  return (
-    <View style={styles.curseurs}>
-      <View style={[styles.curseur, { backgroundColor: couleur, width: 20 }]} />
-      <View style={[styles.curseur, { backgroundColor: couleur, width: 13 }]} />
-      <View style={[styles.curseur, { backgroundColor: couleur, width: 17 }]} />
-    </View>
-  );
-}
 
 const creerStyles = (c: Couleurs) => StyleSheet.create({
   attente: {
@@ -146,38 +119,5 @@ const creerStyles = (c: Couleurs) => StyleSheet.create({
     fontFamily: POLICE_TEXTE,
     fontSize: 11,
     letterSpacing: 0.5,
-  },
-  losange: {
-    width: 15,
-    height: 15,
-    transform: [{ rotate: "45deg" }],
-  },
-  quadrillage: {
-    width: 18,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 2,
-  },
-  carreau: {
-    width: 8,
-    height: 8,
-  },
-  colonnes: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 2,
-    height: 18,
-  },
-  colonne: {
-    width: 3,
-  },
-  curseurs: {
-    gap: 3,
-    alignItems: "flex-start",
-    width: 20,
-  },
-  curseur: {
-    height: 2.5,
-    borderRadius: 2,
   },
 });

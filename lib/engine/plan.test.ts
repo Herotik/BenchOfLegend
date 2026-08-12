@@ -159,4 +159,37 @@ describe("genererPlanSemaine", () => {
     const plan = genererPlanSemaine(profil({ muscleGroups: [] }));
     expect(plan.every((j) => j.groupes.length === 0)).toBe(true);
   });
+
+  it("travaille tous les groupes choisis quand la place le permet", () => {
+    // Six groupes, trois jours : la capacité est de six créneaux, tout doit
+    // tenir. Personne ne doit rester sur le banc une semaine entière.
+    const plan = genererPlanSemaine(
+      profil({
+        daysPerWeek: 3,
+        muscleGroups: (
+          ["pectoraux", "dos", "epaules", "bras", "jambes", "abdos"] as MuscleGroupId[]
+        ).map((id) => ({ id, priority: 1 })),
+      }),
+    );
+    const vus = new Set(plan.flatMap((j) => j.groupes));
+    expect(vus.size).toBe(6);
+  });
+
+  it("apparie les groupes qui vont ensemble plutôt qu'au hasard", () => {
+    // Pectoraux et épaules sollicitent tous deux le deltoïde antérieur : entre
+    // ce voisin-là et le dos, l'appariement doit préférer le dos.
+    const plan = genererPlanSemaine(
+      profil({
+        daysPerWeek: 2,
+        muscleGroups: [
+          { id: "pectoraux", priority: 2 },
+          { id: "epaules", priority: 1 },
+          { id: "dos", priority: 1 },
+        ],
+      }),
+    );
+    const journee = plan.find((j) => j.groupes.includes("pectoraux"));
+    expect(journee?.groupes).toContain("dos");
+    expect(journee?.groupes).not.toContain("epaules");
+  });
 });

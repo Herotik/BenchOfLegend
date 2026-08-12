@@ -153,20 +153,15 @@ export default function Aujourdhui() {
         <Carte style={styles.carteRang}>
           <Ecusson rang={moi.rang} />
           <LibelleRang rang={moi.rang} />
-          <Text style={styles.lp}>{moi.lp} Δ</Text>
-          <BarreProgression
-            part={moi.rang.progression}
-            couleur={moi.rang.couleur}
-            gauche={`${moi.rang.lpDansDivision} / ${moi.rang.lpProchaineDivision} Δ`}
-            droite={
-              moi.rang.division === null
-                ? "Rang final"
-                : `Encore ${Math.max(
-                    moi.rang.lpProchaineDivision - moi.rang.lpDansDivision,
-                    0,
-                  )} Δ`
-            }
-          />
+          {/* Un seul compteur au-dessus de la barre. Le répéter en légende et
+              en rappeler le reste à parcourir disait trois fois la même
+              chose — et le reste se lit déjà dans la barre. */}
+          <Text style={styles.lp}>
+            {moi.rang.division === null
+              ? `${moi.lp} Δ`
+              : `${moi.rang.lpDansDivision} / ${moi.rang.lpProchaineDivision} Δ`}
+          </Text>
+          <BarreProgression part={moi.rang.progression} couleur={moi.rang.couleur} />
         </Carte>
       ) : null}
 

@@ -68,12 +68,17 @@ export default function Calendrier() {
     void charger().finally(() => setRafraichit(false));
   }, [charger]);
 
-  // Un jour du plan peut manquer — le serveur ne génère que ce qu'il a déjà
+  // Une journée porte **plusieurs lignes** quand la séance est hybride : le
+  // plan réunit volontiers deux groupes le même jour. Les indexer un par un
+  // écraserait le second, et l'utilisateur croirait ses groupes oubliés.
+  //
+  // Un jour peut aussi manquer — le serveur ne génère que ce qu'il a déjà
   // calculé. La grille reste complète, les cases absentes restent vides.
-  const parDate = useMemo(
-    () => new Map((jours ?? []).map((j) => [j.date, j])),
-    [jours],
-  );
+  const parDate = useMemo(() => {
+    const index = new Map<string, JourPlan[]>();
+    for (const j of jours ?? []) index.set(j.date, [...(index.get(j.date) ?? []), j]);
+    return index;
+  }, [jours]);
 
   const semaines = useMemo(
     () =>
@@ -107,7 +112,12 @@ export default function Calendrier() {
         ))}
       </View>
 
-      {semaines.map((semaine, index) => (
+      {semaines.map((semaine, index) => {
+        // Une semaine antérieure à l'inscription n'a aucun jour de plan : le
+        // serveur n'en génère pas. Afficher sept numéros sans cases donnait
+        // une rangée orpheline qui ressemblait à un défaut d'affichage.
+        if (index < SEMAINES_AVANT && semaine.every((d) => !parDate.has(d))) return null;
+        return (
         <View key={semaine[0]} style={styles.semaine}>
           <TitreSection>{titreSemaine(index)}</TitreSection>
           <View style={styles.grille}>
@@ -115,14 +125,15 @@ export default function Calendrier() {
               <Case
                 key={date}
                 date={date}
-                jour={parDate.get(date)}
+                lignes={parDate.get(date) ?? []}
                 aujourdhui={date === aujourdhui}
                 libelleGroupe={libelleGroupe}
               />
             ))}
           </View>
         </View>
-      ))}
+        );
+      })}
 
       <Legende />
     </ScrollView>
@@ -147,32 +158,49 @@ const titreSemaine = (index: number): string => {
  */
 function Case({
   date,
-  jour,
+  lignes,
   aujourdhui,
   libelleGroupe,
 }: {
   date: string;
-  jour: JourPlan | undefined;
+  lignes: JourPlan[];
   aujourdhui: boolean;
   libelleGroupe: (id: string) => string;
 }) {
   const styles = useStyles(creerStyles);
   const numero = date.slice(8, 10);
-  const repos = jour?.groupe === "repos";
+  const premiere = lignes[0];
+  const repos = premiere?.groupe === "repos";
+
+  // Une journée hybride est faite dès que **toutes** ses lignes le sont : la
+  // pastille ne doit pas récompenser une moitié de séance.
+  const faite = lignes.length > 0 && lignes.every((l) => l.statut === "FAIT");
 
   return (
     <View
       style={[
         styles.case,
-        jour ? styles[statutStyle(jour.statut)] : styles.caseAbsente,
+        premiere ? styles[statutStyle(faite ? "FAIT" : premiere.statut)] : styles.caseAbsente,
         aujourdhui && styles.caseAujourdhui,
       ]}
     >
       <Text style={[styles.caseNumero, aujourdhui && styles.caseNumeroAujourdhui]}>{numero}</Text>
-      <Text style={styles.caseGroupe} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
-        {jour ? (repos ? "repos" : libelleGroupe(jour.groupe)) : ""}
-      </Text>
-      {jour?.statut === "FAIT" ? <View style={styles.pastille} /> : null}
+      {repos ? (
+        <Text style={styles.caseGroupe}>repos</Text>
+      ) : (
+        lignes.map((l) => (
+          <Text
+            key={l.id}
+            style={styles.caseGroupe}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+          >
+            {libelleGroupe(l.groupe)}
+          </Text>
+        ))
+      )}
+      {faite ? <View style={styles.pastille} /> : null}
     </View>
   );
 }
@@ -246,7 +274,7 @@ const creerStyles = (c: Couleurs) => StyleSheet.create({
   },
   case: {
     flex: 1,
-    aspectRatio: 0.78,
+    aspectRatio: 0.68,
     borderWidth: 1,
     paddingTop: 4,
     // Marge réduite au minimum : « Pectoraux » doit tenir sur une ligne, faute

@@ -62,6 +62,46 @@ function fileDesSeances(
 }
 
 /**
+ * Affinité entre deux groupes réunis dans la même séance.
+ *
+ * Les salles s'organisent depuis toujours autour de trois découpes : pousser /
+ * tirer / jambes, haut / bas, ou l'appariement d'antagonistes. Toutes reposent
+ * sur la même idée — regrouper ce qui travaille ensemble, séparer ce qui se
+ * gênerait.
+ *
+ * Une note haute rapproche, une note négative éloigne :
+ *  · pectoraux + bras, dos + bras — les bras finissent ce que le grand
+ *    mouvement a commencé, c'est la découpe pousser/tirer classique ;
+ *  · pectoraux + dos — antagonistes, la paire des superséries ;
+ *  · jambes + abdos — le bas et le gainage, rien ne se recouvre ;
+ *  · pectoraux + épaules — le deltoïde antérieur travaille déjà au développé :
+ *    l'enchaîner le fatigue deux fois pour un seul gain ;
+ *  · jambes + dos — deux séances les plus lourdes du programme, réunies elles
+ *    dépassent ce qu'on tient en une fois.
+ *
+ * Le cardio reste neutre partout : il ne dispute la récupération à personne.
+ */
+const AFFINITES: Record<string, number> = {
+  "bras|pectoraux": 3,
+  "bras|dos": 3,
+  "dos|pectoraux": 3,
+  "abdos|jambes": 2,
+  "bras|epaules": 2,
+  "abdos|pectoraux": 1,
+  "abdos|dos": 1,
+  "dos|epaules": 1,
+  "epaules|pectoraux": -2,
+  "dos|jambes": -2,
+  "jambes|pectoraux": -1,
+};
+
+/** Note d'un appariement, indépendante de l'ordre des deux groupes. */
+function affinite(a: MuscleGroupId, b: MuscleGroupId): number {
+  if (a === "cardio" || b === "cardio") return 0;
+  return AFFINITES[[a, b].sort().join("|")] ?? 0;
+}
+
+/**
  * Plan hebdomadaire : quels groupes travailler quel jour.
  *
  * Contraintes respectées :
@@ -88,7 +128,20 @@ export function genererPlanSemaine(profil: ProfilEntrainement, semaine = 0): Jou
       if (restants.length === 0) break;
       if (plan[jour].groupes.length > tour) continue;
 
-      const index = restants.findIndex((g) => placementValide(plan, jour, g));
+      // Au premier tour la journée est vide : l'ordre de la file décide, et il
+      // porte déjà les priorités. Au second, on choisit le meilleur compagnon
+      // du groupe déjà posé plutôt que le premier venu — à égalité, la file
+      // tranche, donc la priorité continue de primer.
+      let index = -1;
+      let meilleure = -Infinity;
+      for (let i = 0; i < restants.length; i++) {
+        if (!placementValide(plan, jour, restants[i])) continue;
+        const note = plan[jour].groupes.reduce((s, pose) => s + affinite(pose, restants[i]), 0);
+        if (note > meilleure) {
+          meilleure = note;
+          index = i;
+        }
+      }
       if (index === -1) continue;
 
       plan[jour].groupes.push(restants[index]);
