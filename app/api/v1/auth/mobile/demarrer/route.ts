@@ -23,8 +23,14 @@ export async function GET(requete: Request) {
 
   if (!session?.user) {
     const moi = `${url.origin}${url.pathname}?retour=${encodeURIComponent(retour)}`;
-    await signIn("google", { redirectTo: moi });
-    return; // signIn redirige : ce point n'est jamais atteint.
+
+    // `redirect: false` plutôt que de laisser `signIn` rediriger lui-même.
+    // Sa redirection passe par le mécanisme des Server Actions ; dans un route
+    // handler elle retombait sur la destination par défaut — la page
+    // d'accueil — et `redirectTo` était perdu. L'utilisateur s'identifiait
+    // chez Google puis atterrissait sur le site, l'app restant en plan.
+    const versGoogle = await signIn("google", { redirect: false, redirectTo: moi });
+    return Response.redirect(versGoogle, 303);
   }
 
   const code = await creerCodeRelais(session.user.id);
