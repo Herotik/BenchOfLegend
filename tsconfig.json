@@ -30,5 +30,13 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  /*
+   * `mobile/` est un projet séparé, avec son propre `tsconfig.json`, ses
+   * propres dépendances et sa propre vérification (`npm --prefix mobile run
+   * verifier`). L'inclure ici faisait chercher `react-native` et `expo-router`
+   * dans les dépendances du site, qui ne les a pas : sans erreur en local, où
+   * `mobile/node_modules` existe, mais fatal sur Vercel, qui n'installe que la
+   * racine.
+   */
+  "exclude": ["node_modules", "mobile"]
 }
