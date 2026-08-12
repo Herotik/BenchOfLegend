@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 21.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "simulateur": {
+      "extends": "developpement",
+      "ios": {
+        "simulator": true
+      }
+    },
+    "developpement": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "developpement"
+    },
+    "apercu": {
+      "distribution": "internal",
+      "channel": "apercu"
+    },
+    "production": {
+      "autoIncrement": true,
+      "channel": "production"
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
