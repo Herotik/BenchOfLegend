@@ -17,6 +17,10 @@ import { useStyles } from "../src/theme/theme";
  * Un seul chemin : le relais navigateur. La connexion Google native suppose que
  * l'app enregistre le schéma d'URL de son client OAuth iOS, ce qu'Expo Go ne
  * permet pas — voir `lib/api/relais.ts` côté serveur.
+ *
+ * Le choix du fournisseur — Google, Apple, Discord — se fait donc dans le
+ * navigateur, sur la page d'accueil du site. L'app n'en connaît aucun : ajouter
+ * une porte d'entrée côté serveur n'oblige pas à reconstruire l'app.
  */
 export default function Connexion() {
   const styles = useStyles(creerStyles);
@@ -62,7 +66,7 @@ export default function Connexion() {
       </Text>
 
       <Bouton
-        titre="Se connecter avec Google"
+        titre="Se connecter"
         aide="Le navigateur s'ouvre, puis te ramène ici"
         onPress={lancer}
         enCours={enCours}
@@ -78,8 +82,8 @@ export default function Connexion() {
       ) : null}
 
       <Text style={styles.mention}>
-        La connexion passe par le site : le navigateur s&apos;ouvre le temps de l&apos;identification
-        Google, puis rend la main à l&apos;app.
+        La connexion passe par le site : le navigateur s&apos;ouvre, te laisse choisir entre
+        Google, Apple et Discord, puis rend la main à l&apos;app.
       </Text>
     </ScrollView>
   );

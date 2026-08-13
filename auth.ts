@@ -1,21 +1,20 @@
 import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import { construireFournisseurs, emailVerifie, fournisseursActifs } from "@/lib/fournisseurs";
 
 /**
  * Auth.js v5. Le fichier vit à la racine (pas dans app/) pour être importable
  * aussi bien depuis les Server Components que depuis proxy.ts.
  *
- * Les identifiants Google sont lus automatiquement dans AUTH_GOOGLE_ID et
- * AUTH_GOOGLE_SECRET, et le secret de session dans AUTH_SECRET.
+ * Trois portes d'entrée — Google, Apple, Discord — chacune active à la présence
+ * de ses variables d'environnement. Le détail est dans `lib/fournisseurs.ts` :
+ * ici, on ne fait que les assembler.
+ *
+ * La configuration est **une fonction**, non un objet : le secret d'Apple est
+ * un jeton signé qu'il faut fabriquer, donc obtenu de façon asynchrone.
  */
-
-/** Vrai si les identifiants OAuth sont renseignés. */
-export const googleConfigured =
-  Boolean(process.env.AUTH_GOOGLE_ID) && Boolean(process.env.AUTH_GOOGLE_SECRET);
-
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const { handlers, signIn, signOut, auth } = NextAuth(async () => ({
   adapter: PrismaAdapter(prisma),
 
   // Stratégie « database » : la session vit dans la table Session, ce qui
@@ -23,9 +22,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   // plutôt qu'un JWT figé à la connexion.
   session: { strategy: "database" },
 
-  // Sans identifiants, on n'enregistre aucun provider : Auth.js lèverait
-  // sinon une erreur de configuration au chargement du module.
-  providers: googleConfigured ? [Google] : [],
+  providers: await construireFournisseurs(),
 
   pages: {
     signIn: "/",
@@ -33,6 +30,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
 
   callbacks: {
+    /**
+     * Dernier verrou avant la création ou le rattachement d'un compte.
+     *
+     * Les fournisseurs rattachent au même utilisateur deux connexions de même
+     * adresse (`allowDangerousEmailAccountLinking`), sans quoi revenir par
+     * Apple après s'être inscrit par Google claquerait la porte. Ce rattachement
+     * ne vaut que si l'adresse a réellement été vérifiée par le fournisseur :
+     * sinon, il suffirait de déclarer l'adresse d'autrui pour entrer chez lui.
+     */
+    signIn({ account, profile }) {
+      // Sans compte fournisseur, il n'y a rien à rattacher : le cas ne se
+      // présente pas ici, aucune connexion par mot de passe n'étant déclarée.
+      if (!account) return true;
+      return emailVerifie(account.provider, profile);
+    },
+
     // `strategy: "database"` fournit `user` : on recopie ce dont l'app a
     // besoin partout (garde de redirection onboarding, affichage du rang).
     session({ session, user }) {
@@ -42,4 +55,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
-});
+}));
+
+export { fournisseursActifs };

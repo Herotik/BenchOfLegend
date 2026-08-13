@@ -71,12 +71,26 @@ connectés.
 > Sous Windows, si tu écris le `.env` à la main : **UTF-8 sans BOM**. Un BOM
 > casse la lecture de la première clé.
 
-## Connexion Google
+## Connexion
 
-L'app n'a pas de mot de passe : l'authentification passe uniquement par Google
-(Auth.js v5, sessions stockées en base). Tant que les identifiants ne sont pas
-renseignés, la landing affiche un message le disant explicitement plutôt qu'un
-bouton mort.
+L'app n'a pas de mot de passe : on entre par **Google, Apple ou Discord**
+(Auth.js v5, sessions stockées en base). Chaque fournisseur s'active seul, à la
+présence de ses variables d'environnement — une installation qui n'a que Google
+ne montre que Google. Tant qu'aucun n'est renseigné, la landing le dit
+explicitement plutôt que d'afficher un bouton mort.
+
+> Une variable **créée sans valeur compte pour absente**. C'est volontaire :
+> `lib/fournisseurs.ts` ne teste pas l'existence de la clé mais celle d'une
+> valeur, faute de quoi Auth.js démarrerait un fournisseur incapable de signer
+> quoi que ce soit et l'échec surviendrait plus loin, sans rapport apparent.
+
+**Un compte, plusieurs portes.** Deux connexions portant la même adresse
+vérifiée mènent au même compte : s'inscrire avec Google puis revenir par Apple
+retrouve ses séances. Le rattachement n'a lieu **que si le fournisseur a
+vérifié l'adresse** (`emailVerifie`) — sans quoi il suffirait de déclarer
+l'adresse d'autrui pour entrer chez lui.
+
+### Google
 
 1. Ouvrir la [Google Cloud Console](https://console.cloud.google.com/) et créer
    un projet (ou en sélectionner un).
@@ -101,6 +115,41 @@ bouton mort.
 
 6. **Redémarrer `npm run dev`** — Next.js ne recharge pas `.env` à chaud.
 
+### Discord
+
+[Developer Portal](https://discord.com/developers/applications) → **New
+Application** → onglet **OAuth2** : copier le *Client ID* et le *Client Secret*
+dans `AUTH_DISCORD_ID` et `AUTH_DISCORD_SECRET`, et ajouter la redirection
+`http://localhost:3000/api/auth/callback/discord`.
+
+Discord laisse exister des comptes dont l'adresse n'est pas vérifiée. Ceux-là
+se voient refuser l'entrée, avec un message qui le dit — c'est la contrepartie
+du compte unique par adresse.
+
+### Apple
+
+Apple est le seul à ne pas délivrer de secret : il faut **le signer soi-même**.
+`lib/fournisseurs.ts` le fabrique à chaque démarrage à partir de la clé `.p8`,
+plutôt que de le figer dans une variable — un secret Apple expire au bout de six
+mois au plus, et rien ne prévient le jour où il tombe.
+
+Il faut donc quatre valeurs, prises sur
+[developer.apple.com](https://developer.apple.com/account/resources) :
+
+| Variable | Où la trouver |
+|---|---|
+| `AUTH_APPLE_ID` | Identifiers → **Services ID** (`com.exemple.web`) — pas l'identifiant de bundle de l'app iOS |
+| `AUTH_APPLE_TEAM_ID` | Membership → Team ID |
+| `AUTH_APPLE_KEY_ID` | Keys → la clé créée avec **Sign in with Apple** |
+| `AUTH_APPLE_PRIVATE_KEY` | Contenu du fichier `.p8` téléchargé à la création de la clé — il ne se télécharge qu'**une fois** |
+
+Deux particularités à connaître avant de s'y mettre :
+
+- **Apple refuse `http://` et `localhost`.** Cette connexion ne s'éprouve
+  qu'en ligne, sur le site déployé.
+- **Apple vérifie la propriété du domaine**, ce que les deux autres ne font
+  pas : il télécharge un fichier à déposer dans `public/.well-known/`.
+
 `AUTH_SECRET` est déjà généré dans le `.env` local. Pour en régénérer un :
 `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`.
 
@@ -109,9 +158,10 @@ bouton mort.
 | Symptôme | Cause habituelle |
 |---|---|
 | `redirect_uri_mismatch` | L'URI enregistrée ne correspond pas au caractère près — vérifier `http` et non `https`, le port, et l'absence de `/` final |
-| `access_denied` | Compte absent des **Test users** de l'écran de consentement |
-| Le bouton reste absent | `.env` non rechargé : redémarrer le serveur |
-| `invalid_client` | ID ou secret tronqué à la copie |
+| `access_denied` | Compte absent des **Test users** de l'écran de consentement Google ; ou adresse non vérifiée chez le fournisseur choisi |
+| Aucun bouton | `.env` non rechargé (redémarrer le serveur), ou variable créée sans valeur |
+| `invalid_client` | ID ou secret tronqué à la copie. Côté Apple : `AUTH_APPLE_ID` doit être l'identifiant de **service**, et `AUTH_APPLE_TEAM_ID` l'équipe — les intervertir donne exactement cette erreur |
+| `OAuthAccountNotLinked` | L'adresse existe déjà via un autre fournisseur qui ne l'avait pas vérifiée |
 
 ## Rangs
 

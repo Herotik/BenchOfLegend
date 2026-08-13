@@ -43,7 +43,7 @@ vi.mock("@/auth", async () => {
     signOut: vi.fn(async () => {}),
     signIn: vi.fn(async () => {}),
     handlers: {},
-    googleConfigured: false,
+    fournisseursActifs: () => [],
   };
 });
 

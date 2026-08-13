@@ -31,8 +31,25 @@ AUTH_SECRET         (voir ci-dessous)
 AUTH_GOOGLE_ID
 AUTH_GOOGLE_SECRET
 AUTH_GOOGLE_ID_IOS
-AUTH_URL            https://<ton-projet>.vercel.app
 ```
+
+Plus, si tu les veux, les variables d'Apple et de Discord — voir la section
+« Connexion » du README. Chaque fournisseur s'active seul ; il en faut au moins
+un, l'app n'ayant pas de mot de passe.
+
+> **Trois pièges, tous vécus.**
+>
+> **Une variable créée sans valeur compte pour absente** : le site affichera
+> « Aucune connexion configurée » exactement comme si elle n'existait pas.
+>
+> **Les variables sont figées à la création du déploiement.** En ajouter une ne
+> change rien tant qu'on n'a pas redéployé (Deployments → ⋯ → Redeploy).
+>
+> **Ne déclare pas `AUTH_URL` sur Vercel.** Auth.js déduit l'origine de l'hôte
+> de la requête — `trustHost` est vrai dès que `VERCEL` est défini. Renseignée,
+> elle **réécrit l'origine de chaque requête** : une valeur périmée (un ancien
+> tunnel, par exemple) envoie au fournisseur une URI de redirection qui ne
+> correspond à rien, et la connexion échoue sans que le message le dise.
 
 **Génère un `AUTH_SECRET` neuf pour la production** — celui du `.env` local a
 traversé une conversation :
@@ -41,17 +58,25 @@ traversé une conversation :
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
-## 3. Autoriser le domaine chez Google
+## 3. Autoriser le domaine chez les fournisseurs
 
-[console.cloud.google.com/auth/clients](https://console.cloud.google.com/auth/clients)
-→ client **Web** → URI de redirection autorisés → ajouter :
+Chaque fournisseur veut connaître l'adresse exacte de retour. Au caractère
+près — un `s` de trop dans le nom de domaine suffit à provoquer un
+`redirect_uri_mismatch` qu'on cherche longtemps.
 
-```
-https://<ton-projet>.vercel.app/api/auth/callback/google
-```
+| Fournisseur | Où | URI à déclarer |
+|---|---|---|
+| Google | [console.cloud.google.com/auth/clients](https://console.cloud.google.com/auth/clients) → client **Web** | `https://<ton-projet>.vercel.app/api/auth/callback/google` |
+| Apple | developer.apple.com → **Services ID** → Configure | `https://<ton-projet>.vercel.app/api/auth/callback/apple` |
+| Discord | Developer Portal → ton app → **OAuth2** | `https://<ton-projet>.vercel.app/api/auth/callback/discord` |
 
-Rien de plus : l'app est déjà publiée et ne demande que des scopes non
-sensibles, donc aucune vérification Google n'est requise.
+Côté Google, rien de plus : l'app est déjà publiée et ne demande que des scopes
+non sensibles, donc aucune vérification n'est requise.
+
+Côté Apple, il faut en plus **prouver que le domaine t'appartient** : Apple
+télécharge un fichier que tu déposes dans `public/.well-known/`. Il se peut
+qu'Apple refuse un sous-domaine `.vercel.app` et exige un domaine à toi — c'est
+à vérifier au moment de le déclarer.
 
 ## 4. Charger le catalogue, une fois
 
