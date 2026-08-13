@@ -4,22 +4,34 @@
     "appVersionSource": "remote"
   },
   "build": {
+    "developpement": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "environment": "preview",
+      "channel": "developpement"
+    },
     "simulateur": {
       "distribution": "internal",
       "environment": "preview",
+      "channel": "preview",
       "ios": {
         "simulator": true
       }
     },
     "appareil": {
       "distribution": "internal",
-      "environment": "preview"
+      "environment": "preview",
+      "channel": "preview"
     },
     "apercu": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "environment": "preview",
+      "channel": "preview"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "environment": "production",
+      "channel": "production"
     }
   },
   "submit": {

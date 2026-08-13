@@ -51,6 +51,23 @@ const configuration = (): ExpoConfig => {
       usesAppleSignIn: true,
     },
     plugins: greffons,
+
+    // Mises à jour à distance. L'adresse est dérivée du `projectId` plutôt que
+    // recopiée : deux exemplaires d'un même identifiant finissent par diverger.
+    updates: { url: `https://u.expo.dev/${base.extra.eas.projectId}` },
+
+    /**
+     * `fingerprint` : la version d'exécution est l'empreinte du projet natif.
+     *
+     * Une mise à jour ne descend alors que sur les builds dont le natif
+     * correspond exactement. C'est ce qui empêche d'envoyer un JavaScript qui
+     * appelle un module natif absent du binaire installé — l'app se fermerait
+     * au lancement, et il faudrait la réinstaller pour la rattraper.
+     *
+     * `appVersion` aurait laissé passer ce cas : ajouter une dépendance native
+     * ne change pas le numéro de version.
+     */
+    runtimeVersion: { policy: "fingerprint" },
   };
 };
 

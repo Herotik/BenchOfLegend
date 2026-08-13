@@ -57,6 +57,23 @@ bonus déjà comptés ce jour-là, qu'elle ne connaît pas.
 > faut donc reconstruire l'app (`npx eas-cli build`) — un rechargement de Metro
 > ne suffit pas.
 
+## Mettre l'app à jour
+
+Une build EAS coûte une quinzaine de minutes ; la payer pour changer deux mots
+n'a pas de sens. Deux mécanismes l'évitent, décrits en détail dans
+[`mobile/APERCU-IOS.md`](mobile/APERCU-IOS.md) :
+
+- **`expo-dev-client`** pendant le travail — le JavaScript vient de Metro,
+  l'iPhone recharge en quelques secondes ;
+- **`expo-updates`** pour livrer — `eas update` pousse une correction sur l'app
+  installée, qui la prend au lancement suivant.
+
+`runtimeVersion` suit la politique **`fingerprint`** : une mise à jour ne
+descend que sur les builds dont le projet natif correspond exactement. C'est ce
+qui interdit d'envoyer un JavaScript appelant un module natif absent du binaire
+— l'app se fermerait au lancement. Ajouter ou retirer une dépendance native
+impose donc toujours une build ; tout le reste passe par une mise à jour.
+
 ## Tests
 
 ```bash
