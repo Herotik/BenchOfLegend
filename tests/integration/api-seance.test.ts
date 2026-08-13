@@ -329,7 +329,11 @@ describe("POST /api/v1/seance/valider", () => {
  * et la salle aurait été faite pour rien.
  */
 describe("POST /api/v1/seance/valider — séance différée", () => {
-  const HIER = new Date(jourUTC().getTime() - 86_400_000);
+  // Dérivé de `MERCREDI`, et non de `jourUTC()` : le corps d'un `describe`
+  // s'exécute à la collecte, avant que `beforeAll` n'installe l'horloge figée.
+  // Calculé là, « hier » suivait la date réelle de la machine — les cas
+  // passaient tant qu'elle coïncidait, et tombaient le lendemain.
+  const HIER = new Date(jourUTC(MERCREDI).getTime() - 86_400_000);
   const iso = (jour: Date) => jour.toISOString().slice(0, 10);
 
   /** Jour de plan d'hier, resté au programme, et la séance qui allait avec. */

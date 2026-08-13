@@ -45,7 +45,13 @@ export async function creerUtilisateur(options: OptionsUtilisateur = {}) {
       level: options.level ?? "DEBUTANT",
       goal: options.goal ?? "HYPERTROPHIE",
       daysPerWeek: options.daysPerWeek ?? 4,
-      ...(options.createdAt ? { createdAt: options.createdAt } : {}),
+      // Date d'inscription posée explicitement, et non laissée au `now()` de
+      // PostgreSQL : les horloges figées de Vitest ne s'appliquent pas à la
+      // base. Le compte se retrouvait « créé demain » dès que la date réelle
+      // dépassait celle que la suite fige, et `assurerPlans` écartait alors le
+      // plan du jour comme antérieur à l'inscription — une suite qui passait
+      // un jour et échouait le lendemain, sans qu'une ligne ait bougé.
+      createdAt: options.createdAt ?? new Date(),
     },
   });
 
