@@ -16,11 +16,8 @@ import {
 } from "../api/client";
 import { chargerMoi, revoquerSession } from "../api/routes";
 import type { ReponseEchange, ReponseMoi } from "../api/types";
-import { connecterApple, connecterDiscord, connecterGoogle } from "./natif";
+import { connecter, type FournisseurNatif } from "./natif";
 import { connecterParNavigateur } from "./relais";
-
-/** Les fournisseurs joignables sans passer par le site. */
-export type FournisseurNatif = "google" | "apple" | "discord";
 
 /**
  * État de connexion, partagé par toute l'app.
@@ -127,13 +124,7 @@ export function FournisseurSession({ children }: { children: ReactNode }) {
 
   const seConnecterNatif = useCallback(
     async (fournisseur: FournisseurNatif) => {
-      const connecter = {
-        google: connecterGoogle,
-        apple: connecterApple,
-        discord: connecterDiscord,
-      }[fournisseur];
-
-      await adopterEchange(await connecter());
+      await adopterEchange(await connecter(fournisseur));
     },
     [adopterEchange],
   );

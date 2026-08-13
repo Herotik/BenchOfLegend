@@ -14,10 +14,15 @@ export interface EchecMetier {
   /** Identifiant stable : c'est là-dessus qu'un client branche son comportement. */
   code: string;
   /**
-   * 400 requête malformée · 404 ressource inexistante ou appartenant à
-   * quelqu'un d'autre · 409 conflit d'état · 422 règle métier violée.
+   * 400 requête malformée · 401 identité non prouvée · 404 ressource
+   * inexistante ou appartenant à quelqu'un d'autre · 409 conflit d'état ·
+   * 422 règle métier violée · 503 dépendance non configurée côté serveur.
+   *
+   * Les deux derniers venus — 401 et 503 — servent aux preuves d'identité des
+   * connexions natives : un jeton qu'on ne peut pas vérifier n'est pas une
+   * règle métier violée, et une variable d'environnement absente encore moins.
    */
-  statut: 400 | 404 | 409 | 422;
+  statut: 400 | 401 | 404 | 409 | 422 | 503;
 }
 
 export const echec = (

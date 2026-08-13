@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { corpsJson, erreur } from "@/lib/api/garde";
+import { reponseEchec } from "@/lib/api/reponse";
 import { rattacherOuCreer } from "@/lib/api/comptes";
-import { creerCouple, verifierIdentiteGoogle } from "@/lib/api/jetons";
+import { creerCouple } from "@/lib/api/jetons";
 import { reponseConnexion } from "@/lib/api/connexion";
+import { estEchec, identiteDepuisPreuve } from "@/lib/api/preuves";
 
 const schema = z.object({
   /** `id_token` obtenu par la connexion Google native de l'app. */
@@ -15,9 +17,8 @@ const schema = z.object({
  * Connexion native Google de l'app mobile.
  *
  * L'app mène le flux avec le SDK de Google — la feuille de comptes du système,
- * sans navigateur — puis nous transmet le jeton d'identité. On le vérifie
- * contre les clés publiques de Google, jamais en faisant confiance à son
- * contenu.
+ * sans navigateur — puis nous transmet le jeton d'identité, vérifié contre les
+ * clés publiques de Google par `lib/api/preuves.ts`.
  *
  * Le compte est rattaché par `providerAccountId`, exactement comme le fait
  * l'adaptateur Auth.js côté web : se connecter depuis le téléphone retrouve le
@@ -32,11 +33,12 @@ export async function POST(requete: Request) {
     return erreur(parse.error.issues[0]?.message ?? "Requête invalide", 400, "requete_invalide");
   }
 
-  const identite = await verifierIdentiteGoogle(parse.data.idToken);
-  if (!identite) {
-    return erreur("Identité Google non vérifiable", 401, "google_invalide");
-  }
+  const identite = await identiteDepuisPreuve({
+    fournisseur: "google",
+    idToken: parse.data.idToken,
+  });
+  if (estEchec(identite)) return reponseEchec(identite);
 
-  const user = await rattacherOuCreer({ fournisseur: "google", ...identite });
+  const user = await rattacherOuCreer(identite);
   return reponseConnexion(user, await creerCouple(user.id, parse.data.appareil));
 }

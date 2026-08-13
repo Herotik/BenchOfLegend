@@ -98,7 +98,7 @@ export async function oublierJetons(): Promise<void> {
 // Requêtes
 // ---------------------------------------------------------------------------
 
-type Methode = "GET" | "POST" | "PUT";
+type Methode = "GET" | "POST" | "PUT" | "DELETE";
 
 interface Options {
   methode?: Methode;

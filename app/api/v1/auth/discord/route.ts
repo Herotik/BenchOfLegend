@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { corpsJson, erreur } from "@/lib/api/garde";
+import { reponseEchec } from "@/lib/api/reponse";
 import { rattacherOuCreer } from "@/lib/api/comptes";
-import { creerCouple, verifierIdentiteDiscord } from "@/lib/api/jetons";
+import { creerCouple } from "@/lib/api/jetons";
 import { reponseConnexion } from "@/lib/api/connexion";
-import { retourAutorise } from "@/lib/api/relais";
+import { estEchec, identiteDepuisPreuve } from "@/lib/api/preuves";
 
 const schema = z.object({
   /** Code d'autorisation rapporté par la feuille système ouverte sur Discord. */
@@ -19,9 +20,9 @@ const schema = z.object({
  * Connexion Discord de l'app mobile.
  *
  * Discord n'a pas de connexion native : l'app ouvre une feuille système sur
- * `discord.com` et n'en rapporte qu'un code. L'échange se fait ici, où le
- * secret du client peut vivre — dans un binaire distribué, il se lirait au
- * désassemblage.
+ * `discord.com` et n'en rapporte qu'un code. L'échange se fait côté serveur, où
+ * le secret du client peut vivre — dans un binaire distribué, il se lirait au
+ * désassemblage. Le détail est dans `lib/api/preuves.ts`.
  */
 export async function POST(requete: Request) {
   const corps = await corpsJson<unknown>(requete);
@@ -32,23 +33,14 @@ export async function POST(requete: Request) {
     return erreur(parse.error.issues[0]?.message ?? "Requête invalide", 400, "requete_invalide");
   }
 
-  // La redirection vient de la requête et repart chez Discord. On n'accepte
-  // donc que les schémas de l'app, comme le relais navigateur : sans ce
-  // filtre, elle ferait de cette route un moyen d'obtenir un code pour une
-  // application tierce.
-  if (!retourAutorise(parse.data.redirection)) {
-    return erreur("Adresse de retour non autorisée", 400, "retour_invalide");
-  }
+  const identite = await identiteDepuisPreuve({
+    fournisseur: "discord",
+    code: parse.data.code,
+    verificateur: parse.data.verificateur,
+    redirection: parse.data.redirection,
+  });
+  if (estEchec(identite)) return reponseEchec(identite);
 
-  const identite = await verifierIdentiteDiscord(
-    parse.data.code,
-    parse.data.verificateur,
-    parse.data.redirection,
-  );
-  if (!identite) {
-    return erreur("Identité Discord non vérifiable", 401, "discord_invalide");
-  }
-
-  const user = await rattacherOuCreer({ fournisseur: "discord", ...identite });
+  const user = await rattacherOuCreer(identite);
   return reponseConnexion(user, await creerCouple(user.id, parse.data.appareil));
 }

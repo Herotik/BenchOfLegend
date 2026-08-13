@@ -119,6 +119,28 @@ preuve d'identité reçue — signature, émetteur et **audience** pour les jeto
 `rattacherOuCreer`. C'est ce qui garantit qu'une connexion depuis le téléphone
 retrouve le compte du site, et n'en crée pas un second.
 
+### Réunir deux portes qui n'ont pas la même adresse
+
+Le rattachement automatique s'arrête là où l'adresse s'arrête : un identifiant
+Apple en `@icloud.com` et un compte Google en `@gmail.com` appartiennent à la
+même personne, mais rien ne permet de l'affirmer **avant** qu'elle soit
+identifiée. Se connecter par la seconde porte crée donc un second compte — et
+c'est le comportement correct, l'alternative étant de réunir deux comptes sur
+une ressemblance.
+
+Une fois **connecté**, en revanche, l'identité est prouvée par la session et
+l'adresse n'arbitre plus rien. Les réglages de l'app proposent alors
+« Ajouter Apple / Google / Discord » : la feuille système s'ouvre, la preuve
+part sur `POST /api/v1/me/connexions`, et la connexion rejoint le compte
+courant quelle que soit son adresse.
+
+Deux garde-fous, tous deux dans `lib/api/comptes.ts` :
+
+- une identité **déjà rattachée à un autre compte** n'est jamais déplacée —
+  cela priverait ce compte de sa porte d'entrée, peut-être la seule ;
+- on ne retire jamais la **dernière** connexion : sans mot de passe, ce serait
+  fermer le compte définitivement, sans recours.
+
 ### Google
 
 1. Ouvrir la [Google Cloud Console](https://console.cloud.google.com/) et créer

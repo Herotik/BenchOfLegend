@@ -61,6 +61,19 @@ export const enregistrerPesee = (kg: number) =>
 
 export const chargerStats = () => appelApi<Stats>("/stats");
 
+/**
+ * Façons de se connecter rattachées au compte.
+ *
+ * L'ajout ne passe pas par ici : il réclame une preuve d'identité fraîche, donc
+ * l'ouverture d'une feuille système — voir `rattacher` dans `auth/natif.ts`.
+ */
+export const chargerConnexions = () =>
+  appelApi<{ connexions: string[] }>("/me/connexions");
+
+/** Retire une façon de se connecter. Le serveur refuse la dernière. */
+export const detacherConnexion = (fournisseur: string) =>
+  appelApi<{ connexions: string[] }>(`/me/connexions/${fournisseur}`, { methode: "DELETE" });
+
 export const chargerHistorique = (limite?: number, avant?: string) =>
   appelApi<PageHistorique>("/historique", { parametres: { limite, avant } });
 

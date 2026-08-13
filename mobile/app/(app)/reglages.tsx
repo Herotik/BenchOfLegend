@@ -1,9 +1,17 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BASE_API } from "../../src/api/client";
+import { chargerConnexions, detacherConnexion } from "../../src/api/routes";
 import { useSession } from "../../src/auth/session";
+import {
+  appleDisponible,
+  ConnexionAbandonnee,
+  discordDisponible,
+  googleDisponible,
+  rattacher,
+} from "../../src/auth/natif";
 import { useReferentiel } from "../../src/donnees/referentiel";
 import { Bouton } from "../../src/composants/Bouton";
 import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
@@ -103,6 +111,9 @@ export default function Reglages() {
         </>
       ) : null}
 
+      <TitreSection>Se connecter</TitreSection>
+      <Connexions />
+
       <TitreSection>Apparence</TitreSection>
       <Carte style={styles.carte}>
         <ChoixApparence />
@@ -145,6 +156,118 @@ const APPARENCES: { valeur: ChoixTheme; libelle: string }[] = [
  * passe donc pas par `PUT /me/preferences`. Quelqu'un peut vouloir son iPhone
  * en sombre et son iPad en clair.
  */
+/**
+ * Façons de se connecter rattachées au compte.
+ *
+ * À la connexion, deux comptes ne se rejoignent que s'ils portent la **même
+ * adresse vérifiée** — seule règle sûre tant que personne n'est identifié. Mais
+ * l'identifiant Apple et le compte Google d'une même personne n'ont aucune
+ * raison de partager une adresse, et l'app en créait alors un second.
+ *
+ * Ici, la session prouve déjà qui l'on est : rattacher devient sûr, et
+ * l'adresse n'arbitre plus rien.
+ */
+function Connexions() {
+  const styles = useStyles(creerStyles);
+  const [connexions, setConnexions] = useState<string[] | null>(null);
+  const [enCours, setEnCours] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [appleDispo, setAppleDispo] = useState(false);
+
+  useEffect(() => {
+    let vivant = true;
+    void chargerConnexions()
+      .then((r) => vivant && setConnexions(r.connexions))
+      .catch(() => vivant && setConnexions([]));
+    void appleDisponible().then((d) => vivant && setAppleDispo(d));
+    return () => {
+      vivant = false;
+    };
+  }, []);
+
+  const agir = useCallback((quoi: string, action: () => Promise<string[]>) => {
+    setEnCours(quoi);
+    setMessage(null);
+
+    void action()
+      .then(setConnexions)
+      .catch((cause: unknown) => {
+        // Fermer la feuille n'est pas un incident : rien à signaler.
+        if (cause instanceof ConnexionAbandonnee) return;
+        setMessage(cause instanceof Error ? cause.message : "Opération impossible");
+      })
+      .finally(() => setEnCours(null));
+  }, []);
+
+  if (!connexions) return null;
+
+  const proposables = (
+    [
+      { id: "apple", nom: "Apple", dispo: appleDispo },
+      { id: "google", nom: "Google", dispo: googleDisponible() },
+      { id: "discord", nom: "Discord", dispo: discordDisponible() },
+    ] as const
+  ).filter((f) => f.dispo && !connexions.includes(f.id));
+
+  return (
+    <>
+      <Carte style={styles.carte}>
+        {connexions.length === 0 ? (
+          <Text style={styles.vide}>Aucune connexion rattachée.</Text>
+        ) : (
+          connexions.map((fournisseur) => (
+            <View key={fournisseur} style={styles.groupe}>
+              <View style={styles.groupeTexte}>
+                <Text style={styles.groupeNom}>{LIBELLES[fournisseur] ?? fournisseur}</Text>
+                <Text style={styles.groupeAide}>
+                  {connexions.length === 1
+                    ? "Ta seule façon d'entrer : elle ne peut pas être retirée"
+                    : "Rattachée"}
+                </Text>
+              </View>
+              {connexions.length > 1 ? (
+                <Pressable
+                  onPress={() =>
+                    agir(`retrait-${fournisseur}`, () =>
+                      detacherConnexion(fournisseur).then((r) => r.connexions),
+                    )
+                  }
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Retirer la connexion ${fournisseur}`}
+                >
+                  <Text style={styles.retirer}>
+                    {enCours === `retrait-${fournisseur}` ? "…" : "Retirer"}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ))
+        )}
+      </Carte>
+
+      {proposables.map((f) => (
+        <Bouton
+          key={f.id}
+          titre={`Ajouter ${f.nom}`}
+          aide="La feuille s'ouvre pour prouver l'identité, puis rattache ce compte"
+          intention="sombre"
+          onPress={() => agir(f.id, () => rattacher(f.id))}
+          enCours={enCours === f.id}
+        />
+      ))}
+
+      {message ? <Text style={styles.messageConnexion}>{message}</Text> : null}
+    </>
+  );
+}
+
+const LIBELLES: Record<string, string> = {
+  google: "Google",
+  apple: "Apple",
+  discord: "Discord",
+};
+
 function ChoixApparence() {
   const styles = useStyles(creerStyles);
   const { choix, definirChoix } = useTheme();
@@ -249,6 +372,18 @@ const creerStyles = (c: Couleurs) => StyleSheet.create({
   vide: {
     fontFamily: POLICE_TEXTE,
     color: c.texte2,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  retirer: {
+    fontFamily: POLICE_TEXTE_MOYEN,
+    color: c.texte2,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  messageConnexion: {
+    fontFamily: POLICE_TEXTE,
+    color: c.accent,
     fontSize: 13,
     lineHeight: 20,
   },

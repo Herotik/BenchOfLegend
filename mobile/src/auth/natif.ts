@@ -21,6 +21,21 @@ import type { ReponseEchange } from "../api/types";
  * c'est là que se fait le travail quotidien.
  */
 
+export type FournisseurNatif = "google" | "apple" | "discord";
+
+/**
+ * Ce que la feuille système rapporte, avant tout usage.
+ *
+ * Copie exacte de `schemaPreuve` (`lib/api/preuves.ts`) : deux routes la
+ * reçoivent — `/auth/<fournisseur>` pour se connecter, `/me/connexions` pour
+ * rattacher une porte d'entrée de plus à un compte déjà ouvert. Obtenir la
+ * preuve et s'en servir sont donc deux gestes distincts.
+ */
+export type Preuve =
+  | { fournisseur: "google"; idToken: string }
+  | { fournisseur: "apple"; identityToken: string; nom?: string }
+  | { fournisseur: "discord"; code: string; verificateur: string; redirection: string };
+
 const NATIF = Platform.OS === "ios" || Platform.OS === "android";
 
 /** L'utilisateur a fermé la feuille : ce n'est pas un échec à afficher. */
@@ -51,19 +66,36 @@ async function adopter(echange: ReponseEchange): Promise<ReponseEchange> {
 }
 
 // ---------------------------------------------------------------------------
-// Google
+// Disponibilité
 // ---------------------------------------------------------------------------
 
 export const googleDisponible = (): boolean => NATIF && ID_GOOGLE_IOS !== "";
 
+export const discordDisponible = (): boolean => NATIF && ID_DISCORD !== "";
+
+/**
+ * Apple est le seul dont la disponibilité se demande au système : elle dépend
+ * de la version d'iOS, pas d'une variable de compilation.
+ */
+export async function appleDisponible(): Promise<boolean> {
+  if (Platform.OS !== "ios") return false;
+  try {
+    const Apple = await import("expo-apple-authentication");
+    return await Apple.isAvailableAsync();
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Obtention de la preuve
+// ---------------------------------------------------------------------------
+
 /**
  * Feuille de comptes du système : les comptes Google déjà présents sur le
  * téléphone, un appui, aucun navigateur.
- *
- * Le jeton d'identité obtenu part au serveur, qui le vérifie contre les clés
- * publiques de Google. Rien de ce que l'app annonce n'est cru sur parole.
  */
-export async function connecterGoogle(): Promise<ReponseEchange> {
+async function preuveGoogle(): Promise<Preuve> {
   const { GoogleSignin } = await import("@react-native-google-signin/google-signin");
 
   GoogleSignin.configure({
@@ -82,34 +114,10 @@ export async function connecterGoogle(): Promise<ReponseEchange> {
     throw new Error("Google n'a pas fourni de jeton d'identité. Réessaie, ou passe par le site.");
   }
 
-  return adopter(
-    await appelApi<ReponseEchange>("/auth/google", {
-      methode: "POST",
-      publique: true,
-      corps: { idToken, appareil: nomAppareil() },
-    }),
-  );
+  return { fournisseur: "google", idToken };
 }
 
-// ---------------------------------------------------------------------------
-// Apple
-// ---------------------------------------------------------------------------
-
-/**
- * Uniquement iOS 13+ — et le module répond lui-même s'il est utilisable, ce
- * qu'on ne peut savoir qu'en le lui demandant.
- */
-export async function appleDisponible(): Promise<boolean> {
-  if (Platform.OS !== "ios") return false;
-  try {
-    const Apple = await import("expo-apple-authentication");
-    return await Apple.isAvailableAsync();
-  } catch {
-    return false;
-  }
-}
-
-export async function connecterApple(): Promise<ReponseEchange> {
+async function preuveApple(): Promise<Preuve> {
   const Apple = await import("expo-apple-authentication");
 
   let identifiant;
@@ -138,24 +146,12 @@ export async function connecterApple(): Promise<ReponseEchange> {
     .filter(Boolean)
     .join(" ");
 
-  return adopter(
-    await appelApi<ReponseEchange>("/auth/apple", {
-      methode: "POST",
-      publique: true,
-      corps: {
-        identityToken: identifiant.identityToken,
-        ...(nom ? { nom } : {}),
-        appareil: nomAppareil(),
-      },
-    }),
-  );
+  return {
+    fournisseur: "apple",
+    identityToken: identifiant.identityToken,
+    ...(nom ? { nom } : {}),
+  };
 }
-
-// ---------------------------------------------------------------------------
-// Discord
-// ---------------------------------------------------------------------------
-
-export const discordDisponible = (): boolean => NATIF && ID_DISCORD !== "";
 
 /**
  * Discord n'a pas de connexion native : son OAuth est exclusivement web.
@@ -168,7 +164,7 @@ export const discordDisponible = (): boolean => NATIF && ID_DISCORD !== "";
  * client, qui n'aurait rien à faire dans un binaire distribué, où il se lit au
  * désassemblage.
  */
-export async function connecterDiscord(): Promise<ReponseEchange> {
+async function preuveDiscord(): Promise<Preuve> {
   const AuthSession = await import("expo-auth-session");
 
   const redirection = AuthSession.makeRedirectUri({ scheme: "frameoflegends", path: "auth" });
@@ -195,18 +191,72 @@ export async function connecterDiscord(): Promise<ReponseEchange> {
     throw new Error("Réponse incomplète de Discord. Réessaie, ou passe par le site.");
   }
 
+  return {
+    fournisseur: "discord",
+    code,
+    verificateur: requete.codeVerifier,
+    // Discord revérifie l'adresse de retour à l'échange : elle doit être au
+    // caractère près celle qui a servi à demander le code.
+    redirection,
+  };
+}
+
+/** Ouvre la feuille du fournisseur et rend la preuve qu'elle rapporte. */
+export function preuvePour(fournisseur: FournisseurNatif): Promise<Preuve> {
+  switch (fournisseur) {
+    case "google":
+      return preuveGoogle();
+    case "apple":
+      return preuveApple();
+    case "discord":
+      return preuveDiscord();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Usages
+// ---------------------------------------------------------------------------
+
+/**
+ * Se connecter : la preuve part sur `/auth/<fournisseur>`, qui retrouve le
+ * compte — ou le crée — et rend un couple de jetons.
+ */
+export async function connecter(fournisseur: FournisseurNatif): Promise<ReponseEchange> {
+  const preuve = await preuvePour(fournisseur);
+
   return adopter(
-    await appelApi<ReponseEchange>("/auth/discord", {
+    await appelApi<ReponseEchange>(`/auth/${fournisseur}`, {
       methode: "POST",
       publique: true,
-      corps: {
-        code,
-        verificateur: requete.codeVerifier,
-        // Discord revérifie l'adresse de retour à l'échange : elle doit être
-        // au caractère près celle qui a servi à demander le code.
-        redirection,
-        appareil: nomAppareil(),
-      },
+      // Le fournisseur est déjà dans le chemin : ces routes ne l'attendent pas
+      // dans le corps, contrairement à `/me/connexions` qui sert les trois.
+      corps: { ...sansFournisseur(preuve), appareil: nomAppareil() },
     }),
   );
+}
+
+/** La preuve sans son étiquette de fournisseur. */
+function sansFournisseur(preuve: Preuve): Record<string, unknown> {
+  const copie: Record<string, unknown> = { ...preuve };
+  delete copie.fournisseur;
+  return copie;
+}
+
+/**
+ * Rattacher une porte d'entrée de plus au compte **déjà connecté**.
+ *
+ * Rien à voir avec la connexion : ici l'identité est prouvée par la session en
+ * cours, et l'adresse e-mail n'arbitre plus rien. C'est ce qui permet de
+ * réunir un identifiant Apple et un compte Google qui ne portent pas la même —
+ * l'iCloud et le Gmail d'une même personne n'ayant aucune raison de coïncider.
+ */
+export async function rattacher(fournisseur: FournisseurNatif): Promise<string[]> {
+  const preuve = await preuvePour(fournisseur);
+
+  const { connexions } = await appelApi<{ connexions: string[] }>("/me/connexions", {
+    methode: "POST",
+    corps: preuve,
+  });
+
+  return connexions;
 }
