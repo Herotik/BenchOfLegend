@@ -1,0 +1,57 @@
+import type { ExpoConfig } from "expo/config";
+import app from "./app.json";
+
+const base = app.expo;
+
+/**
+ * Configuration Expo, calculée.
+ *
+ * `app.json` reste la source de tout ce qui est fixe. Ce fichier n'ajoute
+ * qu'une chose : le module natif de Google, qui exige de déclarer dans
+ * `Info.plist` le schéma d'URL **inversé** de son client iOS — une valeur qui
+ * dépend du compte Google et n'a donc rien à faire, figée, dans le dépôt.
+ *
+ * Absente, le module n'est pas branché du tout : la build reste valide et
+ * l'app retombe sur le relais navigateur. Un identifiant manquant ne doit pas
+ * casser une compilation, seulement retirer un bouton.
+ *
+ * `EXPO_PUBLIC_GOOGLE_ID_IOS` sert deux fois : ici pour le schéma d'URL, et
+ * dans `src/auth/natif.ts` pour configurer le SDK. Un identifiant OAuth n'est
+ * pas un secret — il voyage dans chaque requête d'autorisation.
+ */
+const idGoogleIos = process.env.EXPO_PUBLIC_GOOGLE_ID_IOS ?? "";
+
+/** `123-abc.apps.googleusercontent.com` → `com.googleusercontent.apps.123-abc`. */
+function schemaInverse(clientId: string): string | null {
+  const suffixe = ".apps.googleusercontent.com";
+  if (!clientId.endsWith(suffixe)) return null;
+  return `com.googleusercontent.apps.${clientId.slice(0, -suffixe.length)}`;
+}
+
+type Greffons = NonNullable<ExpoConfig["plugins"]>;
+
+const configuration = (): ExpoConfig => {
+  const schema = schemaInverse(idGoogleIos);
+
+  // Le typage vient d'`app.json`, que TypeScript lit comme un tableau de
+  // chaînes et d'objets quelconques là où Expo attend des couples. On l'affirme
+  // ici, une fois, plutôt qu'à chaque entrée.
+  const greffons: Greffons = [...(base.plugins as Greffons), "expo-apple-authentication"];
+
+  if (schema) {
+    greffons.push(["@react-native-google-signin/google-signin", { iosUrlScheme: schema }]);
+  }
+
+  return {
+    ...(base as unknown as ExpoConfig),
+    ios: {
+      ...base.ios,
+      // Exigé par « Sign in with Apple » : sans lui, la capacité n'est pas
+      // demandée à la compilation et la feuille système refuse de s'ouvrir.
+      usesAppleSignIn: true,
+    },
+    plugins: greffons,
+  };
+};
+
+export default configuration;

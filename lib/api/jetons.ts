@@ -155,6 +155,8 @@ export interface IdentiteGoogle {
   email: string | null;
   nom: string | null;
   image: string | null;
+  /** Google ne renvoie que des adresses vérifiées, mais le dit explicitement. */
+  emailVerifie: boolean;
 }
 
 /**
@@ -184,6 +186,141 @@ export async function verifierIdentiteGoogle(idToken: string): Promise<IdentiteG
       email: typeof payload.email === "string" ? payload.email : null,
       nom: typeof payload.name === "string" ? payload.name : null,
       image: typeof payload.picture === "string" ? payload.picture : null,
+      emailVerifie: payload.email_verified === true || payload.email_verified === "true",
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Vérification de l'identité Apple
+// ---------------------------------------------------------------------------
+
+const JWKS_APPLE = createRemoteJWKSet(new URL("https://appleid.apple.com/auth/keys"));
+
+export interface IdentiteApple {
+  sub: string;
+  email: string | null;
+  emailVerifie: boolean;
+}
+
+/**
+ * Vérifie l'`identityToken` produit par « Sign in with Apple » natif.
+ *
+ * **L'audience n'est pas celle du web.** Le flux natif est émis pour
+ * l'identifiant de bundle de l'app (`com.frameoflegends.app`), là où le flux
+ * navigateur l'est pour l'identifiant de service. Les deux sont acceptés ici,
+ * mais aucun ne l'est implicitement : sans audience déclarée, n'importe quel
+ * jeton Apple émis pour une autre application ouvrirait la porte.
+ *
+ * Apple ne renvoie **le nom qu'à la première autorisation**, et jamais dans ce
+ * jeton : c'est l'app qui le transmet à part, la première fois.
+ */
+export async function verifierIdentiteApple(identityToken: string): Promise<IdentiteApple | null> {
+  const audiences = [process.env.AUTH_APPLE_ID_IOS, process.env.AUTH_APPLE_ID].filter(
+    (v): v is string => Boolean(v),
+  );
+  if (audiences.length === 0) return null;
+
+  try {
+    const { payload } = await jwtVerify(identityToken, JWKS_APPLE, {
+      issuer: "https://appleid.apple.com",
+      audience: audiences,
+    });
+
+    if (typeof payload.sub !== "string") return null;
+
+    return {
+      sub: payload.sub,
+      email: typeof payload.email === "string" ? payload.email : null,
+      // Apple ne délivre que des adresses qu'il a vérifiées ou qu'il possède
+      // (le relais privé). Il ne joint pourtant pas toujours la mention.
+      emailVerifie: payload.email_verified === undefined
+        ? true
+        : payload.email_verified === true || payload.email_verified === "true",
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Vérification de l'identité Discord
+// ---------------------------------------------------------------------------
+
+export interface IdentiteDiscord {
+  sub: string;
+  email: string | null;
+  emailVerifie: boolean;
+  nom: string | null;
+  image: string | null;
+}
+
+/**
+ * Échange le code d'autorisation Discord obtenu par l'app, puis lit l'identité.
+ *
+ * Discord n'a pas de connexion native : l'app ouvre une feuille système sur
+ * `discord.com`, en PKCE, et n'en rapporte qu'un **code**. L'échange se fait
+ * ici plutôt que dans l'app, parce qu'il demande le secret du client — qui
+ * n'aurait rien à faire dans un binaire distribué, où il se lit au désassemblage.
+ *
+ * Le `code_verifier` de PKCE reste, lui, indispensable : il prouve que le code
+ * est présenté par celui-là même qui l'a demandé.
+ */
+export async function verifierIdentiteDiscord(
+  code: string,
+  verificateur: string,
+  redirection: string,
+): Promise<IdentiteDiscord | null> {
+  const id = process.env.AUTH_DISCORD_ID;
+  const secret = process.env.AUTH_DISCORD_SECRET;
+  if (!id || !secret) return null;
+
+  try {
+    const jeton = await fetch("https://discord.com/api/oauth2/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: id,
+        client_secret: secret,
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: redirection,
+        code_verifier: verificateur,
+      }),
+    });
+    if (!jeton.ok) return null;
+
+    const { access_token } = (await jeton.json()) as { access_token?: string };
+    if (!access_token) return null;
+
+    const moi = await fetch("https://discord.com/api/users/@me", {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+    if (!moi.ok) return null;
+
+    const profil = (await moi.json()) as {
+      id?: string;
+      email?: string | null;
+      verified?: boolean;
+      global_name?: string | null;
+      username?: string;
+      avatar?: string | null;
+    };
+    if (typeof profil.id !== "string") return null;
+
+    return {
+      sub: profil.id,
+      email: profil.email ?? null,
+      // Discord laisse exister des comptes dont l'adresse n'est pas vérifiée.
+      // C'est le seul des trois dans ce cas, et c'est ce qui interdit de
+      // rattacher aveuglément par adresse.
+      emailVerifie: profil.verified === true,
+      nom: profil.global_name ?? profil.username ?? null,
+      image: profil.avatar
+        ? `https://cdn.discordapp.com/avatars/${profil.id}/${profil.avatar}.png`
+        : null,
     };
   } catch {
     return null;

@@ -98,7 +98,21 @@ Dans `mobile/.env` :
 
 ```
 EXPO_PUBLIC_API_URL=https://<ton-projet>.vercel.app
+EXPO_PUBLIC_GOOGLE_ID_IOS=<client OAuth iOS>.apps.googleusercontent.com
+EXPO_PUBLIC_DISCORD_ID=<identifiant de l'application Discord>
 ```
+
+Ces trois-là sont **figées dans le bundle à la compilation**. Pour une build
+EAS, elles doivent donc vivre dans l'environnement du profil, pas seulement
+dans le fichier local :
+
+```bash
+npx eas-cli env:create --environment preview --name EXPO_PUBLIC_GOOGLE_ID_IOS --value "…"
+```
+
+Côté serveur, la connexion Apple native demande en plus `AUTH_APPLE_ID_IOS`
+— l'identifiant de bundle de l'app —, le jeton natif étant émis pour lui et
+non pour l'identifiant de service du navigateur.
 
 Puis `npx expo start --clear` : `EXPO_PUBLIC_*` est figé dans le bundle, sans
 `--clear` l'ancienne adresse resterait.

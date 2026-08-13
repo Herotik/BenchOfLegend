@@ -90,6 +90,35 @@ retrouve ses séances. Le rattachement n'a lieu **que si le fournisseur a
 vérifié l'adresse** (`emailVerifie`) — sans quoi il suffirait de déclarer
 l'adresse d'autrui pour entrer chez lui.
 
+### Dans l'app mobile
+
+L'app ne passe pas par le site quand elle peut faire mieux :
+
+| | Ce que voit l'utilisateur | Ce qu'il faut |
+|---|---|---|
+| **Google** | La feuille de comptes du système, un appui | `EXPO_PUBLIC_GOOGLE_ID_IOS` (client OAuth de type iOS) |
+| **Apple** | La feuille « Sign in with Apple », Face ID | `AUTH_APPLE_ID_IOS` côté serveur, capacité activée sur l'App ID |
+| **Discord** | Une feuille système sur `discord.com` | `EXPO_PUBLIC_DISCORD_ID` |
+| **Repli** | Le navigateur s'ouvre sur le site | rien — marche toujours |
+
+Discord n'a **pas** de connexion native : son OAuth est exclusivement web, il
+n'existe aucun SDK mobile. La feuille système est le plus court chemin
+possible — elle évite le détour par notre site et le code relais, mais reste
+une feuille de navigateur.
+
+Chaque bouton ne s'affiche que si son identifiant a été fourni **à la
+compilation** : `EXPO_PUBLIC_*` est figé dans le bundle. Sans lui, l'app
+retombe sur le relais navigateur plutôt que d'ouvrir une feuille vouée à
+l'échec. C'est aussi pour ça que `app.config.js` n'ajoute le module natif de
+Google que si son identifiant existe : un identifiant manquant retire un
+bouton, il ne casse pas une compilation.
+
+Les routes `POST /api/v1/auth/{google,apple,discord}` vérifient chacune la
+preuve d'identité reçue — signature, émetteur et **audience** pour les jetons,
+échange serveur du code pour Discord — puis passent par le même
+`rattacherOuCreer`. C'est ce qui garantit qu'une connexion depuis le téléphone
+retrouve le compte du site, et n'en crée pas un second.
+
 ### Google
 
 1. Ouvrir la [Google Cloud Console](https://console.cloud.google.com/) et créer

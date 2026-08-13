@@ -16,7 +16,11 @@ import {
 } from "../api/client";
 import { chargerMoi, revoquerSession } from "../api/routes";
 import type { ReponseEchange, ReponseMoi } from "../api/types";
+import { connecterApple, connecterDiscord, connecterGoogle } from "./natif";
 import { connecterParNavigateur } from "./relais";
+
+/** Les fournisseurs joignables sans passer par le site. */
+export type FournisseurNatif = "google" | "apple" | "discord";
 
 /**
  * État de connexion, partagé par toute l'app.
@@ -34,7 +38,10 @@ interface ValeurSession {
   moi: ReponseMoi | null;
   /** Échec du chargement du profil — réseau, serveur éteint. */
   erreurProfil: string | null;
+  /** Relais navigateur : marche partout, y compris sans module natif. */
   seConnecter: () => Promise<void>;
+  /** Connexion native, sans passer par le site. Voir `auth/natif.ts`. */
+  seConnecterNatif: (fournisseur: FournisseurNatif) => Promise<void>;
   seDeconnecter: () => Promise<void>;
   rafraichirProfil: () => Promise<void>;
   /** Adopte un échange déjà réalisé (retour du relais par lien profond). */
@@ -118,6 +125,19 @@ export function FournisseurSession({ children }: { children: ReactNode }) {
     await adopterEchange(echange);
   }, [adopterEchange]);
 
+  const seConnecterNatif = useCallback(
+    async (fournisseur: FournisseurNatif) => {
+      const connecter = {
+        google: connecterGoogle,
+        apple: connecterApple,
+        discord: connecterDiscord,
+      }[fournisseur];
+
+      await adopterEchange(await connecter());
+    },
+    [adopterEchange],
+  );
+
   const seDeconnecter = useCallback(async () => {
     const jetons = jetonsEnMemoire();
     if (jetons) {
@@ -139,11 +159,21 @@ export function FournisseurSession({ children }: { children: ReactNode }) {
       moi,
       erreurProfil,
       seConnecter,
+      seConnecterNatif,
       seDeconnecter,
       rafraichirProfil: relireProfil,
       adopterEchange,
     }),
-    [etat, moi, erreurProfil, seConnecter, seDeconnecter, relireProfil, adopterEchange],
+    [
+      etat,
+      moi,
+      erreurProfil,
+      seConnecter,
+      seConnecterNatif,
+      seDeconnecter,
+      relireProfil,
+      adopterEchange,
+    ],
   );
 
   return <ContexteSession.Provider value={valeur}>{children}</ContexteSession.Provider>;
