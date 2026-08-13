@@ -57,6 +57,36 @@ bonus déjà comptés ce jour-là, qu'elle ne connaît pas.
 > faut donc reconstruire l'app (`npx eas-cli build`) — un rechargement de Metro
 > ne suffit pas.
 
+## Rappels de séance
+
+Le calendrier sait quels jours on s'entraîne, mais rien ne le disait : une
+séance oubliée l'était pour de bon, et la série de régularité avec elle. L'app
+pose donc une notification les jours prévus, à une heure choisie dans les
+réglages (8 h, 12 h, 18 h ou 20 h).
+
+Ce sont des **notifications locales**, planifiées par le téléphone lui-même. Le
+plan étant connu six semaines à l'avance, rien ne justifiait d'ouvrir un canal
+de notifications distantes — ses jetons, ses clés Apple et son point de panne —
+pour annoncer une information que l'app a déjà. Aucune clé APNs n'est donc
+nécessaire.
+
+Trois règles, dans [`mobile/src/donnees/rappels.ts`](mobile/src/donnees/rappels.ts) :
+
+- **Rien pour une séance déjà validée ni pour un jour manqué.** La
+  spécification interdit de culpabiliser ; la sanction est l'absence de gain,
+  pas un rappel accusateur.
+- **Vingt rappels au plus.** iOS n'accepte que 64 notifications locales en
+  attente et jette silencieusement les suivantes. Vingt couvrent plus d'un mois
+  au rythme de quatre séances par semaine.
+- **Tout est replanifié à chaque ouverture de l'app**, plutôt qu'ajusté au cas
+  par cas : le plan bouge — séance validée, préférences modifiées, semaine
+  régénérée — et suivre ces changements un par un ferait survivre des rappels
+  pour des séances qui n'existent plus.
+
+Le réglage vit **sur l'appareil**, pas dans le profil : deux téléphones n'ont
+aucune raison de vouloir la même heure, et cela évite une migration de base
+pour un confort local.
+
 ## Mettre l'app à jour
 
 Une build EAS coûte une quinzaine de minutes ; la payer pour changer deux mots

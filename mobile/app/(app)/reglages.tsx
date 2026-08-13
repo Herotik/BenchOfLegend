@@ -12,6 +12,14 @@ import {
   googleDisponible,
   rattacher,
 } from "../../src/auth/natif";
+import {
+  appliquer,
+  autoriser,
+  ecrireReglage,
+  HEURES_RAPPEL,
+  lireReglage,
+  type ReglageRappels,
+} from "../../src/donnees/rappels";
 import { useReferentiel } from "../../src/donnees/referentiel";
 import { Bouton } from "../../src/composants/Bouton";
 import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
@@ -111,6 +119,9 @@ export default function Reglages() {
         </>
       ) : null}
 
+      <TitreSection>Rappels</TitreSection>
+      <Rappels />
+
       <TitreSection>Lier un compte</TitreSection>
       <Connexions />
 
@@ -156,6 +167,127 @@ const APPARENCES: { valeur: ChoixTheme; libelle: string }[] = [
  * passe donc pas par `PUT /me/preferences`. Quelqu'un peut vouloir son iPhone
  * en sombre et son iPad en clair.
  */
+/**
+ * Rappels de séance.
+ *
+ * Notifications **locales** : le plan est connu six semaines à l'avance, rien
+ * ne justifie un canal de notifications distantes pour annoncer ce que l'app
+ * sait déjà. Le réglage vit sur l'appareil — deux téléphones n'ont aucune
+ * raison de vouloir la même heure.
+ */
+function Rappels() {
+  const styles = useStyles(creerStyles);
+  const [reglage, setReglage] = useState<ReglageRappels | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [enCours, setEnCours] = useState(false);
+
+  useEffect(() => {
+    let vivant = true;
+    void lireReglage().then((r) => vivant && setReglage(r));
+    return () => {
+      vivant = false;
+    };
+  }, []);
+
+  const appliquerReglage = useCallback(async (suivant: ReglageRappels) => {
+    setEnCours(true);
+    setMessage(null);
+
+    // L'autorisation d'abord : activer les rappels alors qu'iOS les refuse
+    // afficherait un interrupteur qui ment.
+    if (suivant.actif && !(await autoriser())) {
+      setMessage(
+        "iOS refuse les notifications pour cette app. Autorise-les dans Réglages → Notifications → Frame of Legends.",
+      );
+      setEnCours(false);
+      return;
+    }
+
+    setReglage(suivant);
+    await ecrireReglage(suivant);
+
+    const poses = await appliquer(suivant);
+    setMessage(
+      !suivant.actif
+        ? null
+        : poses < 0
+          ? "Réglage enregistré. Les rappels seront posés au prochain démarrage avec du réseau."
+          : poses === 0
+            ? "Aucune séance à venir dans les quatre prochaines semaines."
+            : `${poses} séance${poses > 1 ? "s" : ""} à venir seront rappelées.`,
+    );
+    setEnCours(false);
+  }, []);
+
+  if (!reglage) return null;
+
+  return (
+    <>
+      <Carte style={styles.carte}>
+        <Text style={styles.vide}>
+          {reglage.actif
+            ? "Une notification les jours de séance prévus, tant qu'elle n'est pas validée."
+            : "Aucun rappel. Les jours de séance passent sans que le téléphone ne dise rien."}
+        </Text>
+
+        <View style={styles.segments}>
+          {[
+            { valeur: false, libelle: "Désactivés" },
+            { valeur: true, libelle: "Activés" },
+          ].map((option) => (
+            <Pressable
+              key={String(option.valeur)}
+              onPress={() => void appliquerReglage({ ...reglage, actif: option.valeur })}
+              disabled={enCours}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: option.valeur === reglage.actif }}
+              style={[styles.segment, option.valeur === reglage.actif && styles.segmentActif]}
+            >
+              <Text
+                style={[
+                  styles.segmentTexte,
+                  option.valeur === reglage.actif && styles.segmentTexteActif,
+                ]}
+              >
+                {option.libelle}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {reglage.actif ? (
+          <>
+            <Text style={styles.groupeAide}>À quelle heure</Text>
+            <View style={styles.segments}>
+              {HEURES_RAPPEL.map((heure) => (
+                <Pressable
+                  key={heure}
+                  onPress={() => void appliquerReglage({ ...reglage, heure })}
+                  disabled={enCours}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: heure === reglage.heure }}
+                  style={[styles.segment, heure === reglage.heure && styles.segmentActif]}
+                >
+                  <Text
+                    style={[
+                      styles.segmentTexte,
+                      heure === reglage.heure && styles.segmentTexteActif,
+                    ]}
+                  >
+                    {heure} h
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </>
+        ) : null}
+
+        {message ? <Text style={styles.messageConnexion}>{message}</Text> : null}
+      </Carte>
+    </>
+  );
+}
+
 /**
  * Façons de se connecter rattachées au compte.
  *

@@ -5,6 +5,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect, useState } from "react";
 import { FournisseurSession, useSession } from "../src/auth/session";
 import { useEnvoiAutomatique } from "../src/donnees/envoi-differe";
+import { useRappels } from "../src/donnees/rappels";
 import { FournisseurReferentiel } from "../src/donnees/referentiel";
 import { FournisseurTheme, useTheme } from "../src/theme/theme";
 import { usePolices } from "../src/theme/polices";
@@ -56,6 +57,10 @@ function Coquille() {
   // pas — or on rouvre souvent l'app ailleurs qu'à l'endroit qu'on a quitté.
   const rattraper = useCallback(() => void rafraichirProfil(), [rafraichirProfil]);
   useEnvoiAutomatique(etat === "connecte", rattraper);
+
+  // Rappels de séance : replanifiés au même rythme, et pour la même raison —
+  // le plan a pu changer pendant qu'on ne regardait pas.
+  useRappels(etat === "connecte");
 
   useEffect(() => {
     if (polices) SplashScreen.hideAsync().catch(() => {});
