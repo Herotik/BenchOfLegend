@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
-import { SignJWT, jwtVerify, createRemoteJWKSet } from "jose";
+import { SignJWT, jwtVerify, createRemoteJWKSet, decodeJwt } from "jose";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -217,10 +217,13 @@ export interface IdentiteApple {
  * Apple ne renvoie **le nom qu'à la première autorisation**, et jamais dans ce
  * jeton : c'est l'app qui le transmet à part, la première fois.
  */
-export async function verifierIdentiteApple(identityToken: string): Promise<IdentiteApple | null> {
-  const audiences = [process.env.AUTH_APPLE_ID_IOS, process.env.AUTH_APPLE_ID].filter(
-    (v): v is string => Boolean(v),
+export const audiencesApple = (): string[] =>
+  [process.env.AUTH_APPLE_ID_IOS, process.env.AUTH_APPLE_ID].filter((v): v is string =>
+    Boolean(v),
   );
+
+export async function verifierIdentiteApple(identityToken: string): Promise<IdentiteApple | null> {
+  const audiences = audiencesApple();
   if (audiences.length === 0) return null;
 
   try {
@@ -240,6 +243,31 @@ export async function verifierIdentiteApple(identityToken: string): Promise<Iden
         ? true
         : payload.email_verified === true || payload.email_verified === "true",
     };
+  } catch (cause) {
+    // Le refus le plus courant est une audience qui ne correspond pas — et il
+    // est indiscernable d'une signature invalide vu du téléphone. On note donc
+    // les deux valeurs dans les journaux du serveur : elles n'ont rien de
+    // secret (un identifiant de bundle est public) et elles tranchent en une
+    // ligne un diagnostic qui, sans elles, se fait à l'aveugle.
+    console.warn("[auth/apple] jeton refusé", {
+      audiencesAttendues: audiences,
+      audienceRecue: audienceAnnoncee(identityToken),
+      raison: cause instanceof Error ? cause.message : String(cause),
+    });
+    return null;
+  }
+}
+
+/**
+ * Audience qu'un JWT **prétend** avoir, sans vérifier sa signature.
+ *
+ * À n'utiliser que pour un message de diagnostic : la valeur vient du client
+ * et ne prouve rien.
+ */
+function audienceAnnoncee(jeton: string): string | null {
+  try {
+    const aud = decodeJwt(jeton).aud;
+    return Array.isArray(aud) ? aud.join(", ") : (aud ?? null);
   } catch {
     return null;
   }
