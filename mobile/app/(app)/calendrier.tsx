@@ -4,10 +4,21 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { chargerPlan } from "../../src/api/routes";
 import type { JourPlan, StatutPlan } from "../../src/api/types";
 import { useReferentiel } from "../../src/donnees/referentiel";
-import { TitreSection } from "../../src/composants/Carte";
+import { Carte } from "../../src/composants/Carte";
 import { Chargement, EcranErreur, Vide } from "../../src/composants/Etats";
-import { jourCivilISO, lundiCivilISO } from "../../src/outils/dates";
-import { POLICE_TEXTE, POLICE_TEXTE_MOYEN, POLICE_TITRE, type Couleurs } from "../../src/theme/couleurs";
+import {
+  jourCivilISO,
+  jourCourtEnFrancais,
+  lundiCivilISO,
+  plageEnFrancais,
+} from "../../src/outils/dates";
+import {
+  LETTRAGE_TITRE,
+  POLICE_TEXTE,
+  POLICE_TEXTE_MOYEN,
+  POLICE_TITRE,
+  type Couleurs,
+} from "../../src/theme/couleurs";
 import { useCouleurs, useStyles } from "../../src/theme/theme";
 
 /**
@@ -17,6 +28,13 @@ import { useCouleurs, useStyles } from "../../src/theme/theme";
  * pas d'intérêt — l'historique le fait mieux, séance par séance — et le plan
  * au-delà d'un mois serait de la fiction, puisqu'il se régénère à chaque
  * changement de préférences.
+ *
+ * **Deux lectures par semaine, et c'est délibéré.** La bande de sept jours
+ * donne le rythme d'un coup d'œil ; les lignes en dessous nomment les groupes.
+ * La version précédente voulait tout mettre dans la grille : les noms y étaient
+ * rendus en 7,5 points, illisibles, et « Pectoraux » s'y coupait en deux. Une
+ * case ne porte donc plus que son numéro et une marque d'état — ce qu'on peut
+ * lire sans s'arrêter.
  *
  * L'app ne calcule rien : les jours, leurs groupes et leurs statuts viennent
  * tous de `GET /plan`.
@@ -97,41 +115,29 @@ export default function Calendrier() {
   return (
     <ScrollView
       style={styles.page}
-      contentContainerStyle={[styles.contenu, { paddingTop: marges.top + 16, paddingBottom: 32 }]}
+      contentContainerStyle={[styles.contenu, { paddingTop: marges.top + 16, paddingBottom: 36 }]}
       refreshControl={
         <RefreshControl refreshing={rafraichit} onRefresh={rafraichir} tintColor={c.texte2} />
       }
     >
       <Text style={styles.titre}>Calendrier</Text>
 
-      <View style={styles.enteteJours}>
-        {JOURS_COURTS.map((j, i) => (
-          <Text key={i} style={styles.enteteJour}>
-            {j}
-          </Text>
-        ))}
-      </View>
-
       {semaines.map((semaine, index) => {
         // Une semaine antérieure à l'inscription n'a aucun jour de plan : le
         // serveur n'en génère pas. Afficher sept numéros sans cases donnait
         // une rangée orpheline qui ressemblait à un défaut d'affichage.
         if (index < SEMAINES_AVANT && semaine.every((d) => !parDate.has(d))) return null;
+
         return (
-        <View key={semaine[0]} style={styles.semaine}>
-          <TitreSection>{titreSemaine(index)}</TitreSection>
-          <View style={styles.grille}>
-            {semaine.map((date) => (
-              <Case
-                key={date}
-                date={date}
-                lignes={parDate.get(date) ?? []}
-                aujourdhui={date === aujourdhui}
-                libelleGroupe={libelleGroupe}
-              />
-            ))}
-          </View>
-        </View>
+          <Semaine
+            key={semaine[0]}
+            dates={semaine}
+            titre={titreSemaine(index)}
+            courante={index === SEMAINES_AVANT}
+            parDate={parDate}
+            aujourdhui={aujourdhui}
+            libelleGroupe={libelleGroupe}
+          />
         );
       })}
 
@@ -148,15 +154,134 @@ const titreSemaine = (index: number): string => {
   return relatif < 0 ? `Il y a ${-relatif} semaines` : `Dans ${relatif} semaines`;
 };
 
+// ---------------------------------------------------------------------------
+// Une semaine
+// ---------------------------------------------------------------------------
+
+function Semaine({
+  dates,
+  titre,
+  courante,
+  parDate,
+  aujourdhui,
+  libelleGroupe,
+}: {
+  dates: string[];
+  titre: string;
+  courante: boolean;
+  parDate: Map<string, JourPlan[]>;
+  aujourdhui: string;
+  libelleGroupe: (id: string) => string;
+}) {
+  const styles = useStyles(creerStyles);
+
+  // Seuls les jours d'entraînement sont détaillés : lister les repos allongerait
+  // la carte pour ne rien apprendre, la bande les montre déjà.
+  const seances = dates
+    .map((date) => ({ date, lignes: parDate.get(date) ?? [] }))
+    .filter((j) => j.lignes.length > 0 && j.lignes[0]!.groupe !== "repos");
+
+  return (
+    <Carte style={[styles.semaine, courante && styles.semaineCourante]}>
+      <View style={styles.entete}>
+        <Text style={[styles.enteteTitre, courante && styles.enteteTitreCourant]}>
+          {titre.toUpperCase()}
+        </Text>
+        <Text style={styles.enteteDates}>{plageEnFrancais(dates[0]!, dates[6]!)}</Text>
+      </View>
+
+      <View style={styles.grille}>
+        {dates.map((date, i) => (
+          <Case
+            key={date}
+            date={date}
+            lettre={JOURS_COURTS[i]!}
+            lignes={parDate.get(date) ?? []}
+            aujourdhui={date === aujourdhui}
+          />
+        ))}
+      </View>
+
+      {seances.length > 0 ? (
+        <View style={styles.liste}>
+          {seances.map(({ date, lignes }) => (
+            <LigneSeance
+              key={date}
+              date={date}
+              lignes={lignes}
+              aujourdhui={date === aujourdhui}
+              libelleGroupe={libelleGroupe}
+            />
+          ))}
+        </View>
+      ) : (
+        <Text style={styles.semaineVide}>Aucune séance prévue cette semaine.</Text>
+      )}
+    </Carte>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Une journée, dans la bande
+// ---------------------------------------------------------------------------
+
 /**
- * Une journée.
- *
- * Le statut se lit au filet et à la teinte du fond, jamais à un aplat de
- * couleur vive : une semaine manquée est une information, pas une faute. La
- * spec interdit de culpabiliser, et un calendrier rouge le ferait à chaque
- * ouverture.
+ * Le statut se lit à une marque sous le numéro, jamais à un aplat de couleur
+ * vive : une semaine manquée est une information, pas une faute. La spec
+ * interdit de culpabiliser, et un calendrier rouge le ferait à chaque ouverture.
  */
 function Case({
+  date,
+  lettre,
+  lignes,
+  aujourdhui,
+}: {
+  date: string;
+  lettre: string;
+  lignes: JourPlan[];
+  aujourdhui: boolean;
+}) {
+  const styles = useStyles(creerStyles);
+  const numero = String(Number(date.slice(8, 10)));
+  const premiere = lignes[0];
+  const repos = premiere?.groupe === "repos";
+
+  // Une journée hybride est faite dès que **toutes** ses lignes le sont : la
+  // marque ne doit pas récompenser une moitié de séance.
+  const statut: StatutPlan | null = !premiere
+    ? null
+    : lignes.every((l) => l.statut === "FAIT")
+      ? "FAIT"
+      : premiere.statut;
+
+  return (
+    <View style={styles.colonne}>
+      <Text style={[styles.lettre, aujourdhui && styles.lettreAujourdhui]}>{lettre}</Text>
+      <View style={[styles.case, aujourdhui && styles.caseAujourdhui]}>
+        <Text style={[styles.numero, aujourdhui && styles.numeroAujourdhui]}>{numero}</Text>
+        <Marque statut={statut} repos={repos} />
+      </View>
+    </View>
+  );
+}
+
+/** Marque d'état : disque plein, anneau, tiret, ou rien. */
+function Marque({ statut, repos }: { statut: StatutPlan | null; repos: boolean }) {
+  const styles = useStyles(creerStyles);
+
+  if (repos || statut === "REPOS") return <View style={styles.marqueRepos} />;
+  if (statut === "FAIT") return <View style={styles.marqueFaite} />;
+  if (statut === "PREVU") return <View style={styles.marquePrevue} />;
+  // Manquée, ou jour sans plan : un simple trait gris, sans croix ni rouge.
+  if (statut === "MANQUE") return <View style={styles.marqueManquee} />;
+  return <View style={styles.marqueVide} />;
+}
+
+// ---------------------------------------------------------------------------
+// Une séance, dans la liste
+// ---------------------------------------------------------------------------
+
+function LigneSeance({
   date,
   lignes,
   aujourdhui,
@@ -168,65 +293,46 @@ function Case({
   libelleGroupe: (id: string) => string;
 }) {
   const styles = useStyles(creerStyles);
-  const numero = date.slice(8, 10);
-  const premiere = lignes[0];
-  const repos = premiere?.groupe === "repos";
 
-  // Une journée hybride est faite dès que **toutes** ses lignes le sont : la
-  // pastille ne doit pas récompenser une moitié de séance.
-  const faite = lignes.length > 0 && lignes.every((l) => l.statut === "FAIT");
+  const faite = lignes.every((l) => l.statut === "FAIT");
+  const manquee = lignes.every((l) => l.statut === "MANQUE");
+  const groupes = lignes.map((l) => libelleGroupe(l.groupe)).join(" + ");
 
   return (
-    <View
-      style={[
-        styles.case,
-        premiere ? styles[statutStyle(faite ? "FAIT" : premiere.statut)] : styles.caseAbsente,
-        aujourdhui && styles.caseAujourdhui,
-      ]}
-    >
-      <Text style={[styles.caseNumero, aujourdhui && styles.caseNumeroAujourdhui]}>{numero}</Text>
-      {repos ? (
-        <Text style={styles.caseGroupe}>repos</Text>
-      ) : (
-        lignes.map((l) => (
-          <Text
-            key={l.id}
-            style={styles.caseGroupe}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.7}
-          >
-            {libelleGroupe(l.groupe)}
-          </Text>
-        ))
-      )}
-      {faite ? <View style={styles.pastille} /> : null}
+    <View style={styles.ligne}>
+      <Text style={[styles.ligneJour, aujourdhui && styles.ligneJourAujourdhui]}>
+        {jourCourtEnFrancais(date)}
+      </Text>
+      <Text style={[styles.ligneGroupes, manquee && styles.ligneGroupesManquee]} numberOfLines={1}>
+        {groupes}
+      </Text>
+      <Text style={[styles.ligneStatut, faite && styles.ligneStatutFaite]}>
+        {faite ? "faite" : manquee ? "manquée" : "prévue"}
+      </Text>
     </View>
   );
 }
 
-const STYLE_PAR_STATUT = {
-  FAIT: "caseFaite",
-  MANQUE: "caseManquee",
-  REPOS: "caseRepos",
-  PREVU: "casePrevue",
-} as const;
-
-const statutStyle = (statut: StatutPlan) => STYLE_PAR_STATUT[statut];
+// ---------------------------------------------------------------------------
+// Légende
+// ---------------------------------------------------------------------------
 
 function Legende() {
   const styles = useStyles(creerStyles);
+
   return (
     <View style={styles.legende}>
-      {[
-        ["caseFaite", "faite"],
-        ["casePrevue", "prévue"],
-        ["caseManquee", "manquée"],
-        ["caseRepos", "repos"],
-      ].map(([style, texte]) => (
+      {(
+        [
+          ["marqueFaite", "faite"],
+          ["marquePrevue", "prévue"],
+          ["marqueManquee", "manquée"],
+          ["marqueRepos", "repos"],
+        ] as const
+      ).map(([marque, texte]) => (
         <View key={texte} style={styles.legendeItem}>
-          <View style={[styles.legendeCarre, styles[style as "caseFaite"]]}>
-            {style === "caseFaite" ? <View style={styles.pastilleLegende} /> : null}
+          <View style={styles.legendeMarque}>
+            <View style={styles[marque]} />
           </View>
           <Text style={styles.legendeTexte}>{texte}</Text>
         </View>
@@ -241,124 +347,190 @@ const creerStyles = (c: Couleurs) => StyleSheet.create({
     backgroundColor: c.fond,
   },
   contenu: {
-    paddingHorizontal: 14,
-    gap: 6,
+    paddingHorizontal: 16,
+    gap: 12,
   },
   titre: {
     color: c.texte,
     fontFamily: POLICE_TITRE,
     fontSize: 30,
-    marginLeft: 4,
-    marginBottom: 6,
-  },
-  enteteJours: {
-    flexDirection: "row",
-    gap: 4,
     marginBottom: 2,
   },
-  enteteJour: {
-    fontFamily: POLICE_TEXTE,
-    flex: 1,
-    textAlign: "center",
-    color: c.texte3,
-    fontSize: 11,
-    letterSpacing: 1,
-  },
+
+  // --- La carte d'une semaine ---
   semaine: {
-    gap: 4,
-    marginBottom: 6,
+    gap: 12,
   },
+  semaineCourante: {
+    borderColor: c.accent,
+  },
+  entete: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  enteteTitre: {
+    fontFamily: POLICE_TEXTE_MOYEN,
+    color: c.texte2,
+    fontSize: 11,
+    letterSpacing: LETTRAGE_TITRE,
+    fontWeight: "600",
+  },
+  enteteTitreCourant: {
+    color: c.accent,
+  },
+  enteteDates: {
+    fontFamily: POLICE_TEXTE,
+    color: c.texte3,
+    fontSize: 12,
+  },
+
+  // --- La bande de sept jours ---
   grille: {
     flexDirection: "row",
-    gap: 4,
+    gap: 5,
+  },
+  colonne: {
+    flex: 1,
+    alignItems: "center",
+    gap: 5,
+  },
+  lettre: {
+    fontFamily: POLICE_TEXTE,
+    color: c.texte3,
+    fontSize: 10.5,
+    letterSpacing: 1,
+  },
+  lettreAujourdhui: {
+    color: c.accent,
   },
   case: {
-    flex: 1,
-    aspectRatio: 0.68,
+    width: "100%",
+    // Assez haut pour que le chiffre respire et que la marque ait sa place,
+    // là où la version précédente entassait quatre informations dans 48 points.
+    height: 54,
+    borderRadius: 10,
     borderWidth: 1,
-    paddingTop: 4,
-    // Marge réduite au minimum : « Pectoraux » doit tenir sur une ligne, faute
-    // de quoi il se coupe en « Pectorau / x », qui ne se lit plus.
-    paddingHorizontal: 1,
-    alignItems: "center",
-    gap: 2,
-  },
-  caseAbsente: {
-    borderColor: "transparent",
-    backgroundColor: "transparent",
-  },
-  casePrevue: {
     borderColor: c.filet,
-    backgroundColor: c.fond2,
-  },
-  caseFaite: {
-    borderColor: c.filetFort,
     backgroundColor: c.fond3,
-  },
-  // Ni rouge ni croix : l'absence de gain est déjà la sanction.
-  caseManquee: {
-    borderColor: c.filet,
-    backgroundColor: "transparent",
-  },
-  caseRepos: {
-    borderColor: "transparent",
-    backgroundColor: c.fond2,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
   },
   caseAujourdhui: {
     borderColor: c.accent,
     borderWidth: 1.5,
   },
-  caseNumero: {
-    fontFamily: POLICE_TEXTE_MOYEN,
-    color: c.texte2,
-    fontSize: 12,
-    fontWeight: "600",
+  numero: {
+    fontFamily: POLICE_TITRE,
+    color: c.texte,
+    fontSize: 16,
   },
-  caseNumeroAujourdhui: {
+  numeroAujourdhui: {
     color: c.accent,
   },
-  caseGroupe: {
+  marqueFaite: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: c.positif,
+  },
+  marquePrevue: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    borderWidth: 1.5,
+    borderColor: c.accent,
+  },
+  marqueManquee: {
+    width: 9,
+    height: 1.5,
+    backgroundColor: c.texte3,
+  },
+  marqueRepos: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: c.filetFort,
+  },
+  marqueVide: {
+    width: 7,
+    height: 7,
+  },
+
+  // --- Les séances de la semaine ---
+  liste: {
+    gap: 2,
+    borderTopWidth: 1,
+    borderTopColor: c.filet,
+    paddingTop: 10,
+  },
+  ligne: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 10,
+    paddingVertical: 4,
+  },
+  ligneJour: {
+    fontFamily: POLICE_TEXTE_MOYEN,
+    color: c.texte2,
+    fontSize: 13,
+    // Largeur fixe : les jours s'alignent en colonne, « ven. 15 » comme
+    // « mer. 3 ». Sans elle, les noms de groupes dansaient d'une ligne à
+    // l'autre.
+    width: 62,
+  },
+  ligneJourAujourdhui: {
+    color: c.accent,
+  },
+  ligneGroupes: {
+    fontFamily: POLICE_TEXTE,
+    color: c.texte,
+    fontSize: 14,
+    flex: 1,
+  },
+  ligneGroupesManquee: {
+    color: c.texte3,
+  },
+  ligneStatut: {
     fontFamily: POLICE_TEXTE,
     color: c.texte3,
-    fontSize: 7.5,
-    lineHeight: 10,
-    textAlign: "center",
+    fontSize: 11.5,
   },
-  pastille: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: c.positif,
-    marginTop: 1,
+  ligneStatutFaite: {
+    color: c.positif,
   },
+  semaineVide: {
+    fontFamily: POLICE_TEXTE,
+    color: c.texte3,
+    fontSize: 12.5,
+    borderTopWidth: 1,
+    borderTopColor: c.filet,
+    paddingTop: 10,
+  },
+
+  // --- Légende ---
   legende: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 14,
-    marginTop: 14,
-    marginLeft: 4,
+    gap: 16,
+    marginTop: 4,
+    paddingHorizontal: 2,
   },
   legendeItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 7,
   },
-  legendeCarre: {
-    width: 12,
-    height: 12,
-    borderWidth: 1,
+  legendeMarque: {
+    width: 10,
     alignItems: "center",
     justifyContent: "center",
-  },
-  pastilleLegende: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: c.positif,
   },
   legendeTexte: {
     fontFamily: POLICE_TEXTE,
     color: c.texte3,
-    fontSize: 11.5,
+    fontSize: 12,
   },
 });

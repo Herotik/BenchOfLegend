@@ -4,6 +4,7 @@ import { useSession } from "../../src/auth/session";
 import { useReferentiel } from "../../src/donnees/referentiel";
 import { ecussonDuRang } from "../../src/donnees/ecussons";
 import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
+import { Ecusson } from "../../src/composants/Ecusson";
 import { Logotype } from "../../src/composants/Logo";
 import { Chargement } from "../../src/composants/Etats";
 import {
@@ -79,6 +80,18 @@ export default function Aide() {
         Huit paliers. Les six premiers comptent quatre divisions de{" "}
         {referentiel.lpParDivision} Δ ; les deux derniers n&apos;en ont pas.
       </Text>
+
+      {/* Le rang atteint, en grand. Les écussons sont gravés un par un — les
+          réduire tous à une vignette de côté revenait à ne jamais les montrer. */}
+      {moi ? (
+        <Carte style={styles.vitrine}>
+          <Ecusson rang={moi.rang} taille={148} />
+          <Text style={[styles.vitrineNom, { color: moi.rang.couleur }]}>{moi.rang.libelle}</Text>
+          <Text style={styles.vitrineSous}>{moi.rang.sousTitre}</Text>
+          <Text style={styles.vitrineLp}>{moi.lp} Δ</Text>
+        </Carte>
+      ) : null}
+
       {referentiel.rangs.map((rang) => (
         <Palier key={rang.slug} rang={rang} courant={rang.slug === rangCourant} />
       ))}
@@ -158,7 +171,14 @@ function Bareme({ libelle, valeur }: { libelle: string; valeur: number }) {
   );
 }
 
-/** Un palier de l'échelle, avec son écusson et son seuil. */
+/**
+ * Un palier de l'échelle, avec son écusson et son seuil.
+ *
+ * L'écusson est posé sur un halo de la couleur du rang — le même dispositif que
+ * sur l'accueil. C'est lui qui distingue un Spartiate argenté d'un Titan bleu
+ * au premier coup d'œil, et sans lui les huit médaillons se ressemblaient tous
+ * en petit.
+ */
 function Palier({
   rang,
   courant,
@@ -170,6 +190,7 @@ function Palier({
     lore: string;
     minLp: number;
     divisions: number;
+    couleur: string;
   };
   courant: boolean;
 }) {
@@ -178,13 +199,33 @@ function Palier({
 
   return (
     <Carte style={[styles.palier, courant && styles.palierCourant]}>
-      {ecusson ? <Image source={ecusson} style={styles.ecusson} resizeMode="contain" /> : null}
+      <View style={styles.ecussonCadre}>
+        <View style={[styles.ecussonHalo, { backgroundColor: rang.couleur }]} />
+        {ecusson ? (
+          <Image source={ecusson} style={styles.ecusson} resizeMode="contain" />
+        ) : (
+          <View style={[styles.ecussonReplis, { borderColor: rang.couleur }]}>
+            <Text style={[styles.ecussonReplisTexte, { color: rang.couleur }]}>
+              {rang.nom.slice(0, 2).toUpperCase()}
+            </Text>
+          </View>
+        )}
+      </View>
+
       <View style={styles.palierTexte}>
         <View style={styles.palierEntete}>
+          {/* Le nom reste en texte plein. Le teinter de la couleur du rang
+              paraissait juste, mais « Hoplite » en gris fer devenait plus pâle
+              que le texte courant : le palier de départ se lisait comme
+              désactivé. La couleur passe donc à la pastille du métal, où elle
+              identifie sans rien affaiblir. */}
           <Text style={styles.palierNom}>{rang.nom}</Text>
           {courant ? <Text style={styles.icibas}>tu es ici</Text> : null}
         </View>
-        <Text style={styles.palierSous}>{rang.sousTitre}</Text>
+        <View style={styles.palierMetal}>
+          <View style={[styles.pastilleMetal, { backgroundColor: rang.couleur }]} />
+          <Text style={styles.palierSous}>{rang.sousTitre}</Text>
+        </View>
         <Text style={styles.palierSeuil}>
           {rang.minLp === 0 ? "Point de départ" : `À partir de ${rang.minLp} Δ`}
           {rang.divisions > 1 ? ` · ${rang.divisions} divisions` : " · sans division"}
@@ -261,17 +302,69 @@ const creerStyles = (c: Couleurs) => StyleSheet.create({
     color: c.accent,
     fontSize: 14,
   },
+  vitrine: {
+    alignItems: "center",
+    gap: 2,
+    paddingVertical: 22,
+    marginBottom: 4,
+  },
+  vitrineNom: {
+    fontFamily: POLICE_TITRE,
+    fontSize: 26,
+    letterSpacing: 1,
+    marginTop: 10,
+  },
+  vitrineSous: {
+    fontFamily: POLICE_TEXTE,
+    color: c.texte2,
+    fontSize: 13,
+  },
+  vitrineLp: {
+    fontFamily: POLICE_TITRE,
+    color: c.texte3,
+    fontSize: 14,
+    marginTop: 6,
+  },
   palier: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 16,
+    paddingVertical: 14,
   },
   palierCourant: {
     borderColor: c.accent,
   },
+  ecussonCadre: {
+    width: 92,
+    height: 92,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  // Le halo déborde le médaillon plutôt que de se glisser dessous : les
+  // écussons sont opaques, un halo à leur taille exacte restait invisible.
+  ecussonHalo: {
+    position: "absolute",
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    opacity: 0.16,
+  },
   ecusson: {
-    width: 54,
-    height: 54,
+    width: 80,
+    height: 80,
+  },
+  ecussonReplis: {
+    width: "72%",
+    height: "72%",
+    borderRadius: 999,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  ecussonReplisTexte: {
+    fontFamily: POLICE_TITRE,
+    fontSize: 20,
+    letterSpacing: 1,
   },
   palierTexte: {
     flex: 1,
@@ -286,8 +379,18 @@ const creerStyles = (c: Couleurs) => StyleSheet.create({
   palierNom: {
     fontFamily: POLICE_TITRE,
     color: c.texte,
-    fontSize: 17,
+    fontSize: 19,
     flexShrink: 1,
+  },
+  palierMetal: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  pastilleMetal: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   icibas: {
     fontFamily: POLICE_TEXTE_MOYEN,

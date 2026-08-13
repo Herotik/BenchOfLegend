@@ -45,6 +45,47 @@ export function jourEnFrancais(iso: string): string {
   }).format(date);
 }
 
+/**
+ * « lun. 11 », à partir d'un AAAA-MM-JJ.
+ *
+ * Même lecture en UTC que `jourEnFrancais` : la chaîne désigne un jour civil,
+ * pas un instant. Sans ce fuseau explicite, un téléphone à l'ouest de
+ * Greenwich afficherait la veille.
+ */
+export function jourCourtEnFrancais(iso: string): string {
+  const date = new Date(`${iso}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return iso;
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    weekday: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
+
+/**
+ * « 11 – 17 août », ou « 28 juil. – 3 août » quand la semaine change de mois.
+ *
+ * Le mois n'est répété que s'il diffère : une semaine entière dans le même
+ * mois n'a aucune raison de l'écrire deux fois.
+ */
+export function plageEnFrancais(debutISO: string, finISO: string): string {
+  const debut = new Date(`${debutISO}T00:00:00.000Z`);
+  const fin = new Date(`${finISO}T00:00:00.000Z`);
+  if (Number.isNaN(debut.getTime()) || Number.isNaN(fin.getTime())) return "";
+
+  const memeMois = debutISO.slice(0, 7) === finISO.slice(0, 7);
+  const jourSeul = new Intl.DateTimeFormat("fr-FR", { day: "numeric", timeZone: "UTC" });
+  const jourEtMois = new Intl.DateTimeFormat("fr-FR", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
+
+  const gauche = memeMois ? jourSeul.format(debut) : jourEtMois.format(debut);
+  return `${gauche} – ${jourEtMois.format(fin)}`;
+}
+
 /** « 1:30 » à partir d'un nombre de secondes. */
 export function chronoEnTexte(secondes: number): string {
   const total = Math.max(0, Math.round(secondes));
