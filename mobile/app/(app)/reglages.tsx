@@ -111,7 +111,7 @@ export default function Reglages() {
         </>
       ) : null}
 
-      <TitreSection>Se connecter</TitreSection>
+      <TitreSection>Lier un compte</TitreSection>
       <Connexions />
 
       <TitreSection>Apparence</TitreSection>
@@ -213,7 +213,7 @@ function Connexions() {
     <>
       <Carte style={styles.carte}>
         {connexions.length === 0 ? (
-          <Text style={styles.vide}>Aucune connexion rattachée.</Text>
+          <Text style={styles.vide}>Aucun compte lié.</Text>
         ) : (
           connexions.map((fournisseur) => (
             <View key={fournisseur} style={styles.groupe}>
@@ -221,8 +221,8 @@ function Connexions() {
                 <Text style={styles.groupeNom}>{LIBELLES[fournisseur] ?? fournisseur}</Text>
                 <Text style={styles.groupeAide}>
                   {connexions.length === 1
-                    ? "Ta seule façon d'entrer : elle ne peut pas être retirée"
-                    : "Rattachée"}
+                    ? "Ta seule façon d'entrer : elle ne peut pas être déliée"
+                    : "Liée à ce compte"}
                 </Text>
               </View>
               {connexions.length > 1 ? (
@@ -249,8 +249,8 @@ function Connexions() {
       {proposables.map((f) => (
         <Bouton
           key={f.id}
-          titre={`Ajouter ${f.nom}`}
-          aide="La feuille s'ouvre pour prouver l'identité, puis rattache ce compte"
+          titre={`Lier un compte ${f.nom}`}
+          aide="La feuille s'ouvre pour prouver l'identité, puis la lie à ce compte"
           intention="sombre"
           onPress={() => agir(f.id, () => rattacher(f.id))}
           enCours={enCours === f.id}
