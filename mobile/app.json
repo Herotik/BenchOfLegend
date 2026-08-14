@@ -10,7 +10,11 @@
     "backgroundColor": "#f4f4f1",
     "ios": {
       "bundleIdentifier": "com.frameoflegends.app",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.frameoflegends.app",
@@ -50,6 +54,12 @@
         "projectId": "7c2bee60-63d6-40bc-8fd5-8c0bb3a57703"
       }
     },
-    "owner": "herotik"
+    "owner": "herotik",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/7c2bee60-63d6-40bc-8fd5-8c0bb3a57703"
+    }
   }
 }
