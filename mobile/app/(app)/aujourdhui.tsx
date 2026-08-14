@@ -175,6 +175,18 @@ export default function Aujourdhui() {
               : `${moi.rang.lpDansDivision} / ${moi.rang.lpProchaineDivision} Δ`}
           </Text>
           <BarreProgression part={moi.rang.progression} couleur={moi.rang.couleur} />
+
+          {/* Sous l'écusson, et discret : la phalange se consulte, elle ne
+              s'impose pas. Un aperçu ici obligerait à charger la liste des
+              compagnons sur l'écran le plus souvent ouvert de l'app, pour une
+              information qu'on ne vient pas y chercher. */}
+          <Pressable
+            onPress={() => router.push("/phalange")}
+            accessibilityRole="link"
+            style={styles.lienPhalange}
+          >
+            <Text style={styles.lienPhalangeTexte}>Ma phalange →</Text>
+          </Pressable>
         </Carte>
       ) : null}
 
@@ -469,6 +481,15 @@ const creerStyles = (c: Couleurs) => StyleSheet.create({
   carteRang: {
     alignItems: "center",
     gap: 12,
+  },
+  lienPhalange: {
+    paddingTop: 2,
+    paddingHorizontal: 8,
+  },
+  lienPhalangeTexte: {
+    fontFamily: POLICE_TEXTE_MOYEN,
+    color: c.texte2,
+    fontSize: 13,
   },
   lp: {
     fontFamily: POLICE_TEXTE_GRAS,

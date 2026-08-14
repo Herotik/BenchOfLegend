@@ -21,6 +21,14 @@ export async function GET() {
       weighIns: { orderBy: { date: "asc" } },
       workouts: { orderBy: { date: "asc" } },
       planDays: { orderBy: { date: "asc" } },
+      // Un lien est aussi une donnée du compte : savoir avec qui l'on s'est
+      // comparé fait partie de ce qu'on est en droit de récupérer. On ne prend
+      // du compagnon que son nom d'affichage — celui-là est déjà sous les yeux
+      // de qui exporte, alors que son adresse, ses Δ ou son identifiant ne le
+      // sont pas et n'ont rien à faire dans un fichier qui peut être déposé
+      // n'importe où.
+      amitiesDemandees: { select: { statut: true, createdAt: true, destinataire: { select: { name: true } } } },
+      amitiesRecues: { select: { statut: true, createdAt: true, demandeur: { select: { name: true } } } },
     },
   });
 
@@ -58,6 +66,20 @@ export async function GET() {
       groupe: p.muscleGroup,
       statut: p.status,
     })),
+    phalange: [
+      ...user.amitiesDemandees.map((a) => ({
+        compagnon: a.destinataire.name,
+        sens: "demandee" as const,
+        statut: a.statut,
+        depuis: a.createdAt,
+      })),
+      ...user.amitiesRecues.map((a) => ({
+        compagnon: a.demandeur.name,
+        sens: "recue" as const,
+        statut: a.statut,
+        depuis: a.createdAt,
+      })),
+    ],
   };
 
   const jour = new Date().toISOString().slice(0, 10);

@@ -208,7 +208,7 @@ function ZoneDanger() {
       "Repartir de zéro ?",
       "Tes séances, tes pesées, ton plan, tes charges et tes Δ seront effacés. " +
         "Tu redeviens Hoplite, sans division.\n\n" +
-        "Ton compte, tes connexions et tes préférences d'entraînement restent. " +
+        "Ton compte, tes connexions, ta phalange et tes préférences d'entraînement restent. " +
         "C'est définitif : rien ne permet de revenir en arrière.",
       [
         { text: "Annuler", style: "cancel" },

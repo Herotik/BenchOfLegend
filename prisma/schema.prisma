@@ -41,6 +41,18 @@ model User {
   /// LP cumulés. Jamais négatifs : aucune action n'en retire.
   lp          Int     @default(0)
 
+  /// Code personnel à partager pour être ajouté à une phalange.
+  ///
+  /// Il n'existe **aucune recherche par nom ou par adresse** : pouvoir chercher
+  /// quelqu'un reviendrait à pouvoir savoir qui a un compte. Le code est le
+  /// seul chemin, et il ne circule que si son porteur le donne.
+  ///
+  /// Créé à la demande, jamais à l'inscription : la plupart des comptes n'en
+  /// auront jamais besoin. Régénérable — il ne déclenche qu'une demande, qui
+  /// doit ensuite être acceptée, si bien qu'un code égaré ne coûte au pire
+  /// qu'une sollicitation à refuser.
+  codeAmi     String? @unique
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -54,6 +66,39 @@ model User {
   charges      ExerciseLoad[]
   apiTokens    ApiRefreshToken[]
   handoffCodes ApiHandoffCode[]
+
+  amitiesDemandees Amitie[] @relation("AmitiesDemandees")
+  amitiesRecues    Amitie[] @relation("AmitiesRecues")
+}
+
+/// Lien entre deux comptes — demandé, accepté ou refusé.
+///
+/// Une seule ligne par paire, quel que soit le sens. La contrainte qui le
+/// garantit porte sur `paire`, la concaténation des deux identifiants **triés**
+/// : sans elle, A→B et B→A pourraient coexister, et deux demandes croisées
+/// envoyées en même temps produiraient deux amitiés entre les mêmes personnes.
+/// Vérifier l'absence de réciproque en amont ne suffirait pas — deux requêtes
+/// simultanées passeraient toutes deux le contrôle avant que l'une n'écrive.
+///
+/// Le sens reste porté par `demandeurId` / `destinataireId` : seul le
+/// destinataire peut accepter, et l'un comme l'autre peut rompre.
+model Amitie {
+  id             String       @id @default(cuid())
+  demandeurId    String
+  destinataireId String
+  statut         StatutAmitie @default(EN_ATTENTE)
+
+  /// `[demandeurId, destinataireId].sort().join(":")`. Voir la note du modèle.
+  paire String @unique
+
+  createdAt DateTime  @default(now())
+  reponduLe DateTime?
+
+  demandeur    User @relation("AmitiesDemandees", fields: [demandeurId], references: [id], onDelete: Cascade)
+  destinataire User @relation("AmitiesRecues", fields: [destinataireId], references: [id], onDelete: Cascade)
+
+  @@index([demandeurId, statut])
+  @@index([destinataireId, statut])
 }
 
 model Account {
@@ -293,4 +338,16 @@ enum PlanStatus {
   FAIT
   MANQUE
   REPOS
+}
+
+/// Un refus est **conservé** plutôt que supprimé : la ligne subsiste, et la
+/// contrainte d'unicité sur `paire` empêche alors le demandeur d'insister. Le
+/// supprimer laisserait la voie libre à une nouvelle demande dans la seconde,
+/// autant de fois que voulu — un code partagé publiquement suffirait à harceler
+/// son porteur. Celui qui a refusé peut revenir dessus : retirer la ligne rouvre
+/// la porte, accepter la franchit.
+enum StatutAmitie {
+  EN_ATTENTE
+  ACCEPTEE
+  REFUSEE
 }

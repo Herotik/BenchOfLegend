@@ -323,3 +323,38 @@ export interface PageHistorique {
   /** Curseur de la page suivante. `null` = fin. */
   suivant: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Phalange — `GET /amis`
+// ---------------------------------------------------------------------------
+
+/**
+ * Ce qu'un compagnon laisse voir de lui, et rien de plus.
+ *
+ * Ni poids, ni taille, ni charge : le serveur ne les envoie pas, et c'est
+ * délibéré — voir l'en-tête de `lib/amis.ts` côté serveur.
+ */
+export interface Compagnon {
+  /** Vide pour soi-même : on ne se retire pas de sa propre phalange. */
+  amitieId: string;
+  nom: string | null;
+  image: string | null;
+  lp: number;
+  rang: { slug: string; nom: string; couleur: string; libelle: string };
+  /** `assiduite` vaut `null` quand aucune séance n'était prévue — ce n'est pas 0 %. */
+  semaine: { faites: number; prevues: number; assiduite: number | null };
+}
+
+export interface DemandeRecue {
+  amitieId: string;
+  nom: string | null;
+  image: string | null;
+  demandeLe: string;
+}
+
+export interface Phalange {
+  /** Soi compris, pour que le classement s'affiche sans cas particulier. */
+  compagnons: Compagnon[];
+  recues: DemandeRecue[];
+  envoyees: { amitieId: string; nom: string | null }[];
+}

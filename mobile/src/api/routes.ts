@@ -4,6 +4,7 @@ import type {
   CorpsPreferences,
   CorpsValidation,
   PageHistorique,
+  Phalange,
   PreferencesApi,
   Referentiel,
   ReponseDifficulte,
@@ -100,3 +101,27 @@ export const chargerHistorique = (limite?: number, avant?: string) =>
  */
 export const revoquerSession = (refreshToken: string) =>
   appelApi<void>("/auth/logout", { methode: "POST", corps: { refreshToken } });
+
+// ---------------------------------------------------------------------------
+// Phalange
+// ---------------------------------------------------------------------------
+
+export const chargerPhalange = () => appelApi<Phalange>("/amis");
+
+/** Code personnel à partager. Créé côté serveur au premier appel. */
+export const chargerCodeAmi = () => appelApi<{ code: string }>("/amis/code");
+
+/** Nouveau code. L'ancien cesse aussitôt de valoir ; les liens noués restent. */
+export const regenererCodeAmi = () =>
+  appelApi<{ code: string }>("/amis/code", { methode: "POST" });
+
+/** Demande à rejoindre la phalange du porteur d'un code. */
+export const demanderAmi = (code: string) =>
+  appelApi<{ amitieId: string }>("/amis", { methode: "POST", corps: { code } });
+
+export const repondreDemande = (amitieId: string, accepte: boolean) =>
+  appelApi<Phalange>(`/amis/${amitieId}`, { methode: "POST", corps: { accepte } });
+
+/** Rompt le lien. Chacun des deux peut partir. */
+export const rompreAmitie = (amitieId: string) =>
+  appelApi<Phalange>(`/amis/${amitieId}`, { methode: "DELETE" });
