@@ -4,7 +4,7 @@ import { useSession } from "../../src/auth/session";
 import { useReferentiel } from "../../src/donnees/referentiel";
 import { ecussonDuRang } from "../../src/donnees/ecussons";
 import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
-import { Ecusson } from "../../src/composants/Ecusson";
+import { EcussonAdmirable } from "../../src/composants/VitrineEcusson";
 import { Logotype } from "../../src/composants/Logo";
 import { Chargement } from "../../src/composants/Etats";
 import {
@@ -78,19 +78,9 @@ export default function Aide() {
       <TitreSection>Les rangs</TitreSection>
       <Text style={styles.intro}>
         Huit paliers. Les six premiers comptent quatre divisions de{" "}
-        {referentiel.lpParDivision} Δ ; les deux derniers n&apos;en ont pas.
+        {referentiel.lpParDivision} Δ ; les deux derniers n&apos;en ont pas. Garde le doigt appuyé
+        sur un écusson pour le voir en grand.
       </Text>
-
-      {/* Le rang atteint, en grand. Les écussons sont gravés un par un — les
-          réduire tous à une vignette de côté revenait à ne jamais les montrer. */}
-      {moi ? (
-        <Carte style={styles.vitrine}>
-          <Ecusson rang={moi.rang} taille={148} />
-          <Text style={[styles.vitrineNom, { color: moi.rang.couleur }]}>{moi.rang.libelle}</Text>
-          <Text style={styles.vitrineSous}>{moi.rang.sousTitre}</Text>
-          <Text style={styles.vitrineLp}>{moi.lp} Δ</Text>
-        </Carte>
-      ) : null}
 
       {referentiel.rangs.map((rang) => (
         <Palier key={rang.slug} rang={rang} courant={rang.slug === rangCourant} />
@@ -199,18 +189,25 @@ function Palier({
 
   return (
     <Carte style={[styles.palier, courant && styles.palierCourant]}>
-      <View style={styles.ecussonCadre}>
-        <View style={[styles.ecussonHalo, { backgroundColor: rang.couleur }]} />
-        {ecusson ? (
-          <Image source={ecusson} style={styles.ecusson} resizeMode="contain" />
-        ) : (
-          <View style={[styles.ecussonReplis, { borderColor: rang.couleur }]}>
-            <Text style={[styles.ecussonReplisTexte, { color: rang.couleur }]}>
-              {rang.nom.slice(0, 2).toUpperCase()}
-            </Text>
-          </View>
-        )}
-      </View>
+      <EcussonAdmirable
+        slug={rang.slug}
+        couleur={rang.couleur}
+        titre={rang.nom}
+        sousTitre={rang.sousTitre}
+      >
+        <View style={styles.ecussonCadre}>
+          <View style={[styles.ecussonHalo, { backgroundColor: rang.couleur }]} />
+          {ecusson ? (
+            <Image source={ecusson} style={styles.ecusson} resizeMode="contain" />
+          ) : (
+            <View style={[styles.ecussonReplis, { borderColor: rang.couleur }]}>
+              <Text style={[styles.ecussonReplisTexte, { color: rang.couleur }]}>
+                {rang.nom.slice(0, 2).toUpperCase()}
+              </Text>
+            </View>
+          )}
+        </View>
+      </EcussonAdmirable>
 
       <View style={styles.palierTexte}>
         <View style={styles.palierEntete}>
@@ -301,29 +298,6 @@ const creerStyles = (c: Couleurs) => StyleSheet.create({
     fontFamily: POLICE_TITRE,
     color: c.accent,
     fontSize: 14,
-  },
-  vitrine: {
-    alignItems: "center",
-    gap: 2,
-    paddingVertical: 22,
-    marginBottom: 4,
-  },
-  vitrineNom: {
-    fontFamily: POLICE_TITRE,
-    fontSize: 26,
-    letterSpacing: 1,
-    marginTop: 10,
-  },
-  vitrineSous: {
-    fontFamily: POLICE_TEXTE,
-    color: c.texte2,
-    fontSize: 13,
-  },
-  vitrineLp: {
-    fontFamily: POLICE_TITRE,
-    color: c.texte3,
-    fontSize: 14,
-    marginTop: 6,
   },
   palier: {
     flexDirection: "row",

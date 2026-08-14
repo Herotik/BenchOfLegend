@@ -21,6 +21,7 @@ import { BarreProgression } from "../../src/composants/BarreProgression";
 import { Bouton } from "../../src/composants/Bouton";
 import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
 import { Ecusson, LibelleRang } from "../../src/composants/Ecusson";
+import { EcussonAdmirable } from "../../src/composants/VitrineEcusson";
 import { Chargement, EcranErreur } from "../../src/composants/Etats";
 import { jourCivilISO, jourEnFrancais, lundiCivilISO } from "../../src/outils/dates";
 import { POLICE_TEXTE_MOYEN, POLICE_TEXTE_GRAS, POLICE_TEXTE, POLICE_TITRE, type Couleurs } from "../../src/theme/couleurs";
@@ -156,7 +157,14 @@ export default function Aujourdhui() {
 
       {moi ? (
         <Carte style={styles.carteRang}>
-          <Ecusson rang={moi.rang} />
+          <EcussonAdmirable
+            slug={moi.rang.slug}
+            couleur={moi.rang.couleur}
+            titre={moi.rang.libelle}
+            sousTitre={moi.rang.sousTitre}
+          >
+            <Ecusson rang={moi.rang} taille={172} />
+          </EcussonAdmirable>
           <LibelleRang rang={moi.rang} />
           {/* Un seul compteur au-dessus de la barre. Le répéter en légende et
               en rappeler le reste à parcourir disait trois fois la même

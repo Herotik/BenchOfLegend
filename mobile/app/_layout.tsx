@@ -10,6 +10,7 @@ import { FournisseurReferentiel } from "../src/donnees/referentiel";
 import { FournisseurTheme, useTheme } from "../src/theme/theme";
 import { usePolices } from "../src/theme/polices";
 import { Ouverture } from "../src/composants/Ouverture";
+import { FournisseurVitrine } from "../src/composants/VitrineEcusson";
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   /* Déjà masqué : rien à faire. */
@@ -31,7 +32,12 @@ export default function Racine() {
       <SafeAreaProvider>
         <FournisseurReferentiel>
           <FournisseurSession>
-            <Coquille />
+            {/* En dernier, donc au-dessus de tous les écrans : la vitrine se
+                pose par-dessus l'app sans capter le toucher, ce qu'un écran
+                imbriqué ne pourrait pas faire. */}
+            <FournisseurVitrine>
+              <Coquille />
+            </FournisseurVitrine>
           </FournisseurSession>
         </FournisseurReferentiel>
       </SafeAreaProvider>
