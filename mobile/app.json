@@ -54,12 +54,6 @@
         "projectId": "7c2bee60-63d6-40bc-8fd5-8c0bb3a57703"
       }
     },
-    "owner": "herotik",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/7c2bee60-63d6-40bc-8fd5-8c0bb3a57703"
-    }
+    "owner": "herotik"
   }
 }

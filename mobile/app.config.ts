@@ -6,10 +6,17 @@ const base = app.expo;
 /**
  * Configuration Expo, calculée.
  *
- * `app.json` reste la source de tout ce qui est fixe. Ce fichier n'ajoute
- * qu'une chose : le module natif de Google, qui exige de déclarer dans
- * `Info.plist` le schéma d'URL **inversé** de son client iOS — une valeur qui
- * dépend du compte Google et n'a donc rien à faire, figée, dans le dépôt.
+ * **Le partage est net** : `app.json` porte tout ce qui est fixe — identifiant
+ * de bundle, capacité « Sign in with Apple », conformité au chiffrement. Ce
+ * fichier ne porte que ce qui se **calcule** : le schéma d'URL de Google, dérivé
+ * de son identifiant client, et l'adresse des mises à jour, dérivée du
+ * `projectId`. Rien n'est déclaré aux deux endroits, faute de quoi les deux
+ * finiraient par diverger — `expo install` avait justement écrit dans
+ * `app.json` un `runtimeVersion` concurrent de celui-ci.
+ *
+ * Le module natif de Google exige de déclarer dans `Info.plist` le schéma d'URL
+ * **inversé** de son client iOS — une valeur qui dépend du compte Google et
+ * n'a donc rien à faire, figée, dans le dépôt.
  *
  * Absente, le module n'est pas branché du tout : la build reste valide et
  * l'app retombe sur le relais navigateur. Un identifiant manquant ne doit pas
@@ -44,12 +51,6 @@ const configuration = (): ExpoConfig => {
 
   return {
     ...(base as unknown as ExpoConfig),
-    ios: {
-      ...base.ios,
-      // Exigé par « Sign in with Apple » : sans lui, la capacité n'est pas
-      // demandée à la compilation et la feuille système refuse de s'ouvrir.
-      usesAppleSignIn: true,
-    },
     plugins: greffons,
 
     // Mises à jour à distance. L'adresse est dérivée du `projectId` plutôt que
