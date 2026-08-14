@@ -173,6 +173,16 @@ function useVitrine(): ValeurVitrine {
  * Rend un écusson admirable : appui maintenu pour l'ouvrir, relâchement pour
  * le refermer. `children` reste ce que l'écran affichait déjà.
  */
+/**
+ * Assez large pour couvrir n'importe quel écran.
+ *
+ * Sans cela, React Native tient la pression pour sortie de sa cible dès 20
+ * points de déplacement (`DEFAULT_PRESS_RECT_OFFSETS`) et déclenche
+ * `onPressOut` — l'écusson se refermait au moindre glissement du doigt, alors
+ * qu'il ne doit se refermer qu'au relâchement.
+ */
+const RETENTION = { top: 2000, bottom: 2000, left: 2000, right: 2000 };
+
 export function EcussonAdmirable({
   slug,
   couleur,
@@ -181,17 +191,37 @@ export function EcussonAdmirable({
   children,
 }: Montre & { children: ReactNode }) {
   const { montrer, cacher } = useVitrine();
+  const [ouvert, setOuvert] = useState(false);
+
+  const ouvrir = useCallback(() => {
+    setOuvert(true);
+    montrer({ slug, couleur, titre, sousTitre });
+  }, [montrer, slug, couleur, titre, sousTitre]);
+
+  const fermer = useCallback(() => {
+    setOuvert(false);
+    cacher();
+  }, [cacher]);
 
   return (
     <Pressable
       // 200 ms : assez pour ne pas déclencher sur un effleurement, assez peu
       // pour que le geste paraisse immédiat.
       delayLongPress={200}
-      onLongPress={() => montrer({ slug, couleur, titre, sousTitre })}
-      // Couvre le relâchement **et** l'interruption du geste — un appel
-      // entrant, un glissement hors du bouton. Sans quoi l'écusson resterait
-      // ouvert sans plus rien pour le fermer.
-      onPressOut={cacher}
+      onLongPress={ouvrir}
+      // Couvre le relâchement et l'interruption véritable du geste — un appel
+      // entrant, par exemple. Sans quoi l'écusson resterait ouvert sans plus
+      // rien pour le fermer.
+      onPressOut={fermer}
+      pressRetentionOffset={RETENTION}
+      /*
+       * Ces deux écrans défilent. Tant que l'écusson est ouvert, le doigt qui
+       * bouge ressemble à un défilement : le `ScrollView` réclame alors le
+       * toucher, la pression est terminée, et l'écusson se refermait. On refuse
+       * de céder — mais seulement une fois ouvert, faute de quoi on ne pourrait
+       * plus faire défiler la page en démarrant le geste sur un écusson.
+       */
+      cancelable={!ouvert}
       accessibilityRole="imagebutton"
       accessibilityLabel={`Écusson ${titre}`}
       accessibilityHint="Maintiens l'appui pour l'agrandir"
