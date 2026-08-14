@@ -62,6 +62,21 @@ export const enregistrerPesee = (kg: number) =>
 export const chargerStats = () => appelApi<Stats>("/stats");
 
 /**
+ * Efface séances, pesées, plan, charges et Δ. Le compte, ses connexions et ses
+ * préférences restent.
+ *
+ * N'appelle pas cette fonction directement depuis un écran : `reinitialiser`
+ * dans `donnees/reinitialisation.ts` fait le ménage local qui doit
+ * l'accompagner, sans quoi la file d'attente recréerait ce qu'on vient
+ * d'effacer.
+ */
+export const reinitialiserCompteApi = () =>
+  appelApi<{ efface: { seances: number; pesees: number; joursDePlan: number; charges: number } }>(
+    "/me/reinitialiser",
+    { methode: "POST", corps: { confirmation: "REINITIALISER" } },
+  );
+
+/**
  * Façons de se connecter rattachées au compte.
  *
  * L'ajout ne passe pas par ici : il réclame une preuve d'identité fraîche, donc

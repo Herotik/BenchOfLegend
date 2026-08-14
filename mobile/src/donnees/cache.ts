@@ -1,6 +1,6 @@
 import type { Referentiel, ReponseSeance } from "../api/types";
 import { jourCivilISO } from "../outils/dates";
-import { ecrire, lire } from "../outils/stockage";
+import { ecrire, effacerPrefixe, lire } from "../outils/stockage";
 
 /**
  * Ce que l'app garde sous la main pour tenir une séance sans réseau.
@@ -50,3 +50,16 @@ export async function seanceEnCache(groupe: string): Promise<ReponseSeance | nul
   if (!gardee) return null;
   return gardee.date === jourCivilISO() ? gardee : null;
 }
+
+/**
+ * Oublie les séances gardées, tous groupes confondus.
+ *
+ * Appelé après une remise à zéro du compte : le serveur régénère les séances à
+ * partir d'une graine quotidienne **et du profil**, or les ajustements de
+ * difficulté viennent d'être effacés. Une séance d'avant la remise à zéro
+ * prescrirait des variantes que le serveur ne prescrit plus, et la validation
+ * porterait sur des exercices qu'il ne reconnaîtrait pas.
+ *
+ * Le référentiel, lui, reste : il ne dépend d'aucun compte.
+ */
+export const oublierSeances = (): Promise<void> => effacerPrefixe("fol.seance.v1.");

@@ -117,6 +117,21 @@ export function mettreEnFile(corps: CorpsValidation): Promise<void> {
   });
 }
 
+/**
+ * Jette la file sans rien envoyer.
+ *
+ * Réservé à la remise à zéro du compte : les séances en attente appartiennent
+ * au passé qu'on vient justement d'effacer, et les laisser partir les
+ * recréerait — la remise à zéro serait défaite quelques secondes après avoir
+ * été demandée.
+ *
+ * Passe par `enSerie` comme toute autre écriture : un envoi peut être en cours,
+ * et sa réécriture finale ferait réapparaître ce qu'on vient de jeter.
+ */
+export function viderFile(): Promise<void> {
+  return enSerie(() => ecrireFile([]));
+}
+
 // ---------------------------------------------------------------------------
 // Abonnement — les écrans suivent le nombre en attente
 // ---------------------------------------------------------------------------
@@ -149,6 +164,20 @@ export function envoyerLaFile(): Promise<BilanEnvoi> {
     envoiEnCours = null;
   });
   return envoiEnCours;
+}
+
+/**
+ * Attend qu'un envoi déjà lancé se termine, sans en déclencher un nouveau.
+ *
+ * Sert à la remise à zéro. Un envoi en vol se termine par une réécriture de la
+ * file qui y remet ce qu'il n'a pas réussi à envoyer : vider la file pendant ce
+ * temps-là serait défait quelques instants plus tard. On le laisse conclure
+ * d'abord, puis on jette.
+ *
+ * Ne rejette jamais — `envoyerLaFile` non plus.
+ */
+export async function attendreEnvoi(): Promise<void> {
+  await envoiEnCours;
 }
 
 async function tenterEnvoi(): Promise<BilanEnvoi> {

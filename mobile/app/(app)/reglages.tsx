@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { router } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BASE_API } from "../../src/api/client";
 import { chargerConnexions, detacherConnexion } from "../../src/api/routes";
@@ -21,6 +21,7 @@ import {
   type ReglageRappels,
 } from "../../src/donnees/rappels";
 import { useReferentiel } from "../../src/donnees/referentiel";
+import { reinitialiser } from "../../src/donnees/reinitialisation";
 import { Bouton } from "../../src/composants/Bouton";
 import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
 import { Chargement } from "../../src/composants/Etats";
@@ -147,12 +148,87 @@ export default function Reglages() {
         enCours={enCours}
       />
 
+      <ZoneDanger />
+
       <View style={styles.signature}>
         <Marque taille={44} />
         <Text style={styles.signatureNom}>FRAME OF LEGENDS</Text>
         <Text style={styles.mention}>Serveur : {BASE_API}</Text>
       </View>
     </ScrollView>
+  );
+}
+
+/**
+ * Repartir de zéro.
+ *
+ * Séparé du reste par son propre titre, et volontairement en bas de page : rien
+ * ici ne se fait en passant. L'intention `discret` plutôt qu'une couleur
+ * d'alerte — un bouton rouge attire l'œil, or on ne veut pas qu'on le
+ * remarque, seulement qu'on le trouve quand on le cherche. Le poids de
+ * l'avertissement est porté par la confirmation, où il ne peut pas être ignoré.
+ */
+function ZoneDanger() {
+  const styles = useStyles(creerStyles);
+  const { rafraichirProfil } = useSession();
+  const [enCours, setEnCours] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const lancer = useCallback(async () => {
+    setEnCours(true);
+    setMessage(null);
+    try {
+      const efface = await reinitialiser();
+      // Le profil porte les Δ et le rang : sans cette relecture, les Réglages
+      // et le tableau de bord continueraient d'afficher l'ancien rang.
+      await rafraichirProfil();
+      // Le plan vient de disparaître ; les rappels déjà posés annonceraient des
+      // séances qui n'existent plus.
+      await appliquer(await lireReglage());
+
+      setMessage(
+        efface.seances === 0
+          ? "Compte remis à zéro. Il n'y avait aucune séance à effacer."
+          : `Compte remis à zéro : ${efface.seances} séance${efface.seances > 1 ? "s" : ""} et ` +
+            `${efface.pesees} pesée${efface.pesees > 1 ? "s" : ""} effacées.`,
+      );
+    } catch (cause) {
+      setMessage(
+        cause instanceof Error
+          ? `Échec : ${cause.message}`
+          : "Échec de la remise à zéro. Rien n'a été effacé côté serveur.",
+      );
+    } finally {
+      setEnCours(false);
+    }
+  }, [rafraichirProfil]);
+
+  const demander = useCallback(() => {
+    Alert.alert(
+      "Repartir de zéro ?",
+      "Tes séances, tes pesées, ton plan, tes charges et tes Δ seront effacés. " +
+        "Tu redeviens Hoplite, sans division.\n\n" +
+        "Ton compte, tes connexions et tes préférences d'entraînement restent. " +
+        "C'est définitif : rien ne permet de revenir en arrière.",
+      [
+        { text: "Annuler", style: "cancel" },
+        { text: "Tout effacer", style: "destructive", onPress: () => void lancer() },
+      ],
+    );
+  }, [lancer]);
+
+  return (
+    <>
+      <TitreSection>Repartir de zéro</TitreSection>
+      <Bouton
+        titre="Réinitialiser ma progression"
+        aide="Séances, pesées, plan, charges et Δ — le compte et les préférences restent"
+        intention="discret"
+        onPress={demander}
+        enCours={enCours}
+      />
+      {message ? <Text style={styles.messageConnexion}>{message}</Text> : null}
+    </>
   );
 }
 

@@ -54,3 +54,20 @@ export async function effacer(cle: string): Promise<void> {
     /* Idem : l'appelant n'a rien à rattraper. */
   }
 }
+
+/**
+ * Efface toutes les clés commençant par `prefixe`.
+ *
+ * Nécessaire pour les familles de clés dont on ne connaît pas les membres à
+ * l'avance — les séances en cache portent le nom de leur groupe musculaire, et
+ * rien ne dit lesquels ont été visités.
+ */
+export async function effacerPrefixe(prefixe: string): Promise<void> {
+  try {
+    const toutes = await AsyncStorage.getAllKeys();
+    const visees = toutes.filter((c) => c.startsWith(prefixe));
+    if (visees.length > 0) await AsyncStorage.multiRemove(visees);
+  } catch {
+    /* Idem. */
+  }
+}
