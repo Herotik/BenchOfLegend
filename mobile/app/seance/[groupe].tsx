@@ -288,6 +288,16 @@ export default function SeanceGuidee() {
       >
         {phase === "exercices" && exercice ? (
           <EtapeExercice
+            // Remonte l'étape à chaque exercice, et c'est **nécessaire** : le
+            // chrono de repos ne se réinitialisait que lorsque `restSec`
+            // changeait de valeur. Deux exercices consécutifs partageant la
+            // même durée de repos — le cas courant dans une séance — le
+            // laissaient tourner d'un exercice à l'autre, si bien qu'un repos
+            // lancé sur le précédent finissait sur le suivant.
+            //
+            // `EtapeExercice` ne porte aucun état propre : la charge saisie
+            // vit dans le parent, rien n'est perdu au remontage.
+            key={index}
             exercice={exercice}
             premier={index === 0}
             echauffement={donnees.seance.echauffement}

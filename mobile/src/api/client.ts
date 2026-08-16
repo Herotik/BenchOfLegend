@@ -250,9 +250,21 @@ export async function appelApi<T>(chemin: string, options: Options = {}): Promis
     try {
       neufs = await rafraichir();
     } catch (cause) {
-      // Le rafraîchissement a échoué : les jetons ne valent plus rien, et le
-      // serveur a peut-être déjà révoqué toute la famille. Retour à l'écran de
-      // connexion, c'est le seul état honnête.
+      // Le réseau qui manque n'est **pas** un refus.
+      //
+      // Une salle de sport en sous-sol, et le jeton d'accès qui expire au bout
+      // d'un quart d'heure : au milieu de la séance, une requête part, le
+      // rafraîchissement se déclenche, et n'atteint jamais le serveur. Jeter
+      // les jetons là serait déconnecter quelqu'un dont la session est
+      // parfaitement valide — et il ne pourrait pas se reconnecter, faute du
+      // réseau qui vient de manquer. On les garde, on remonte la panne, et
+      // l'écran la traite comme n'importe quelle autre coupure : la séance part
+      // en file d'attente et l'envoi reprendra au retour du signal.
+      if (cause instanceof ErreurReseau) throw cause;
+
+      // Le serveur, lui, a répondu, et il a refusé : les jetons ne valent plus
+      // rien, et il a peut-être déjà révoqué toute la famille. Retour à l'écran
+      // de connexion, c'est le seul état honnête.
       await deconnecter();
       throw cause instanceof Error
         ? cause

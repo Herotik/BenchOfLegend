@@ -13,6 +13,15 @@ import { BarreProgression } from "./BarreProgression";
  * ils sont suspendus quand l'app passe en arrière-plan — ce qui arrive à chaque
  * fois qu'on repose le téléphone pendant le repos. Au retour, l'échéance donne
  * le temps réellement écoulé.
+ *
+ * **L'appelant doit remonter ce composant à chaque exercice** — une `key` sur
+ * lui ou sur son parent. Il ne surveille pas `secondes` pour se réinitialiser,
+ * et c'est délibéré : il l'a fait, et cela paraissait suffire jusqu'à ce qu'on
+ * remarque que deux exercices consécutifs ont presque toujours le même repos.
+ * La valeur ne changeant pas, la réinitialisation ne partait jamais et le
+ * décompte lancé sur un exercice se terminait sur le suivant. Une durée
+ * identique n'est pas un repos identique ; seule l'identité de l'exercice l'est,
+ * et elle n'est connue que du parent.
  */
 export function ChronoRepos({ secondes }: { secondes: number }) {
   const styles = useStyles(creerStyles);
@@ -20,13 +29,6 @@ export function ChronoRepos({ secondes }: { secondes: number }) {
   const [restant, setRestant] = useState(secondes);
   const [enMarche, setEnMarche] = useState(false);
   const echeance = useRef<number | null>(null);
-
-  // Exercice suivant : le chrono repart de la consigne du nouvel exercice.
-  useEffect(() => {
-    setEnMarche(false);
-    echeance.current = null;
-    setRestant(secondes);
-  }, [secondes]);
 
   useEffect(() => {
     if (!enMarche) return;
