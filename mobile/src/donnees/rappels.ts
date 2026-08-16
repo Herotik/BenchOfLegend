@@ -3,6 +3,7 @@ import { AppState, Platform } from "react-native";
 import { chargerPlan } from "../api/routes";
 import type { JourPlan } from "../api/types";
 import { jourCivilISO } from "../outils/dates";
+import { rappelsAPoser } from "./rappels-choix";
 import { ecrire, lire } from "../outils/stockage";
 
 /**
@@ -109,40 +110,35 @@ export async function replanifier(
   if (!reglage.actif) return 0;
   if (!(await Notifications.getPermissionsAsync()).granted) return 0;
 
-  const aujourdhui = jourCivilISO();
-  const maintenant = Date.now();
+  const poser = rappelsAPoser(jours, {
+    heure: reglage.heure,
+    aujourdhui: jourCivilISO(),
+    maintenant: Date.now(),
+    maximum: MAX_PROGRAMMEES,
+  });
 
-  const aRappeler = jours
-    .filter((j) => j.groupe !== "repos")
-    // Une séance déjà validée n'a rien à rappeler, et un jour manqué non plus :
-    // la spec interdit de culpabiliser, la sanction est l'absence de gain.
-    .filter((j) => j.statut === "PREVU")
-    .filter((j) => j.date >= aujourdhui)
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, MAX_PROGRAMMEES);
-
-  let poses = 0;
-
-  for (const jour of aRappeler) {
-    const quand = instantLocal(jour.date, reglage.heure);
-    // L'heure du jour est peut-être déjà passée : la programmer ferait
-    // sonner le téléphone immédiatement.
-    if (quand.getTime() <= maintenant) continue;
-
+  for (const { quand, genre } of poser) {
     await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Séance prévue aujourd'hui",
-        // Ton motivant, jamais culpabilisant — c'est une contrainte de la
-        // spécification, pas une préférence de rédaction.
-        body: "Ta séance t'attend. Une de plus, un rang de gagné.",
-        sound: true,
-      },
+      content:
+        genre === "rappel"
+          ? {
+              title: "Séance prévue aujourd'hui",
+              // Ton motivant, jamais culpabilisant — c'est une contrainte de la
+              // spécification, pas une préférence de rédaction.
+              body: "Ta séance t'attend. Une de plus, un rang de gagné.",
+              sound: true,
+            }
+          : {
+              // Sans son : c'est une bonne nouvelle, pas une sollicitation.
+              title: "Le job est déjà fait",
+              body: "Bien joué. Ta séance est validée, les Δ sont comptés.",
+              sound: false,
+            },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: quand },
     });
-    poses += 1;
   }
 
-  return poses;
+  return poser.length;
 }
 
 /** Efface tous les rappels — à l'extinction du réglage, ou à la déconnexion. */
@@ -228,13 +224,3 @@ export function useRappels(actif: boolean): void {
   }, [actif]);
 }
 
-/**
- * `AAAA-MM-JJ` + heure → instant local.
- *
- * Construit à partir des composantes locales, comme le reste de l'app : un
- * `new Date("2026-08-14T18:00:00Z")` désignerait 20 h en France.
- */
-function instantLocal(iso: string, heure: number): Date {
-  const [annee, mois, jour] = iso.split("-").map(Number) as [number, number, number];
-  return new Date(annee, mois - 1, jour, heure, 0, 0, 0);
-}

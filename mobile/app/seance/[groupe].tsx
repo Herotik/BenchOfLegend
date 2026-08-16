@@ -24,6 +24,7 @@ import type {
 import { useSession } from "../../src/auth/session";
 import { memoriserSeance, seanceEnCache } from "../../src/donnees/cache";
 import { mettreEnFile } from "../../src/donnees/file-attente";
+import { appliquer, lireReglage } from "../../src/donnees/rappels";
 import { useReferentiel } from "../../src/donnees/referentiel";
 import { Bouton } from "../../src/composants/Bouton";
 import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
@@ -190,6 +191,12 @@ export default function SeanceGuidee() {
           // Le rang et les Δ viennent de changer : l'onglet « Aujourd'hui »
           // doit repartir du nouveau total, pas de celui d'avant la séance.
           void rafraichirProfil();
+          // Et le rappel du soir n'a plus lieu d'être. Il est déjà posé dans
+          // iOS : `useRappels` ne replanifie qu'au démarrage et au retour au
+          // premier plan, si bien que s'entraîner à 16 h puis ranger son
+          // téléphone laissait sonner le rappel de 18 h. On replanifie donc
+          // ici, au moment précis où le plan change.
+          void lireReglage().then(appliquer);
         })
         .catch(async (cause: unknown) => {
           // Un refus du serveur se corrige — l'écran le montre et laisse
