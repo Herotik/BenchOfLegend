@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { genererPlanSemaine, repartirJours } from "./plan";
+import { derniereSeance, genererPlanSemaine, repartirJours } from "./plan";
 import type { ProfilEntrainement } from "./types";
 import type { MuscleGroupId } from "@/lib/referentiel";
 
@@ -81,12 +81,16 @@ describe("genererPlanSemaine", () => {
           semaine,
         );
 
-        for (let i = 0; i < 7; i++) {
-          const veille = plan[(i + 6) % 7].groupes;
+        // Du mardi au dimanche : la veille du lundi n'est pas le dimanche de
+        // cette semaine-là — six jours plus tôt — mais celui de la semaine
+        // précédente, que `genererPlanSemaine` reçoit à part. Voir le bloc
+        // « continuité d'une semaine à l'autre ».
+        for (let i = 1; i < 7; i++) {
+          const veille = plan[i - 1].groupes;
           for (const g of plan[i].groupes) {
             expect(
               veille.includes(g),
-              `${g} enchaîné les jours ${(i + 6) % 7} et ${i} (jours=${jours}, semaine=${semaine})`,
+              `${g} enchaîné les jours ${i - 1} et ${i} (jours=${jours}, semaine=${semaine})`,
             ).toBe(false);
           }
         }
@@ -191,5 +195,100 @@ describe("genererPlanSemaine", () => {
     const journee = plan.find((j) => j.groupes.includes("pectoraux"));
     expect(journee?.groupes).toContain("dos");
     expect(journee?.groupes).not.toContain("epaules");
+  });
+});
+
+describe("continuité d'une semaine à l'autre", () => {
+  const tousGroupes: MuscleGroupId[] = [
+    "pectoraux",
+    "dos",
+    "epaules",
+    "bras",
+    "jambes",
+    "abdos",
+  ];
+
+  const enchainees = (daysPerWeek: number, semaine: number) => {
+    const p = profil({
+      daysPerWeek,
+      muscleGroups: tousGroupes.map((id) => ({ id, priority: 1 })),
+    });
+    const a = genererPlanSemaine(p, semaine);
+    return { a, b: genererPlanSemaine(p, semaine + 1, a) };
+  };
+
+  it("ne colle pas le dimanche d'une semaine au lundi de la suivante", () => {
+    // Deux jours calendaires consécutifs : c'est la règle des 48 h, franchement
+    // violée. Chaque semaine étant engendrée en aveugle, cela arrivait vingt
+    // fois sur cent enchaînements.
+    for (let jours = 2; jours <= 6; jours++) {
+      for (let semaine = 0; semaine < 20; semaine++) {
+        const { a, b } = enchainees(jours, semaine);
+        for (const g of b[0]!.groupes) {
+          expect(
+            a[6]!.groupes.includes(g),
+            `${g} dimanche puis lundi (jours=${jours}, semaine=${semaine})`,
+          ).toBe(false);
+        }
+      }
+    }
+  });
+
+  it("n'enchaîne pas deux séances consécutives sur le même groupe", () => {
+    // Samedi puis lundi : le dimanche de repos ne suffit pas à en faire deux
+    // séances distinctes du point de vue de qui s'entraîne.
+    for (let jours = 2; jours <= 6; jours++) {
+      for (let semaine = 0; semaine < 20; semaine++) {
+        const { a, b } = enchainees(jours, semaine);
+        const derniere = derniereSeance(a);
+        for (const g of b[0]!.groupes) {
+          expect(
+            derniere.includes(g),
+            `${g} en fin de semaine puis lundi (jours=${jours}, semaine=${semaine})`,
+          ).toBe(false);
+        }
+      }
+    }
+  });
+
+  it("laisse le cardio enjamber le dimanche", () => {
+    // Il ne réclame pas les mêmes 48 h : le lui interdire appauvrirait le plan
+    // sans rien protéger.
+    const p = profil({ daysPerWeek: 4, muscleGroups: [{ id: "cardio", priority: 1 }] });
+    const a = genererPlanSemaine(p, 0);
+    const b = genererPlanSemaine(p, 1, a);
+    expect(b.filter((j) => j.groupes.length > 0).length).toBeGreaterThan(0);
+  });
+
+  it("préfère répéter un groupe plutôt que supprimer une séance", () => {
+    // Profil à un seul groupe : la semaine passée s'est forcément terminée
+    // dessus, et l'interdire viderait le lundi. Un jour d'entraînement changé
+    // en repos serait une régression plus visible qu'une répétition.
+    const p = profil({ daysPerWeek: 4, muscleGroups: [{ id: "bras", priority: 1 }] });
+    const a = genererPlanSemaine(p, 0);
+    const b = genererPlanSemaine(p, 1, a);
+    expect(b[0]!.groupes).toEqual(["bras"]);
+  });
+
+  it("sans semaine précédente, engendre comme avant", () => {
+    const p = profil();
+    expect(genererPlanSemaine(p, 3)).toEqual(genererPlanSemaine(p, 3, undefined));
+  });
+});
+
+describe("derniereSeance", () => {
+  it("remonte au-delà d'un dimanche de repos", () => {
+    const plan = genererPlanSemaine(
+      profil({ daysPerWeek: 3, muscleGroups: [{ id: "bras", priority: 1 }] }),
+      0,
+    );
+    // 3 séances/semaine : lundi, jeudi, samedi. Le dimanche est creux, la
+    // dernière séance est donc ailleurs.
+    expect(plan[6]!.groupes).toEqual([]);
+    expect(derniereSeance(plan).length).toBeGreaterThan(0);
+  });
+
+  it("rend une liste vide quand rien n'est travaillé", () => {
+    expect(derniereSeance(genererPlanSemaine(profil({ muscleGroups: [] })))).toEqual([]);
   });
 });

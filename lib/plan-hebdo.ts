@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { jourUTC, midiLocal } from "@/lib/dates";
 import { debutSemaineUTC, grainesSemaine, joursDeLaSemaine } from "@/lib/semaine";
 import { genererPlanSemaine, genererSeance } from "@/lib/engine";
-import type { ExerciceDisponible, ProfilEntrainement, Seance } from "@/lib/engine";
+import type { ExerciceDisponible, JourPlan, ProfilEntrainement, Seance } from "@/lib/engine";
 import type { MuscleGroupId } from "@/lib/referentiel";
 
 /** Profil complet d'entraînement, tel que le moteur l'attend. */
@@ -37,6 +37,30 @@ export async function chargerCatalogue(): Promise<ExerciceDisponible[]> {
 export const SEMAINES_A_LAVANCE = 5;
 
 /**
+ * Reconstruit une semaine du calendrier telle qu'elle est **enregistrée**, à
+ * la forme que le moteur attend.
+ *
+ * Les jours de repos gardent une liste vide : c'est ce qui permet à
+ * `derniereSeance` de retrouver la dernière journée réellement travaillée
+ * plutôt que de s'arrêter sur un dimanche creux.
+ */
+function semaineDepuisBase(
+  lignes: { date: Date; muscleGroup: string }[],
+  lundi: Date,
+): JourPlan[] {
+  const semaine: JourPlan[] = Array.from({ length: 7 }, (_, jour) => ({ jour, groupes: [] }));
+
+  for (const ligne of lignes) {
+    if (ligne.muscleGroup === "repos") continue;
+    const decalage = Math.round((ligne.date.getTime() - lundi.getTime()) / 86_400_000);
+    if (decalage < 0 || decalage > 6) continue;
+    semaine[decalage]!.groupes.push(ligne.muscleGroup as MuscleGroupId);
+  }
+
+  return semaine;
+}
+
+/**
  * Garantit que les semaines à venir ont un plan, et bascule en MANQUE les
  * jours passés restés à PREVU.
  *
@@ -49,6 +73,10 @@ export const SEMAINES_A_LAVANCE = 5;
  * requêtes : une lecture de l'existant sur toute la plage, un createMany, un
  * updateMany, une relecture. Boucler semaine par semaine en multipliait le
  * nombre par six.
+ *
+ * Les semaines sont enchaînées les unes aux autres — chacune reçoit la
+ * précédente — pour que la contrainte de récupération ne s'arrête pas au
+ * dimanche. La lecture remonte donc une semaine en arrière.
  */
 export async function assurerPlans(userId: string, semaines = SEMAINES_A_LAVANCE) {
   const { user, profil } = await chargerProfil(userId);
@@ -57,23 +85,40 @@ export async function assurerPlans(userId: string, semaines = SEMAINES_A_LAVANCE
   const debut = semaineCourante[0];
   const fin = new Date(debut.getTime() + (semaines + 1) * 7 * 86_400_000);
 
+  // La semaine qui précède est lue elle aussi : c'est elle qui dira au lundi
+  // à venir ce qu'il ne doit pas répéter. Sans ce recul d'une semaine, le
+  // premier plan engendré repartirait en aveugle.
+  const veilleSemaine = new Date(debut.getTime() - 7 * 86_400_000);
+
   const existants = await prisma.planDay.findMany({
-    where: { userId, date: { gte: debut, lt: fin } },
-    select: { date: true },
+    where: { userId, date: { gte: veilleSemaine, lt: fin } },
+    select: { date: true, muscleGroup: true },
   });
 
   const inscription = jourUTC(user.createdAt);
-  const dejaPlanifies = new Set(existants.map((p) => p.date.getTime()));
+  const dejaPlanifies = new Set(
+    existants.filter((p) => p.date >= debut).map((p) => p.date.getTime()),
+  );
   const lignes: Prisma.PlanDayCreateManyInput[] = [];
 
   if (profil.muscleGroups.length > 0) {
+    // Ce qui est déjà en base fait foi : une semaine à demi remplie ne sera
+    // complétée que sur ses jours vides, et c'est donc ce qu'elle contient
+    // vraiment — non ce que le moteur en aurait fait — que la suivante doit
+    // regarder.
+    let precedente = semaineDepuisBase(existants, veilleSemaine);
+
     for (let decalage = 0; decalage <= semaines; decalage++) {
       const reference = new Date(Date.now() + decalage * 7 * 86_400_000);
       const jours = joursDeLaSemaine(reference);
 
       // La graine dépend du numéro de semaine ISO : chaque semaine reçoit donc
       // une rotation différente des groupes, plutôt que six copies conformes.
-      const plan = genererPlanSemaine(profil, grainesSemaine(reference));
+      const plan = genererPlanSemaine(profil, grainesSemaine(reference), precedente);
+
+      // Pour la semaine d'après : le stocké s'il existe, l'engendré sinon.
+      const stockee = semaineDepuisBase(existants, jours[0]!);
+      precedente = stockee.some((j) => j.groupes.length > 0) ? stockee : plan;
 
       for (const jour of plan) {
         const date = jours[jour.jour];
