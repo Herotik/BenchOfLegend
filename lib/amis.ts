@@ -4,6 +4,7 @@ import { Prisma, StatutAmitie } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { jourUTC } from "@/lib/dates";
 import { echec, type EchecMetier } from "@/lib/erreurs";
+import { assiduiteDe } from "@/lib/assiduite";
 import { rankForLp, rankLabel } from "@/lib/ranks";
 import { debutSemaineUTC } from "@/lib/semaine";
 
@@ -294,40 +295,46 @@ export async function listerPhalange(userId: string): Promise<Phalange> {
   const idsAmis = acceptees.map((l) => (l.demandeurId === userId ? l.destinataireId : l.demandeurId));
   const tousIds = [userId, ...idsAmis];
 
+  const finSemaine = new Date(debutSemaineUTC().getTime() + 7 * 86_400_000);
+
   const [comptes, agregats] = await Promise.all([
     prisma.user.findMany({
       where: { id: { in: [...tousIds, ...recuesLiens.map((l) => l.demandeurId), ...envoyeesLiens.map((l) => l.destinataireId)] } },
       select: CHAMPS_PUBLICS,
     }),
-    // Mêmes bornes que `lib/stats.ts` : les jours de repos ne sont pas des
-    // séances prévues, et un jour à venir n'est pas encore manqué — sans quoi
-    // l'assiduité du lundi serait de 20 % pour tout le monde.
-    prisma.planDay.groupBy({
-      by: ["userId", "status"],
+    // La semaine **entière**, à venir comprise : une séance de jeudi compte
+    // parmi les prévues dès le lundi, sans peser sur l'assiduité tant que le
+    // jour n'est pas passé. La règle est partagée avec les statistiques —
+    // voir `lib/assiduite.ts`, où l'on explique pourquoi un lundi matin ne
+    // vaut pas 0 %.
+    //
+    // Les lignes plutôt qu'un `groupBy` : le regroupement perdait la date, donc
+    // le moyen de savoir quel jour est écoulé. Sept lignes par compagnon au
+    // plus, la requête reste unique.
+    prisma.planDay.findMany({
       where: {
         userId: { in: tousIds },
         muscleGroup: { not: "repos" },
-        date: { gte: debutSemaineUTC(), lte: jourUTC() },
+        date: { gte: debutSemaineUTC(), lt: finSemaine },
       },
-      _count: { _all: true },
+      select: { userId: true, date: true, status: true },
     }),
   ]);
 
   const parId = new Map(comptes.map((c) => [c.id, c]));
 
-  const semaines = new Map<string, { faites: number; prevues: number }>();
+  const semaines = new Map<string, { date: Date; status: string }[]>();
   for (const ligne of agregats) {
-    const courant = semaines.get(ligne.userId) ?? { faites: 0, prevues: 0 };
-    courant.prevues += ligne._count._all;
-    if (ligne.status === "FAIT") courant.faites += ligne._count._all;
-    semaines.set(ligne.userId, courant);
+    const lignes = semaines.get(ligne.userId);
+    if (lignes) lignes.push(ligne);
+    else semaines.set(ligne.userId, [ligne]);
   }
 
   const compagnon = (id: string, amitieId: string): Compagnon | null => {
     const compte = parId.get(id);
     if (!compte) return null;
 
-    const { faites, prevues } = semaines.get(id) ?? { faites: 0, prevues: 0 };
+    const semaine = assiduiteDe(semaines.get(id) ?? [], jourUTC());
     const rang = rankForLp(compte.lp);
 
     return {
@@ -336,13 +343,7 @@ export async function listerPhalange(userId: string): Promise<Phalange> {
       image: compte.image,
       lp: compte.lp,
       rang: { slug: rang.slug, nom: rang.name, couleur: rang.color, libelle: rankLabel(compte.lp) },
-      semaine: {
-        faites,
-        prevues,
-        // Aucune séance prévue n'est pas 0 % : c'est l'absence de mesure. Rendre
-        // zéro ferait passer pour paresseux quelqu'un qui n'a rien à faire.
-        assiduite: prevues > 0 ? Math.round((faites / prevues) * 100) : null,
-      },
+      semaine,
     };
   };
 

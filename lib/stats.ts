@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { jourUTC } from "@/lib/dates";
 import { debutSemaineUTC } from "@/lib/semaine";
+import { assiduiteDe } from "@/lib/assiduite";
 import { MUSCLE_GROUPS } from "@/lib/referentiel";
 
 /**
@@ -48,7 +49,15 @@ export async function chargerStats(userId: string): Promise<Stats> {
     prisma.weighIn.findMany({ where: { userId }, orderBy: { date: "asc" } }),
     prisma.workoutLog.findMany({ where: { userId }, orderBy: { date: "asc" } }),
     prisma.planDay.findMany({
-      where: { userId, muscleGroup: { not: "repos" }, date: { lte: jourUTC() } },
+      // Jusqu'à la fin de la semaine en cours, et non jusqu'à aujourd'hui : une
+      // séance encore à venir compte parmi les prévues, même si elle n'est pas
+      // encore jugée. Voir `lib/assiduite.ts`. La borne s'arrête là pour ne pas
+      // faire apparaître des semaines futures dans le graphe.
+      where: {
+        userId,
+        muscleGroup: { not: "repos" },
+        date: { lt: new Date(debutSemaineUTC().getTime() + 7 * 86_400_000) },
+      },
     }),
   ]);
 
@@ -86,10 +95,15 @@ export async function chargerStats(userId: string): Promise<Stats> {
     return semaines.get(cle)!;
   };
 
+  // Les lignes sont gardées par semaine : l'assiduité se juge sur la semaine
+  // entière, à venir comprise, et non ligne à ligne.
+  const planParSemaine = new Map<number, { date: Date; status: string }[]>();
   for (const p of plan) {
-    const s = toucher(p.date);
-    s.prevues += 1;
-    if (p.status === "FAIT") s.faites += 1;
+    toucher(p.date);
+    const cle = debutSemaineUTC(p.date).getTime();
+    const lignes = planParSemaine.get(cle);
+    if (lignes) lignes.push(p);
+    else planParSemaine.set(cle, [p]);
   }
 
   for (const w of seances) {
@@ -127,7 +141,10 @@ export async function chargerStats(userId: string): Promise<Stats> {
       s.delta = precedent === null ? null : Math.round((kg - precedent) * 100) / 100;
       precedent = kg;
     }
-    s.assiduite = s.prevues > 0 ? Math.round((s.faites / s.prevues) * 100) : null;
+    const { prevues, faites, assiduite } = assiduiteDe(planParSemaine.get(cle) ?? [], jourUTC());
+    s.prevues = prevues;
+    s.faites = faites;
+    s.assiduite = assiduite;
   }
 
   // --- Δ cumulés ---

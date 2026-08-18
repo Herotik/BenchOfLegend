@@ -236,15 +236,17 @@ describe("listerPhalange", () => {
     await prisma.user.update({ where: { id: sam.id }, data: { lp: 850 } });
     await lier(alex, sam);
 
-    // Deux séances prévues cette semaine jusqu'à aujourd'hui, une faite.
     const lundi = debutSemaineUTC();
     await prisma.planDay.createMany({
       data: [
+        // Lundi validé.
         { userId: sam.id, date: lundi, muscleGroup: "dos", status: "FAIT" },
+        // Aujourd'hui : prévue, pas encore faite — et la journée n'est pas
+        // finie. Elle ne doit pas peser contre lui.
         { userId: sam.id, date: jourUTC(), muscleGroup: "pectoraux", status: "PREVU" },
-        // Un repos n'est pas une séance prévue, et un jour à venir n'est pas
-        // encore manqué : ni l'un ni l'autre ne doit peser sur l'assiduité.
+        // Un repos n'est jamais une séance prévue.
         { userId: sam.id, date: new Date(lundi.getTime() + 86_400_000), muscleGroup: "repos", status: "REPOS" },
+        // Demain : comptée parmi les prévues, jugée le moment venu.
         {
           userId: sam.id,
           date: new Date(jourUTC().getTime() + 86_400_000),
@@ -258,7 +260,32 @@ describe("listerPhalange", () => {
     const compagnon = phalange.compagnons.find((c) => c.lp === 850)!;
 
     expect(compagnon.rang.slug).toBe("spartiate");
-    expect(compagnon.semaine).toEqual({ faites: 1, prevues: 2, assiduite: 50 });
+    // Trois séances au programme, une faite, et rien de manqué : le seul jour
+    // jugé est lundi, et il est validé.
+    expect(compagnon.semaine).toEqual({ faites: 1, prevues: 3, assiduite: 100 });
+  });
+
+  it("ne fait pas payer la séance du jour tant qu'elle n'est pas passée", async () => {
+    // Le reproche anticipé, tel qu'il se voyait un lundi matin : quatre séances
+    // devant soi, zéro faite, et l'app affichait déjà 0 %.
+    const { alex, sam } = await deuxComptes();
+    await lier(alex, sam);
+
+    await prisma.planDay.createMany({
+      data: [
+        { userId: sam.id, date: jourUTC(), muscleGroup: "dos", status: "PREVU" },
+        {
+          userId: sam.id,
+          date: new Date(jourUTC().getTime() + 86_400_000),
+          muscleGroup: "bras",
+          status: "PREVU",
+        },
+      ],
+    });
+
+    const phalange = await listerPhalange(alex.id);
+    const compagnon = phalange.compagnons.find((c) => c.amitieId !== "")!;
+    expect(compagnon.semaine).toEqual({ faites: 0, prevues: 2, assiduite: 100 });
   });
 
   it("ne rend pas 0 % quand aucune séance n'est prévue", async () => {
