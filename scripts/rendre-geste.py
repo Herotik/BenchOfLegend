@@ -5,7 +5,9 @@
 Options (après le `--`) :
   --images 20        Nombre d'images rendues sur la boucle.
   --taille 512       Côté de l'image rendue, en pixels.
-  --vue profil       `profil` (tourné vers la droite) ou `face`.
+  --vue profil       `profil` (tourné vers la droite), `face`, ou
+                     `trois-quarts` pour les gestes qui plient le buste, que
+                     ni l'une ni l'autre ne montre correctement.
   --geste <nom>      **Ignore l'animation du FBX** et joue à la place un geste
                      écrit dans `gestes_generes.py`. Le FBX ne fournit alors
                      que le corps — squelette, maillage et matières. C'est ce
@@ -195,6 +197,15 @@ def placer_camera(mini, maxi, vue, echelle):
         direction = Vector((0, -1, 0))
         rotation = (math.radians(90), 0, 0)
         largeur = taille.x
+    elif vue == "trois-quarts":
+        # Pour les gestes qui plient le buste. De face, un corps penché est
+        # tellement raccourci qu'un oiseau ne se distingue plus d'une élévation
+        # latérale ; de profil, l'écartement des bras disparaît dans l'axe de
+        # la caméra. Le trois-quarts montre les deux.
+        oblique = math.sqrt(0.5)
+        direction = Vector((-oblique, -oblique, 0))
+        rotation = (math.radians(90), 0, math.radians(-45))
+        largeur = (taille.x + taille.y) * 0.5
     else:
         # De profil, tourné vers la droite de l'image — même convention que les
         # motifs vectoriels, pour qu'un exercice ne change pas d'orientation

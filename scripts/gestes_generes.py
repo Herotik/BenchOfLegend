@@ -37,6 +37,12 @@ Le repère est celui de Blender, tel que la captation Mixamo l'exporte :
 Un geste est une suite de **poses clés** parcourue en aller-retour. Un os
 laissé à `REPOS` garde l'orientation qu'il a dans le modèle importé.
 
+Chaque geste porte aussi la **vue** sous laquelle il se lit. C'est une décision
+par geste et non un réglage global : une élévation frontale ne se voit pas de
+face, où le bras monte dans l'axe de la caméra ; une élévation latérale ne se
+voit pas de profil, pour la raison inverse ; et un geste buste penché ne se
+voit correctement d'aucune des deux — d'où le trois-quarts.
+
 ## Ne redresser que ce qu'on déplace
 
 C'est la leçon du premier jet, et elle vaut d'être écrite. La première version
@@ -73,6 +79,8 @@ ORDRE = [
     "mixamorig:Spine",
     "mixamorig:Spine1",
     "mixamorig:Spine2",
+    "mixamorig:Neck",
+    "mixamorig:Head",
     "mixamorig:LeftShoulder",
     "mixamorig:LeftArm",
     "mixamorig:LeftForeArm",
@@ -104,12 +112,16 @@ DEBOUT = {nom: REPOS for nom in ORDRE}
 # devant les pieds, et un débutant qui copie une posture jambes tendues se fait
 # mal au dos. L'animation doit montrer la bonne.
 #
-# La nuque et la tête restent à `REPOS` : portées par une colonne penchée, elles
-# regardent naturellement vers le sol, ce qui est exactement la bonne posture.
+# La nuque et la tête sont **redressées**. Laissées à `REPOS`, elles suivent la
+# colonne penchée et s'y ajoutent : le menton finit sur la poitrine, et de
+# profil la silhouette devient une masse informe où l'on ne distingue plus le
+# mouvement des bras. Un pratiquant garde d'ailleurs la nuque dans l'axe.
 BUSTE_PENCHE = {
-    _os("Spine"): (0, -0.42, 0.91),
-    _os("Spine1"): (0, -0.60, 0.80),
-    _os("Spine2"): (0, -0.70, 0.71),
+    _os("Spine"): (0, -0.34, 0.94),
+    _os("Spine1"): (0, -0.50, 0.87),
+    _os("Spine2"): (0, -0.58, 0.81),
+    _os("Neck"): (0, -0.22, 0.98),
+    _os("Head"): (0, -0.10, 0.99),
     _os("LeftUpLeg"): (0.03, 0.17, -0.98),
     _os("LeftLeg"): (0.02, -0.22, -0.97),
     _os("RightUpLeg"): (-0.03, 0.17, -0.98),
@@ -228,7 +240,7 @@ GESTES = {
         ],
     },
     "kickback-triceps": {
-        "vue": "profil",
+        "vue": "trois-quarts",
         "duree": 1800,
         "bassin": RECUL_BASSIN,
         "cles": [
@@ -249,7 +261,7 @@ GESTES = {
     },
     # ---- Dos -------------------------------------------------------------
     "oiseau": {
-        "vue": "face",
+        "vue": "trois-quarts",
         "duree": 2200,
         "bassin": RECUL_BASSIN,
         "cles": [
@@ -263,7 +275,7 @@ GESTES = {
         ],
     },
     "rowing-halteres": {
-        "vue": "profil",
+        "vue": "trois-quarts",
         "duree": 2000,
         "bassin": RECUL_BASSIN,
         "cles": [
