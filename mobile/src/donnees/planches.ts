@@ -12,8 +12,14 @@ import type { ImageSourcePropType } from "react-native";
  *
  * Les deux coexistent **exprès**. Les bibliothèques d'animation gratuites
  * couvrent les gestes communs — pompes, squat, curl — et ignorent le kickback
- * triceps ou l'oiseau buste penché, qui n'ont aucun usage en jeu vidéo. Chaque
- * geste manquant devra donc être animé à la main, un par un, sur des mois.
+ * triceps ou l'oiseau buste penché, qui n'ont aucun usage en jeu vidéo.
+ *
+ * Ces manquants-là ne sont plus tous à attendre : `scripts/gestes_generes.py`
+ * en écrit une partie directement, en posant le squelette du personnage. Ça
+ * marche pour les gestes où une seule articulation travaille pendant que le
+ * corps tient debout, c'est-à-dire justement ceux que personne ne capte. Ça ne
+ * marche pas pour un corps entier qui bascule — burpee, traction — ni pour les
+ * gestes de trop faible amplitude, qui restent au bonhomme vectoriel.
  *
  * D'où la règle : **une planche si elle existe, le motif vectoriel sinon.**
  * Aucun exercice ne se retrouve sans démonstration en attendant, et remplacer
@@ -122,6 +128,59 @@ export const PLANCHES: Record<string, Planche> = {
     images: 20,
     colonnes: 4,
     duree: 1100,
+  },
+
+  // --- Gestes écrits plutôt que captés -----------------------------------
+  //
+  // Ceux-ci ne viennent d'aucune bibliothèque : ils sont décrits dans
+  // `scripts/gestes_generes.py` et posés sur le squelette du personnage. C'est
+  // ce qui permet d'avoir un rendu 3D pour des mouvements que personne n'a
+  // captés, faute d'usage hors d'une salle de sport.
+  //
+  // Ils sont plus lents que les gestes captés — une élévation latérale se fait
+  // en contrôlant la charge, pas en la lançant, et la démonstration doit le
+  // montrer.
+  "elevations-laterales": {
+    source: require("../../assets/gestes/elevations-laterales.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 2000,
+  },
+  "elevations-frontales": {
+    source: require("../../assets/gestes/elevations-frontales.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 2000,
+  },
+  "developpe-militaire": {
+    source: require("../../assets/gestes/developpe-militaire.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 2200,
+  },
+  "extension-triceps": {
+    source: require("../../assets/gestes/extension-triceps.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 2000,
+  },
+  "kickback-triceps": {
+    source: require("../../assets/gestes/kickback-triceps.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 1800,
+  },
+  oiseau: {
+    source: require("../../assets/gestes/oiseau.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 2200,
+  },
+  "rowing-halteres": {
+    source: require("../../assets/gestes/rowing-halteres.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 2000,
   },
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
