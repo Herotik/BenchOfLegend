@@ -59,7 +59,14 @@ mentionnent, et c'est alors une intention et non un accident.
 
 ## Ce que ce fichier ne sait pas faire
 
-Rien qui demande de garder un appui pendant que le corps se déplace : mollets
+Les gestes de **faible amplitude**. Le haussement d'épaules y a été essayé puis
+retiré : la clavicule est un os court, son élévation réelle fait quelques
+pixels sur un rendu, et même exagérée trois fois elle reste masquée par le
+vêtement. Le bonhomme vectoriel s'en tire mieux, parce qu'il peut exagérer sans
+prétendre à l'anatomie — c'est exactement pourquoi les deux façons de montrer
+un geste coexistent.
+
+Rien non plus qui demande de garder un appui pendant que le corps se déplace : mollets
 debout (le corps monte sur la pointe des pieds), fentes, tout ce qui touche le
 sol. Il y faudrait de la cinématique inverse. La captation reste le bon outil
 pour ceux-là.
@@ -192,24 +199,6 @@ GESTES = {
                 _os("LeftForeArm"): (0.12, 0, 1),
                 _os("RightArm"): (-0.32, -0.06, 1),
                 _os("RightForeArm"): (-0.12, 0, 1),
-            }),
-        ],
-    },
-    "haussement-epaules": {
-        "vue": "face",
-        # Court : un shrug se fait vite, et l'amplitude est faible. Étalé sur
-        # deux secondes il ne se lirait plus comme un mouvement.
-        "duree": 1200,
-        "cles": [
-            _pose(),
-            # Une amplitude franchement exagérée. Un haussement d'épaules réel
-            # se voit à peine, et le premier rendu ne se lisait pas comme un
-            # mouvement : le personnage semblait immobile. Une démonstration
-            # doit montrer quelle articulation travaille, pas reproduire une
-            # amplitude au degré près.
-            _pose({
-                _os("LeftShoulder"): (1, 0, 0.70),
-                _os("RightShoulder"): (-1, 0, 0.70),
             }),
         ],
     },
