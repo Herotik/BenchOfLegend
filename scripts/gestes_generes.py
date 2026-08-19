@@ -74,7 +74,10 @@ bon outil pour ceux-là.
 Les haltères ne sont pas modélisées : le personnage ferme le poing. Les rendus
 de captation font pareil, l'app reste cohérente.
 """
-from mathutils import Vector
+# `mathutils` n'existe que dans Blender. L'import est donc fait **dans** les
+# fonctions qui en ont besoin, et non ici : les définitions de gestes restent
+# alors lisibles par un Python ordinaire, ce dont `verifier-gestes.py` se sert
+# pour contrôler les postures sans avoir à lancer un rendu.
 
 #: Marque un os qu'on ne touche pas : il garde l'orientation du modèle importé.
 REPOS = None
@@ -135,10 +138,13 @@ BUSTE_PENCHE = {
     _os("Spine2"): (0, -0.62, 0.78),
     _os("Neck"): (0, -0.48, 0.88),
     _os("Head"): (0, -0.32, 0.95),
-    _os("LeftUpLeg"): (0.03, 0.17, -0.98),
-    _os("LeftLeg"): (0.02, -0.22, -0.97),
-    _os("RightUpLeg"): (-0.03, 0.17, -0.98),
-    _os("RightLeg"): (-0.02, -0.22, -0.97),
+    # Cuisse vers l'avant, tibia vers l'arrière : le genou est le point le plus
+    # **avancé** de la jambe. L'inverse — qu'on avait — plie le genou à l'envers,
+    # comme une patte d'oiseau. `verifier-gestes.py` l'attrape désormais.
+    _os("LeftUpLeg"): (0.03, -0.16, -0.99),
+    _os("LeftLeg"): (0.02, 0.20, -0.98),
+    _os("RightUpLeg"): (-0.03, -0.16, -0.99),
+    _os("RightLeg"): (-0.02, 0.20, -0.98),
     # Les bras pendent vers le sol : la gravité ne se penche pas avec le buste.
     _os("LeftArm"): (0.16, 0.05, -1),
     _os("LeftForeArm"): (0.18, 0.02, -1),
@@ -306,6 +312,7 @@ def _parcours(cles, images, repos):
 
     `repos` fournit la direction des os laissés à `REPOS`, mesurée sur le modèle.
     """
+    from mathutils import Vector
     resolue = lambda pose: {  # noqa: E731
         nom: Vector(repos[nom] if pose[nom] is REPOS else pose[nom]).normalized()
         for nom in pose
@@ -354,6 +361,7 @@ def viser(armature, os_pose, direction, repos, contexte):
 
     `repos` est cette orientation de repos, en espace armature.
     """
+    from mathutils import Vector
     cible = (armature.matrix_world.inverted().to_3x3() @ Vector(direction)).normalized()
     depuis = repos.col[1].normalized()
     oriente = (depuis.rotation_difference(cible).to_matrix() @ repos).to_4x4()
@@ -368,6 +376,7 @@ def viser(armature, os_pose, direction, repos, contexte):
 
 def _deplacer_bassin(armature, decalage, contexte):
     """Recule le bassin, en mètres et dans le monde."""
+    from mathutils import Vector
     contexte.view_layer.update()
     bassin = armature.pose.bones[BASSIN]
     matrice = bassin.matrix.copy()

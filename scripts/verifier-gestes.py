@@ -1,0 +1,169 @@
+"""Contrôle les postures déclarées dans `gestes_generes.py`, sans lancer de rendu.
+
+    python3 scripts/verifier-gestes.py
+
+## Pourquoi ce script existe
+
+Deux fautes ont été livrées avant d'être vues à l'œil sur un rendu : un torse
+vrillé, puis un **genou plié à l'envers** — la cuisse partait vers l'arrière et
+le tibia revenait vers l'avant, ce qui donne une patte d'oiseau. Chacune a
+demandé un rendu complet, un coup d'œil, et un aller-retour.
+
+Or ces fautes-là sont géométriques. Une direction mal signée se voit dans les
+chiffres bien avant de se voir sur une image, et le contrôle prend une
+milliseconde là où le rendu prend deux minutes. D'où ce script : il ne juge pas
+si un geste est *beau* — ça, seul l'œil le dit — mais si une posture est
+anatomiquement possible.
+
+Il tourne avec un Python ordinaire : `gestes_generes.py` n'importe `mathutils`
+que dans les fonctions qui s'en servent, précisément pour que ses définitions
+restent lisibles hors de Blender.
+
+## Repère
+
+    +Z  le haut              +X  la gauche du personnage
+    -Y  la direction du regard (le personnage est de dos en +Y)
+"""
+import math
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import gestes_generes as g  # noqa: E402
+
+# Longueurs approximatives, en mètres, mesurées sur le squelette Mixamo. Elles
+# n'ont pas à être exactes : elles servent à placer une articulation par rapport
+# aux deux autres, et seul le signe du résultat compte.
+CUISSE, TIBIA = 0.45, 0.45
+BRAS, AVANT_BRAS = 0.28, 0.26
+
+#: En deçà, l'articulation est trop alignée pour qu'on affirme quoi que ce soit —
+#: une jambe tendue est légitime, seul un pli franc à l'envers est une faute.
+SEUIL = 0.02
+
+
+def _somme(a, b, k=1.0):
+    return tuple(x + y * k for x, y in zip(a, b))
+
+
+def _normalise(v):
+    n = sum(x * x for x in v) ** 0.5
+    return tuple(x / n for x in v) if n else v
+
+
+def _saillie(racine, milieu, bout, axe):
+    """De combien l'articulation dépasse du segment racine→bout, selon `axe`.
+
+    Positif = elle dépasse dans le sens de l'axe. C'est la mesure qui dit dans
+    quel sens un genou ou un coude est plié, sans avoir à raisonner sur des
+    angles.
+    """
+    t = 0.5  # le milieu du segment suffit : on compare deux points, pas des aires
+    reference = tuple(r + (b - r) * t for r, b in zip(racine, bout))
+    return sum((m - r) * a for m, r, a in zip(milieu, reference, axe))
+
+
+def genou_a_lendroit(pose):
+    """Le genou doit être en avant du segment hanche→cheville.
+
+    C'est l'invariant le plus simple qui distingue une jambe humaine d'une patte
+    d'oiseau, et celui qui manquait.
+    """
+    fautes = []
+    for cote in ("Left", "Right"):
+        cuisse = pose.get(g._os(f"{cote}UpLeg"))
+        tibia = pose.get(g._os(f"{cote}Leg"))
+        if cuisse is g.REPOS or tibia is g.REPOS or cuisse is None or tibia is None:
+            continue
+        hanche = (0.0, 0.0, 0.0)
+        genou = _somme(hanche, _normalise(cuisse), CUISSE)
+        cheville = _somme(genou, _normalise(tibia), TIBIA)
+        # -Y est l'avant du personnage.
+        avance = _saillie(hanche, genou, cheville, (0, -1, 0))
+        if avance < -SEUIL:
+            fautes.append(
+                f"genou {cote} plié à l'envers : il dépasse de "
+                f"{-avance * 100:.0f} cm vers l'arrière au lieu de l'avant"
+            )
+    return fautes
+
+
+def dos_plat(pose):
+    """Les trois vertèbres doivent pointer à peu près dans la même direction.
+
+    Un dos qui s'enroule est ce qu'on corrige chez un débutant ; une
+    démonstration ne peut pas l'enseigner.
+    """
+    vertebres = [pose.get(g._os(n)) for n in ("Spine", "Spine1", "Spine2")]
+    if any(v is g.REPOS or v is None for v in vertebres):
+        return []
+
+    def inclinaison(v):
+        x, y, z = _normalise(v)
+        return (y * y + x * x) ** 0.5, z
+
+    angles = []
+    for v in vertebres:
+        plan, haut = inclinaison(v)
+        angles.append(math.degrees(math.atan2(plan, haut)))
+    ecart = max(angles) - min(angles)
+    if ecart > 15:
+        return [
+            f"dos enroulé : {ecart:.0f}° d'écart entre la première et la "
+            f"dernière vertèbre ({', '.join(f'{a:.0f}°' for a in angles)})"
+        ]
+    return []
+
+
+def symetrie(pose):
+    """Gauche et droite doivent se répondre en miroir : X opposé, Y et Z égaux.
+
+    Toutes ces poses sont symétriques. Un signe oublié se voit ici avant de se
+    voir à l'écran.
+    """
+    fautes = []
+    for membre in ("Shoulder", "Arm", "ForeArm", "UpLeg", "Leg"):
+        gauche = pose.get(g._os(f"Left{membre}"))
+        droite = pose.get(g._os(f"Right{membre}"))
+        if gauche is g.REPOS or droite is g.REPOS or gauche is None or droite is None:
+            continue
+        gx, gy, gz = _normalise(gauche)
+        dx, dy, dz = _normalise(droite)
+        if abs(gx + dx) > 0.05 or abs(gy - dy) > 0.05 or abs(gz - dz) > 0.05:
+            fautes.append(
+                f"{membre} : gauche {gx:+.2f},{gy:+.2f},{gz:+.2f} et droite "
+                f"{dx:+.2f},{dy:+.2f},{dz:+.2f} ne sont pas en miroir"
+            )
+    return fautes
+
+
+def directions_utilisables(pose):
+    """Une direction nulle ne définit aucune orientation."""
+    return [
+        f"{nom.removeprefix('mixamorig:')} : direction nulle"
+        for nom, v in pose.items()
+        if v is not g.REPOS and sum(x * x for x in v) < 1e-6
+    ]
+
+
+CONTROLES = (directions_utilisables, genou_a_lendroit, dos_plat, symetrie)
+
+
+def main():
+    total = 0
+    for nom in sorted(g.GESTES):
+        for rang, pose in enumerate(g.GESTES[nom]["cles"]):
+            for controle in CONTROLES:
+                for faute in controle(pose):
+                    print(f"  ✗ {nom} · pose {rang + 1} — {faute}")
+                    total += 1
+
+    poses = sum(len(x["cles"]) for x in g.GESTES.values())
+    if total:
+        print(f"\n{total} faute(s) sur {len(g.GESTES)} gestes ({poses} poses).")
+        sys.exit(1)
+    print(f"{len(g.GESTES)} gestes, {poses} poses : postures cohérentes.")
+
+
+if __name__ == "__main__":
+    main()
