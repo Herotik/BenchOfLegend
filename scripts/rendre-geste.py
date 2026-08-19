@@ -12,6 +12,23 @@ Options (après le `--`) :
 La sortie se passe ensuite dans `scripts/planche-geste.py`, qui en fait la
 planche que l'app lit.
 
+## Ce qu'il faut installer
+
+    apt-get install blender libegl1 libgl1-mesa-dri libglx-mesa0 python3-numpy
+
+Blender refuse de démarrer sans pile OpenGL même en mode sans interface, et son
+importateur FBX réclame numpy — absent du paquet Ubuntu, ce qui fait échouer
+l'import avec un `ModuleNotFoundError` peu parlant. Les erreurs `EGL Error`
+affichées ensuite sont sans conséquence : le rendu aboutit.
+
+## Ce que Mixamo exporte
+
+Vérifié sur le personnage X Bot : verticale en Z, profondeur en Y, largeur en X.
+`--vue profil` regarde donc selon X, `--vue face` selon Y — ce que le script
+suppose. Le FBX ne contient **aucune image** : les mannequins Mixamo portent
+des matériaux unis, ce qui suffit à une démonstration d'exercice et évite tout
+fichier de texture à côté.
+
 ## Ce dont le script s'occupe, et pourquoi
 
 **Le cadrage.** C'est le point qui rate quand on le fait à la main : deux gestes
