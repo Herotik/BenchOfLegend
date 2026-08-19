@@ -56,7 +56,22 @@ export interface Planche {
  * Tant que ce registre est vide, tous les gestes s'affichent en vectoriel —
  * ce qui est exactement le repli voulu, pas une panne.
  */
-export const PLANCHES: Record<string, Planche> = {};
+/*
+ * `require` et non `import` : le bundler React Native doit connaître le chemin
+ * de l'image à la compilation, une chaîne calculée ne se résoudrait pas. La
+ * règle est donc neutralisée ici plutôt que sur chaque ligne — le registre
+ * comptera une entrée par geste, et le nombre d'avertissements ne doit pas
+ * croître avec le contenu.
+ */
+/* eslint-disable @typescript-eslint/no-require-imports */
+export const PLANCHES: Record<string, Planche> = {
+  pompe: {
+    source: require("../../assets/gestes/pompe.png"),
+    images: 20,
+    colonnes: 4,
+  },
+};
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 export const plancheDe = (slug: string | null | undefined): Planche | null =>
   (slug ? PLANCHES[slug] : null) ?? null;

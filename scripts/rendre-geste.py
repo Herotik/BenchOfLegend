@@ -6,6 +6,12 @@ Options (après le `--`) :
   --images 20        Nombre d'images rendues sur la boucle.
   --taille 512       Côté de l'image rendue, en pixels.
   --vue profil       `profil` (tourné vers la droite) ou `face`.
+  --echelle 2.6      Hauteur de champ de la caméra, en mètres. **À fixer une
+                     fois pour toutes** et à garder identique sur tous les
+                     gestes : c'est ce qui fait que le personnage a la même
+                     taille d'un exercice à l'autre. Sans elle, le cadrage
+                     s'ajuste à chaque geste et un corps allongé pour des
+                     pompes paraît plus petit qu'un corps debout.
   --essai            Rend une forme d'essai au lieu d'importer un FBX, pour
                      éprouver le cadrage et l'éclairage sans avoir de modèle.
 
@@ -69,6 +75,7 @@ def arguments():
         "images": int(valeur("--images", 20)),
         "taille": int(valeur("--taille", 512)),
         "vue": valeur("--vue", "profil"),
+        "echelle": float(valeur("--echelle", 0)) or None,
         "essai": "--essai" in apres,
     }
 
@@ -146,8 +153,14 @@ def encombrement(images):
     return mini, maxi
 
 
-def placer_camera(mini, maxi, vue):
-    """Caméra orthographique, cadrée sur l'encombrement avec une marge fixe."""
+def placer_camera(mini, maxi, vue, echelle):
+    """Caméra orthographique.
+
+    Avec `echelle`, le champ est imposé et **identique pour tous les gestes** :
+    un corps allongé pour des pompes garde alors la taille qu'il a debout. Sans
+    elle, on s'ajuste à l'encombrement du geste, ce qui remplit mieux le cadre
+    mais fait changer le personnage de taille d'un exercice à l'autre.
+    """
     centre = (mini + maxi) / 2
     taille = maxi - mini
 
@@ -169,7 +182,7 @@ def placer_camera(mini, maxi, vue):
     camera = bpy.context.object
     camera.data.type = "ORTHO"
     # 15 % de marge : le personnage respire sans flotter dans le vide.
-    camera.data.ortho_scale = max(largeur, taille.z) * 1.15
+    camera.data.ortho_scale = echelle if echelle else max(largeur, taille.z) * 1.15
     bpy.context.scene.camera = camera
 
 
@@ -232,7 +245,7 @@ def main():
     numeros = [int(debut + round(i * pas)) for i in range(o["images"])]
 
     mini, maxi = encombrement(numeros)
-    placer_camera(mini, maxi, o["vue"])
+    placer_camera(mini, maxi, o["vue"], o["echelle"])
     eclairer(mini, maxi)
     configurer_rendu(o["taille"], o["sortie"])
 
@@ -242,7 +255,12 @@ def main():
         bpy.ops.render.render(write_still=True)
 
     print(f"\n{len(numeros)} images rendues dans {o['sortie']}")
-    print(f"Images {debut} à {fin} de l'animation, vue « {o['vue'] } ».")
+    print(f"Images {debut} à {fin} de l'animation, vue « {o['vue']} ».")
+    if o["echelle"]:
+        print(f"Champ imposé à {o['echelle']} m — garde la même valeur sur tous les gestes.")
+    else:
+        print(f"Champ ajusté à ce geste ({max(maxi - mini):.2f} m). Pour que le personnage")
+        print("garde la même taille partout, relance tous les gestes avec --echelle 2.6.")
     print("\nEnsuite :")
     print(f"  python scripts/planche-geste.py {o['sortie']} <slug-du-geste>")
 

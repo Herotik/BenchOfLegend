@@ -13,6 +13,12 @@ Options :
   --images 20     Nombre d'images retenues. Les rendus en comptent souvent
                   bien plus ; on en prélève à intervalle régulier.
   --sortie …      Dossier de destination. Par défaut `mobile/assets/gestes/`.
+  --sans-recadrage  Garde le cadrage tel quel. C'est le bon choix pour les
+                  images sorties de `rendre-geste.py`, qui les a déjà cadrées
+                  à une échelle commune à tous les gestes. Recadrer les
+                  rapetisserait ou les grossirait chacune selon son
+                  encombrement, et le personnage changerait de taille d'un
+                  exercice à l'autre.
 
 Une **grille** plutôt qu'une bande : une bande de vingt images fait 5120 px de
 large, ce qui dépasse la taille de texture que certains téléphones acceptent
@@ -56,15 +62,36 @@ def prelever(chemins, combien):
     return [chemins[round(i * pas)] for i in range(combien)]
 
 
-def cadrer(image, taille):
-    """Met l'image au carré sans la déformer, en la centrant sur son contenu.
+def boite_commune(chemins):
+    """Encombrement du dessin sur **l'ensemble** des images.
 
-    Le rendu peut arriver en 1920 × 1080 avec le personnage au milieu : découpé
-    au centre géométrique, il se retrouverait décalé. On se cale donc sur la
-    zone réellement dessinée.
+    Recadrer chaque image sur son propre contenu ferait grandir et rapetisser le
+    personnage d'une image à l'autre : au plus bas d'une pompe le corps occupe
+    moins de place, et il se retrouverait grossi pour compenser. Une seule boîte
+    pour toute la série, et le mouvement redevient stable.
+    """
+    union = None
+    for chemin in chemins:
+        with Image.open(chemin) as image:
+            boite = image.convert("RGBA").getbbox()
+        if not boite:
+            continue
+        union = boite if union is None else (
+            min(union[0], boite[0]),
+            min(union[1], boite[1]),
+            max(union[2], boite[2]),
+            max(union[3], boite[3]),
+        )
+    return union
+
+
+def cadrer(image, taille, boite):
+    """Met l'image au carré sans la déformer.
+
+    `boite` vaut `None` quand on ne recadre pas — les images de
+    `rendre-geste.py` sont déjà cadrées à une échelle commune à tous les gestes.
     """
     image = image.convert("RGBA")
-    boite = image.getbbox()
     if boite:
         image = image.crop(boite)
 
@@ -81,6 +108,7 @@ def main():
     a.add_argument("--taille", type=int, default=256)
     a.add_argument("--images", type=int, default=20)
     a.add_argument("--sortie", default=SORTIE_DEFAUT)
+    a.add_argument("--sans-recadrage", action="store_true")
     args = a.parse_args()
 
     if not os.path.isdir(args.dossier):
@@ -88,6 +116,7 @@ def main():
 
     chemins = prelever(images_du_dossier(args.dossier), args.images)
     nombre = len(chemins)
+    boite = None if args.sans_recadrage else boite_commune(chemins)
     lignes = (nombre + COLONNES - 1) // COLONNES
 
     planche = Image.new(
@@ -101,7 +130,7 @@ def main():
             # mieux vaut le signaler que le laisser passer.
             if brute.mode not in ("RGBA", "LA") and "transparency" not in brute.info:
                 opaques += 1
-            vignette = cadrer(brute, args.taille)
+            vignette = cadrer(brute, args.taille, boite)
         planche.paste(
             vignette,
             ((index % COLONNES) * args.taille, (index // COLONNES) * args.taille),
@@ -114,6 +143,7 @@ def main():
     poids = os.path.getsize(destination) / 1024
     print(f"{destination}")
     print(f"  {nombre} images, {COLONNES} colonnes, {args.taille} px, {poids:.0f} Ko")
+    print(f"  cadrage : {'tel quel' if boite is None else f'commun aux {nombre} images {boite}'}")
 
     if opaques:
         print(
