@@ -51,10 +51,11 @@ export interface Planche {
 }
 
 /**
- * Aucune planche pour l'instant : les rendus 3D restent à produire.
+ * Gestes déjà rendus. Les autres tombent sur le motif vectoriel, ce qui est le
+ * repli voulu et non une panne.
  *
- * Tant que ce registre est vide, tous les gestes s'affichent en vectoriel —
- * ce qui est exactement le repli voulu, pas une panne.
+ * Tous rendus avec `--echelle 2.6` : **garder cette valeur** pour les suivants,
+ * faute de quoi le personnage changerait de taille d'un exercice à l'autre.
  */
 /*
  * `require` et non `import` : le bundler React Native doit connaître le chemin
@@ -65,10 +66,62 @@ export interface Planche {
  */
 /* eslint-disable @typescript-eslint/no-require-imports */
 export const PLANCHES: Record<string, Planche> = {
+  // Pompes
   pompe: {
     source: require("../../assets/gestes/pompe.png"),
     images: 20,
     colonnes: 4,
+  },
+  // Squat au poids du corps
+  squat: {
+    source: require("../../assets/gestes/squat.png"),
+    images: 20,
+    colonnes: 4,
+  },
+  // Squat barre, mains aux épaules
+  "squat-barre": {
+    source: require("../../assets/gestes/squat-barre.png"),
+    images: 20,
+    colonnes: 4,
+  },
+  // Curl biceps
+  curl: {
+    source: require("../../assets/gestes/curl.png"),
+    images: 20,
+    colonnes: 4,
+  },
+  // Crunchs
+  crunch: {
+    source: require("../../assets/gestes/crunch.png"),
+    images: 20,
+    colonnes: 4,
+  },
+  // Crunchs vélo, jambes alternées
+  "crunch-velo": {
+    source: require("../../assets/gestes/crunch-velo.png"),
+    images: 20,
+    colonnes: 4,
+  },
+  // Gainage planche
+  planche: {
+    source: require("../../assets/gestes/planche.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 3200,
+  },
+  // Burpee
+  burpee: {
+    source: require("../../assets/gestes/burpee.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 2000,
+  },
+  // Saut vertical
+  saut: {
+    source: require("../../assets/gestes/saut.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 1100,
   },
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
