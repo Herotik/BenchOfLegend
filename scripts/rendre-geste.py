@@ -6,6 +6,17 @@ Options (après le `--`) :
   --images 20        Nombre d'images rendues sur la boucle.
   --taille 512       Côté de l'image rendue, en pixels.
   --vue profil       `profil` (tourné vers la droite) ou `face`.
+  --geste <nom>      **Ignore l'animation du FBX** et joue à la place un geste
+                     écrit dans `gestes_generes.py`. Le FBX ne fournit alors
+                     que le corps — squelette, maillage et matières. C'est ce
+                     qui permet d'animer les exercices qu'aucune bibliothèque
+                     de captation ne propose (élévations latérales, kickback
+                     triceps, oiseau) sans attendre qu'on les capte. `--vue`
+                     vient du geste, sauf si on la donne à la main.
+                     `--geste liste` énumère ce qui existe.
+                     Le FBX doit être un personnage **debout** : c'est sa pose
+                     de repos qui sert d'assise, et un modèle exporté à plat
+                     ventre resterait couché.
   --echelle 2.6      Hauteur de champ de la caméra, en mètres. **À fixer une
                      fois pour toutes** et à garder identique sur tous les
                      gestes : c'est ce qui fait que le personnage a la même
@@ -57,11 +68,23 @@ import os
 import math
 from mathutils import Vector
 
+# Blender ne met pas le script lancé sur le chemin d'import : sans cette ligne,
+# `import gestes_generes` échouerait alors que le fichier est juste à côté.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import gestes_generes  # noqa: E402
+
 
 def arguments():
     """Ce qui suit `--` sur la ligne de commande ; Blender ignore le reste."""
     argv = sys.argv
     apres = argv[argv.index("--") + 1 :] if "--" in argv else []
+
+    if "liste" in apres and "--geste" in apres and apres[apres.index("--geste") + 1] == "liste":
+        print("\nGestes écrits dans gestes_generes.py :")
+        for nom in sorted(gestes_generes.GESTES):
+            g = gestes_generes.GESTES[nom]
+            print(f"  {nom:24s} vue {g['vue']:6s} {g['duree']} ms")
+        sys.exit(0)
 
     if len(apres) < 2:
         sys.exit("Usage : ... -- <fichier.fbx> <dossier-sortie> [--images N] [--taille N] [--vue profil|face] [--essai]")
@@ -74,8 +97,11 @@ def arguments():
         "sortie": apres[1],
         "images": int(valeur("--images", 20)),
         "taille": int(valeur("--taille", 512)),
-        "vue": valeur("--vue", "profil"),
+        # `None` et non « profil » : un geste écrit porte sa propre vue, et il
+        # faut savoir distinguer « non précisé » de « profil demandé ».
+        "vue": valeur("--vue", None),
         "echelle": float(valeur("--echelle", 0)) or None,
+        "geste": valeur("--geste", None),
         "essai": "--essai" in apres,
     }
 
@@ -231,21 +257,50 @@ def configurer_rendu(taille, sortie):
     os.makedirs(sortie, exist_ok=True)
 
 
+def generer(nom, images):
+    """Remplace l'animation du FBX par un geste écrit dans `gestes_generes.py`.
+
+    L'animation importée est effacée d'abord : les images clés de la captation
+    et celles qu'on pose se disputeraient sinon les mêmes os, et le résultat
+    tiendrait de l'une comme de l'autre.
+    """
+    for objet in bpy.data.objects:
+        objet.animation_data_clear()
+    for action in list(bpy.data.actions):
+        bpy.data.actions.remove(action)
+
+    armatures = [o for o in bpy.data.objects if o.type == "ARMATURE"]
+    if not armatures:
+        sys.exit("Aucun squelette dans ce FBX : impossible d'y poser un geste.")
+
+    numeros = gestes_generes.appliquer(armatures[0], nom, images, bpy.context)
+    bpy.context.scene.frame_start = numeros[0]
+    bpy.context.scene.frame_end = numeros[-1]
+    return numeros
+
+
 def main():
     o = arguments()
     scene_vierge()
     importer(o["fbx"], o["essai"])
 
     scene = bpy.context.scene
-    debut, fin = scene.frame_start, scene.frame_end
 
-    # La dernière image est **exclue** : sur un geste bouclé elle répète la
-    # première, et la planche marquerait un temps mort à chaque tour.
-    pas = max(1, (fin - debut)) / o["images"]
-    numeros = [int(debut + round(i * pas)) for i in range(o["images"])]
+    if o["geste"]:
+        numeros = generer(o["geste"], o["images"])
+        vue = o["vue"] or gestes_generes.GESTES[o["geste"]]["vue"]
+    else:
+        debut, fin = scene.frame_start, scene.frame_end
+        # La dernière image est **exclue** : sur un geste bouclé elle répète la
+        # première, et la planche marquerait un temps mort à chaque tour.
+        pas = max(1, (fin - debut)) / o["images"]
+        numeros = [int(debut + round(i * pas)) for i in range(o["images"])]
+        vue = o["vue"] or "profil"
+
+    debut, fin = numeros[0], numeros[-1]
 
     mini, maxi = encombrement(numeros)
-    placer_camera(mini, maxi, o["vue"], o["echelle"])
+    placer_camera(mini, maxi, vue, o["echelle"])
     eclairer(mini, maxi)
     configurer_rendu(o["taille"], o["sortie"])
 
@@ -255,7 +310,8 @@ def main():
         bpy.ops.render.render(write_still=True)
 
     print(f"\n{len(numeros)} images rendues dans {o['sortie']}")
-    print(f"Images {debut} à {fin} de l'animation, vue « {o['vue']} ».")
+    origine = f"geste écrit « {o['geste']} »" if o["geste"] else "animation du FBX"
+    print(f"Images {debut} à {fin} — {origine}, vue « {vue} ».")
     if o["echelle"]:
         print(f"Champ imposé à {o['echelle']} m — garde la même valeur sur tous les gestes.")
     else:
