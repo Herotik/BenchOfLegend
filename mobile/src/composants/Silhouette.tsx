@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, StyleSheet, View } from "react-native";
 import Svg, { Circle, G, Line, Rect } from "react-native-svg";
-import { motifDe, type Charge, type Decor, type Point, type Pose } from "../donnees/motifs";
+import {
+  membresDuFond,
+  motifDe,
+  type Charge,
+  type Decor,
+  type Point,
+  type Pose,
+} from "../donnees/motifs";
 import { useCouleurs } from "../theme/theme";
 
 /**
@@ -125,24 +132,26 @@ export function Silhouette({
   const cheville = p(pose.cheville);
   const tete = p(pose.tete);
 
+  const fond = membresDuFond(pose, 7);
+  const coudeF = p(fond.coude);
+  const poignetF = p(fond.poignet);
+  const genouF = p(fond.genou);
+  const chevilleF = p(fond.cheville);
+
   return (
     <View style={[styles.cadre, { width: taille, height: taille }]}>
       <Svg width={taille} height={taille}>
         <Repere decor={motif.decor ?? null} taille={taille} couleur={c.filet} />
 
-        {/* Membres du fond, décalés et pâlis : sans eux la silhouette paraît
-            plate, et l'on ne voit pas que le corps a deux bras. */}
+        {/* Membres du fond : posés quand le geste les décrit, décalés et pâlis
+            sinon. Sans eux la silhouette paraît plate, et l'on ne voit pas que
+            le corps a deux bras. La règle vit dans `motifs.ts`, partagée avec
+            les mannequins habillés. */}
         <G opacity={0.35}>
-          <Line x1={cou.x} y1={cou.y} x2={coude.x - 7 * u} y2={coude.y} {...trait} />
-          <Line x1={coude.x - 7 * u} y1={coude.y} x2={poignet.x - 7 * u} y2={poignet.y} {...trait} />
-          <Line x1={bassin.x} y1={bassin.y} x2={genou.x - 7 * u} y2={genou.y} {...trait} />
-          <Line
-            x1={genou.x - 7 * u}
-            y1={genou.y}
-            x2={cheville.x - 7 * u}
-            y2={cheville.y}
-            {...trait}
-          />
+          <Line x1={cou.x} y1={cou.y} x2={coudeF.x} y2={coudeF.y} {...trait} />
+          <Line x1={coudeF.x} y1={coudeF.y} x2={poignetF.x} y2={poignetF.y} {...trait} />
+          <Line x1={bassin.x} y1={bassin.y} x2={genouF.x} y2={genouF.y} {...trait} />
+          <Line x1={genouF.x} y1={genouF.y} x2={chevilleF.x} y2={chevilleF.y} {...trait} />
         </G>
 
         {/* Tronc */}

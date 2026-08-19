@@ -45,6 +45,43 @@ export interface Pose {
   poignet: Point;
   genou: Point;
   cheville: Point;
+
+  /**
+   * Membres du fond, quand ils ne suivent pas ceux de devant.
+   *
+   * Facultatifs : le bonhomme bâton s'en passe, il décale et pâlit une copie du
+   * membre visible. Un personnage habillé, lui, ne le peut pas — un bras de
+   * derrière obtenu par décalage trahit à la première image. Ces points sont
+   * donc renseignés à mesure que les gestes passent en version habillable, sans
+   * qu'il faille tout reprendre d'un coup.
+   */
+  coudeFond?: Point;
+  poignetFond?: Point;
+  genouFond?: Point;
+  chevilleFond?: Point;
+}
+
+/**
+ * Membres du fond, avec repli sur le décalage du bonhomme bâton.
+ *
+ * Un seul endroit décide : le rendu habillé et le rendu bâton lisent la même
+ * chose, et un geste passé en version complète profite aux deux sans qu'on
+ * touche à l'un ou à l'autre.
+ */
+export function membresDuFond(pose: Pose, decalage: number) {
+  const recule = (p: Point): Point => [p[0] - decalage, p[1]];
+  return {
+    coude: pose.coudeFond ?? recule(pose.coude),
+    poignet: pose.poignetFond ?? recule(pose.poignet),
+    genou: pose.genouFond ?? recule(pose.genou),
+    cheville: pose.chevilleFond ?? recule(pose.cheville),
+    /** Vrai quand les membres sont réellement posés, non déduits. */
+    poses:
+      pose.coudeFond !== undefined ||
+      pose.poignetFond !== undefined ||
+      pose.genouFond !== undefined ||
+      pose.chevilleFond !== undefined,
+  };
 }
 
 /** Ce que la silhouette tient, dessiné aux poignets. */
@@ -149,7 +186,12 @@ export const MOTIFS: Record<string, Motif> = {
     nom: "Pompes",
     decor: "sol",
     poses: [
-      APPUI_FACIAL,
+      derive(APPUI_FACIAL, {
+        coudeFond: [26, 64],
+        poignetFond: [24, 84],
+        genouFond: [78, 76],
+        chevilleFond: [92, 88],
+      }),
       // Descente : les coudes fléchissent, le corps reste aligné.
       derive(APPUI_FACIAL, {
         tete: [22, 62],
@@ -158,6 +200,10 @@ export const MOTIFS: Record<string, Motif> = {
         coude: [22, 72],
         genou: [80, 82],
         cheville: [94, 90],
+        coudeFond: [16, 70],
+        poignetFond: [24, 84],
+        genouFond: [78, 86],
+        chevilleFond: [92, 92],
       }),
     ],
   },
@@ -185,9 +231,24 @@ export const MOTIFS: Record<string, Motif> = {
     decor: "sol",
     charge: "haltere",
     poses: [
-      derive(DEBOUT, { coude: [55, 40], poignet: [58, 55] }),
-      // Le coude reste au corps, l'avant-bras monte seul.
-      derive(DEBOUT, { coude: [55, 40], poignet: [64, 26] }),
+      derive(DEBOUT, {
+        coude: [55, 40],
+        poignet: [58, 55],
+        coudeFond: [46, 40],
+        poignetFond: [50, 28],
+        genouFond: [52, 72],
+        chevilleFond: [48, 93],
+      }),
+      // Le coude reste au corps, l'avant-bras monte seul. L'autre redescend :
+      // c'est ainsi qu'on curle en alterné, et le geste se lit mieux.
+      derive(DEBOUT, {
+        coude: [55, 40],
+        poignet: [64, 26],
+        coudeFond: [46, 40],
+        poignetFond: [44, 54],
+        genouFond: [52, 72],
+        chevilleFond: [48, 93],
+      }),
     ],
   },
 
@@ -227,7 +288,12 @@ export const MOTIFS: Record<string, Motif> = {
     nom: "Tractions",
     decor: "barre",
     poses: [
-      SUSPENDU,
+      derive(SUSPENDU, {
+        coudeFond: [42, 26],
+        poignetFond: [38, 10],
+        genouFond: [54, 82],
+        chevilleFond: [50, 95],
+      }),
       // Le corps monte, les coudes passent sous les mains restées à la barre.
       derive(SUSPENDU, {
         tete: [48, 20],
@@ -236,6 +302,10 @@ export const MOTIFS: Record<string, Motif> = {
         coude: [64, 22],
         genou: [46, 70],
         cheville: [50, 84],
+        coudeFond: [36, 22],
+        poignetFond: [38, 10],
+        genouFond: [56, 70],
+        chevilleFond: [52, 84],
       }),
     ],
   },
