@@ -66,10 +66,10 @@ vêtement. Le bonhomme vectoriel s'en tire mieux, parce qu'il peut exagérer san
 prétendre à l'anatomie — c'est exactement pourquoi les deux façons de montrer
 un geste coexistent.
 
-Rien non plus qui demande de garder un appui pendant que le corps se déplace : mollets
-debout (le corps monte sur la pointe des pieds), fentes, tout ce qui touche le
-sol. Il y faudrait de la cinématique inverse. La captation reste le bon outil
-pour ceux-là.
+Rien non plus qui demande de garder un appui pendant que le corps se déplace :
+mollets debout (le corps monte sur la pointe des pieds), fentes, tout ce qui
+touche le sol. Il y faudrait de la cinématique inverse — la captation reste le
+bon outil pour ceux-là.
 
 Les haltères ne sont pas modélisées : le personnage ferme le poing. Les rendus
 de captation font pareil, l'app reste cohérente.
@@ -263,7 +263,7 @@ GESTES = {
             }),
         ],
     },
-    "rowing-halteres": {
+    "rowing": {
         "vue": "trois-quarts",
         "duree": 2000,
         "bassin": RECUL_BASSIN,

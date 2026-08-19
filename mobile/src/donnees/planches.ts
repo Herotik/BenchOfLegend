@@ -176,8 +176,8 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 2200,
   },
-  "rowing-halteres": {
-    source: require("../../assets/gestes/rowing-halteres.png"),
+  rowing: {
+    source: require("../../assets/gestes/rowing.png"),
     images: 20,
     colonnes: 4,
     duree: 2000,

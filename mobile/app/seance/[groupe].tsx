@@ -24,11 +24,13 @@ import type {
 import { useSession } from "../../src/auth/session";
 import { memoriserSeance, seanceEnCache } from "../../src/donnees/cache";
 import { mettreEnFile } from "../../src/donnees/file-attente";
+import { gesteDe } from "../../src/donnees/gestes";
 import { appliquer, lireReglage } from "../../src/donnees/rappels";
 import { useReferentiel } from "../../src/donnees/referentiel";
 import { Bouton } from "../../src/composants/Bouton";
 import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
 import { ChronoRepos } from "../../src/composants/Chrono";
+import { Demonstration } from "../../src/composants/Demonstration";
 import { Chargement, EcranErreur } from "../../src/composants/Etats";
 import { FilAriane } from "../../src/composants/FilAriane";
 import { POLICE_TEXTE_MOYEN, POLICE_TEXTE_GRAS, POLICE_TEXTE, POLICE_TITRE, type Couleurs } from "../../src/theme/couleurs";
@@ -405,6 +407,18 @@ function EtapeExercice({
       </Text>
 
       {exercice.finisher ? <Text style={styles.finisher}>Finisher</Text> : null}
+
+      {/*
+        Avant la consigne écrite, pas après : l'app s'adresse d'abord à des
+        débutants, pour qui « coudes à 45 degrés du buste » ne veut rien dire
+        tant qu'ils n'ont pas vu le mouvement. Voir puis lire, et le texte
+        précise ce que l'animation ne peut pas montrer.
+
+        Rien ne s'affiche pour un exercice sans geste associé, et c'est le
+        comportement voulu : mieux vaut une case vide qu'une démonstration à
+        côté de la plaque, qu'un débutant suivrait sans se douter de rien.
+      */}
+      <Demonstration motif={gesteDe(exercice.nom)} taille={180} />
 
       <Carte style={styles.consigne}>
         <Text style={styles.consigneTexte}>{exercice.description}</Text>
