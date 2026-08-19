@@ -190,9 +190,14 @@ GESTES = {
         "duree": 1200,
         "cles": [
             _pose(),
+            # Une amplitude franchement exagérée. Un haussement d'épaules réel
+            # se voit à peine, et le premier rendu ne se lisait pas comme un
+            # mouvement : le personnage semblait immobile. Une démonstration
+            # doit montrer quelle articulation travaille, pas reproduire une
+            # amplitude au degré près.
             _pose({
-                _os("LeftShoulder"): (1, 0, 0.42),
-                _os("RightShoulder"): (-1, 0, 0.42),
+                _os("LeftShoulder"): (1, 0, 0.70),
+                _os("RightShoulder"): (-1, 0, 0.70),
             }),
         ],
     },
@@ -211,11 +216,14 @@ GESTES = {
             # Coudes en place, avant-bras repliés derrière la nuque : c'est le
             # coude immobile qui fait tout l'exercice, et l'animation doit le
             # montrer sinon le débutant balance les bras.
+            # Les mains descendent derrière la nuque, pas seulement à
+            # l'horizontale : un premier essai s'arrêtait là et l'amplitude
+            # paraissait deux fois moindre qu'elle ne l'est.
             _pose({
                 _os("LeftArm"): (0.22, 0.04, 1),
-                _os("LeftForeArm"): (0.02, 0.95, -0.12),
+                _os("LeftForeArm"): (0.02, 0.60, -0.80),
                 _os("RightArm"): (-0.22, 0.04, 1),
-                _os("RightForeArm"): (-0.02, 0.95, -0.12),
+                _os("RightForeArm"): (-0.02, 0.60, -0.80),
             }),
         ],
     },
