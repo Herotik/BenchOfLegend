@@ -113,22 +113,28 @@ DEBOUT = {nom: REPOS for nom in ORDRE}
 
 # Buste penché, comme on se tient pour un oiseau, un rowing ou un kickback.
 #
-# La flexion est répartie sur les trois vertèbres : la concentrer sur une seule
-# casserait le dos en angle droit là où un dos se courbe. Les genoux fléchissent
-# et le bassin recule — sans quoi le personnage aurait le centre de gravité
-# devant les pieds, et un débutant qui copie une posture jambes tendues se fait
-# mal au dos. L'animation doit montrer la bonne.
+# Le dos est **plat**, et c'est le point de la posture. Les trois vertèbres
+# pointent quasiment dans la même direction : la flexion vient de la hanche, pas
+# de la colonne. Un premier jet les graduait de vingt à trente-six degrés, ce
+# qui arrondissait le dos — exactement ce qu'on passe son temps à corriger chez
+# un débutant, et ce qui lui abîmerait le dos s'il copiait la démonstration.
 #
-# La nuque et la tête sont **redressées**. Laissées à `REPOS`, elles suivent la
-# colonne penchée et s'y ajoutent : le menton finit sur la poitrine, et de
-# profil la silhouette devient une masse informe où l'on ne distingue plus le
-# mouvement des bras. Un pratiquant garde d'ailleurs la nuque dans l'axe.
+# Le squelette Mixamo rend ça facile : le bassin porte à la fois la colonne et
+# les jambes. Incliner la colonne sans toucher aux jambes, c'est charnière à la
+# hanche. Les genoux fléchissent un peu et le bassin recule pour compenser,
+# sans quoi le centre de gravité passerait devant les pieds.
+#
+# La nuque **prolonge** le torse, elle ne le contredit pas. Laissée à `REPOS`
+# elle s'ajoute à la flexion et le menton finit sur la poitrine ; redressée à la
+# verticale, elle forme un coude de vingt degrés sur une seule articulation et
+# la tête s'enfonce dans les épaules. Elle suit donc la colonne, un peu moins
+# inclinée — le regard porte à un mètre ou deux devant, comme en salle.
 BUSTE_PENCHE = {
-    _os("Spine"): (0, -0.34, 0.94),
-    _os("Spine1"): (0, -0.50, 0.87),
-    _os("Spine2"): (0, -0.58, 0.81),
-    _os("Neck"): (0, -0.22, 0.98),
-    _os("Head"): (0, -0.10, 0.99),
+    _os("Spine"): (0, -0.56, 0.83),
+    _os("Spine1"): (0, -0.60, 0.80),
+    _os("Spine2"): (0, -0.62, 0.78),
+    _os("Neck"): (0, -0.48, 0.88),
+    _os("Head"): (0, -0.32, 0.95),
     _os("LeftUpLeg"): (0.03, 0.17, -0.98),
     _os("LeftLeg"): (0.02, -0.22, -0.97),
     _os("RightUpLeg"): (-0.03, 0.17, -0.98),
@@ -328,21 +334,35 @@ def _direction(armature, os_pose):
     return (armature.matrix_world.to_3x3() @ os_pose.matrix.col[1].to_3d()).normalized()
 
 
-def viser(armature, os_pose, direction, contexte):
-    """Oriente l'os pour qu'il pointe vers `direction`, exprimée dans le monde.
+def viser(armature, os_pose, direction, repos, contexte):
+    """Oriente l'os vers `direction`, exprimée dans le monde.
 
-    On passe par `pose_bone.matrix`, qui parle en espace armature et se charge
-    de remonter la chaîne des parents. Composer soi-même les rotations locales
-    obligerait à connaître l'orientation de repos de chaque os — la source
-    d'erreur qui rend toute retouche de squelette pénible.
+    ## Pourquoi partir du **repos** et non de la pose courante
+
+    Une direction ne suffit pas à orienter un os : il reste libre de tourner
+    autour d'elle. Aligner simplement l'axe courant sur la cible laisse ce
+    roulis au hasard de la rotation minimale — et sur une chaîne, chaque os
+    hérite du roulis de son parent et y ajoute le sien. Le premier jet faisait
+    exactement ça : les gestes debout passaient, parce qu'ils ne touchent pas au
+    dos, mais dès qu'on pliait la colonne les vrilles s'accumulaient sur trois
+    vertèbres et le torse sortait tordu, épaules écrasées et capuche de travers.
+
+    On repart donc de l'orientation **complète** de l'os au repos, à laquelle on
+    applique la rotation qui mène sa direction de repos à la cible. Le roulis
+    est alors celui du modèle, le résultat ne dépend plus de l'ordre ni de
+    l'historique des poses, et deux images voisines ne peuvent plus diverger.
+
+    `repos` est cette orientation de repos, en espace armature.
     """
-    matrice = os_pose.matrix.copy()
     cible = (armature.matrix_world.inverted().to_3x3() @ Vector(direction)).normalized()
-    actuelle = matrice.col[1].to_3d().normalized()
-    os_pose.matrix = actuelle.rotation_difference(cible).to_matrix().to_4x4() @ matrice
+    depuis = repos.col[1].normalized()
+    oriente = (depuis.rotation_difference(cible).to_matrix() @ repos).to_4x4()
+    # La position, elle, vient de la chaîne telle qu'elle est **maintenant** :
+    # un os suit son parent quand celui-ci tourne.
+    oriente.translation = os_pose.matrix.translation
+    os_pose.matrix = oriente
     # Sans cette réévaluation, l'os suivant lirait la matrice de son parent
-    # d'avant la pose. Une seule suffit — celle d'après ; la précédente a déjà
-    # laissé la chaîne à jour.
+    # d'avant la pose.
     contexte.view_layer.update()
 
 
@@ -374,9 +394,13 @@ def appliquer(armature, nom, images, contexte):
         )
 
     contexte.view_layer.update()
-    # Mesuré **avant** toute pose : c'est l'orientation que le modèle porte de
-    # lui-même, et à laquelle `REPOS` renvoie.
+    # Mesurées **avant** toute pose : c'est ce que le modèle porte de lui-même.
+    # La direction sert à résoudre `REPOS` ; l'orientation complète sert à
+    # `viser`, qui a besoin du roulis et pas seulement de l'axe (voir là-bas).
     repos = {o: _direction(armature, armature.pose.bones[o]) for o in ORDRE}
+    orientations = {
+        o: armature.pose.bones[o].matrix.to_3x3().copy() for o in ORDRE
+    }
 
     geste = GESTES[nom]
     decalage = geste.get("bassin")
@@ -391,7 +415,7 @@ def appliquer(armature, nom, images, contexte):
             armature.pose.bones[BASSIN].keyframe_insert("location", frame=numero)
         for os_nom in ORDRE:
             os_pose = armature.pose.bones[os_nom]
-            viser(armature, os_pose, pose[os_nom], contexte)
+            viser(armature, os_pose, pose[os_nom], orientations[os_nom], contexte)
             os_pose.rotation_mode = "QUATERNION"
             os_pose.keyframe_insert("rotation_quaternion", frame=numero)
 
