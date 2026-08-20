@@ -115,18 +115,28 @@ export const PLANCHES: Record<string, Planche> = {
   // Elles **montrent la mise en position**, et pas seulement la position
   // tenue : le personnage part à quatre pattes et se hisse. C'est la moitié de
   // ce qu'un débutant a besoin de voir, et c'est ce que la seule pose finale
-  // laissait deviner.
-  "planche-avant-bras": {
-    source: require("../../assets/gestes/planche-avant-bras.png"),
+  // laissait deviner. Chacune a donc trois temps — position de départ, mise en
+  // position, maintien — et les poses clés sont doublées aux extrémités, deux
+  // clés identiques faisant une pause.
+  "planche-basse": {
+    source: require("../../assets/gestes/planche-basse.png"),
     images: 20,
     colonnes: 4,
-    duree: 3200,
+    duree: 3600,
   },
   "planche-haute": {
     source: require("../../assets/gestes/planche-haute.png"),
     images: 20,
     colonnes: 4,
-    duree: 3200,
+    duree: 3600,
+  },
+  // Vingt-quatre images et non vingt : celle-ci enchaîne deux élévations, une
+  // par jambe, là où les deux autres ne montrent qu'une mise en position.
+  "planche-jambes-alternees": {
+    source: require("../../assets/gestes/planche-jambes-alternees.png"),
+    images: 24,
+    colonnes: 4,
+    duree: 4400,
   },
   // Burpee
   burpee: {

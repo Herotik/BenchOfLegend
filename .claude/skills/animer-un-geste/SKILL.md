@@ -95,6 +95,35 @@ Trois choses manquent systématiquement, et chacune a livré une faute :
   millimètres du sol, en diagonale. Et une fois le geste symétrisé, on peut
   retirer `symetrique: False` : le contrôle devient une garantie.
 
+  Les autres options disent chacune un fait physique, jamais un réglage :
+  `--avant-bras-au-sol` (le coude porte, l'avant-bras repose de tout son long),
+  `--bras-au-sol` (le bras entier repose ; on garde de la mesure son
+  orientation vue de dessus, on lui retire sa hauteur), `--dans-le-plan` (le
+  mouvement se fait de profil, la dérive latérale est du bruit), `--miroir`
+  (démontrer des deux côtés un mouvement relevé d'un seul).
+
+  **Toutes se donnent par clé** — `--bras-tendus 2`, `--symetrique 0,1` — et
+  c'est indispensable dès qu'un geste montre sa mise en position : à quatre
+  pattes les bras sont tendus, en planche sur les avant-bras ils ne le sont
+  plus, et une correction posée pour tout le geste décrirait une posture que
+  personne ne tient.
+
+### 1 quater. Ne pas demander à l'estimateur ce qu'il ne peut pas voir
+
+C'est la leçon la plus rentable de toutes, et elle a coûté trois tours.
+
+L'entrée en planche avait d'abord été relevée **à plat ventre**, comme dans la
+vidéo. Or un corps écrasé au sol est le cas où l'estimateur se trompe le plus :
+la profondeur y est presque entièrement devinée, les membres se cachent. Il
+plaçait le coude cinquante centimètres au-dessus de l'épaule sur une femme
+couchée à plat. Le corps descendait jusqu'à poser ce coude et le buste passait
+sous le plancher ; forcer le bras à plat ne faisait que déplacer la faute —
+c'était la tête qui s'enfonçait, de treize centimètres.
+
+Le départ **à quatre pattes** sépare les membres, se mesure bien, et c'est de
+surcroît la consigne classique. Une image bien choisie vaut mieux que trois
+corrections sur une mauvaise.
+
 ### 1 ter. Ce qui touche le sol est la chair, pas l'os
 
 L'os de la main passe au milieu de la paume : le poser à zéro enfonce la main
@@ -133,6 +162,13 @@ les genoux à l'envers — c'est arrivé sur les quatre membres à la fois.
 90 : la portée au sol est √(0,90² − 0,42²) ≈ 0,80 m, pas davantage. Au-delà, le
 membre se tend sans atteindre et pend en diagonale.
 
+**Un geste qui montre sa mise en position a trois temps** : position de
+départ, mise en position, maintien. Les deux premiers viennent des clés, le
+troisième d'une **pause** — deux clés identiques à la suite. Sans elle, le
+parcours passe autant de temps dans la transition que dans la position tenue,
+et un maintien ressemble à un passage. `cles: [A, A, B, B]` donne un sixième de
+pause au départ, un sixième de montée, un tiers de maintien.
+
 **La hauteur du corps se donne, ou se déduit, jamais les deux.** Un geste qui
 plante des appuis déclare `hauteur` ; les autres laissent `ancrage` poser le
 corps au sol. Quand le personnage porte un vêtement long, l'ancrage doit porter
@@ -143,10 +179,22 @@ quoi c'est la cape qui touche le sol pendant que les pieds flottent.
 
     python3 scripts/verifier-gestes.py
 
-Huit contrôles instantanés : genou à l'envers, dos rond, asymétrie non
-déclarée, direction nulle, assise dégénérée, appui hors de portée, appui sous le
-sol, pôle qui plie à l'envers. Chacun a été ajouté après une faute réellement
+Sept contrôles instantanés : direction nulle, genou à l'envers, dos rond,
+asymétrie non déclarée, assise dégénérée, appui hors de portée ou sous le sol,
+pôle qui plie à l'envers. Chacun a été ajouté après une faute réellement
 livrée.
+
+Puis, une fois par lot de corrections, l'audit du sol sur **tout** le
+catalogue :
+
+    blender -b -noaudio -P scripts/auditer-gestes.py -- <corps.fbx>
+
+Une ligne par geste. Il répond à la seule question qui compte après avoir
+touché au moteur — qu'est-ce que ça a cassé, et qu'est-ce que ça n'a pas encore
+réparé. Son premier passage a trouvé trois fautes sur des démonstrations
+**déjà livrées** : un mountain climber enfoncé de dix-sept centimètres, un
+gainage latéral les pieds à cinquante centimètres en l'air, et sa main d'appui
+posée sur le chant. Aucune ne se voyait sans dessiner le sol.
 
 ### 4. Mesurer
 

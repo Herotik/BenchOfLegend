@@ -171,9 +171,9 @@ export const GESTE_PAR_EXERCICE: Record<string, string> = {
   // désormais : « appui sur les avant-bras » pour le gainage planche, « en
   // planche bras tendus » pour les touches d'épaules. Un seul rendu pour les
   // deux faisait mentir la description de l'exercice.
-  "Gainage planche": "planche-avant-bras",
+  "Gainage planche": "planche-basse",
   "Planche avec touches d'épaules": "planche-haute",
-  "Gainage planche sur un bras": "planche-avant-bras",
+  "Gainage planche sur un bras": "planche-basse",
   "Gainage latéral": "gainage-lateral",
   "Gainage latéral avec élévation de hanche": "gainage-lateral",
   "Mountain climbers": "mountain-climber",

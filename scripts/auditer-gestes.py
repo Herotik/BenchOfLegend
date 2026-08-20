@@ -29,6 +29,10 @@ chant. Rien ne le signalait, parce que rien ne regardait.
 - **L'orientation des paumes**, quand la main porte. Une main posée à plat et
   une main posée sur le chant ont la même direction et ne diffèrent que par le
   roulis ; c'est exactement la faute qui est passée deux fois.
+
+Un appui qui **décolle** n'est pas une faute : sur une planche jambes
+alternées, chaque pied se lève à son tour, et c'est le geste. Ce qui serait
+fautif, c'est un membre déclaré porteur qui ne touche jamais.
 """
 import importlib.util
 import os
@@ -49,13 +53,34 @@ IMAGES = 7
 
 
 def charger(chemin):
+    """Importe le corps. **Une seule fois** pour tout l'audit.
+
+    Réimporter le FBX à chaque geste faisait mourir Blender sans un mot après
+    le treizième — et un outil de contrôle qui s'arrête au milieu de sa liste
+    est pire que pas d'outil du tout : il déclare bon ce qu'il n'a pas
+    regardé. Purger les données orphelines n'y changeait rien, c'est l'import
+    lui-même qui ne tient pas.
+
+    Rien n'obligeait d'ailleurs à recharger : il suffit de remettre le
+    squelette au repos entre deux gestes, ce que fait `remettre_au_repos`.
+    """
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.fbx(filepath=chemin)
-    for objet in bpy.data.objects:
-        objet.animation_data_clear()
+    return next(o for o in bpy.data.objects if o.type == "ARMATURE")
+
+
+def remettre_au_repos(armature):
+    """Efface la pose et l'animation, pour repartir du modèle tel qu'importé.
+
+    `appliquer` lit les directions de repos sur la pose courante : la laisser
+    telle que le geste précédent l'a posée les fausserait toutes.
+    """
+    armature.animation_data_clear()
     for action in list(bpy.data.actions):
         bpy.data.actions.remove(action)
-    return next(o for o in bpy.data.objects if o.type == "ARMATURE")
+    for os_pose in armature.pose.bones:
+        os_pose.matrix_basis.identity()
+    bpy.context.view_layer.update()
 
 
 def plus_bas(contexte):
@@ -110,21 +135,25 @@ def auditer(armature, nom):
             fautes.append(f"corps dans le sol ({min(bas) * 100:.0f} cm)")
         if min(bas) > 0.01:
             fautes.append(f"corps en l'air ({min(bas) * 100:+.0f} cm)")
+    # Un appui qui décolle n'est pas une faute : sur une planche jambes
+    # alternées, chaque pied se lève à son tour, et c'est le geste. Ce qui
+    # serait fautif, c'est un membre déclaré porteur qui ne touche **jamais** —
+    # celui-là ne porte rien et son nom ment.
     for n, hauteurs in appuis.items():
-        if max(hauteurs) > 0.03:
-            fautes.append(f"{n} décolle ({max(hauteurs) * 100:+.0f} cm)")
+        if min(hauteurs) > 0.03:
+            fautes.append(f"{n} ne touche jamais ({min(hauteurs) * 100:+.0f} cm)")
     # La paume ne se juge que si la main **porte**. Ailleurs, elle est libre.
     for cote, court in (("Left", "G"), ("Right", "D")):
         if f"{cote}Hand" not in nomme:
             continue
-        if max(paumes[cote]) > -0.5:
+        if min(paumes[cote]) > -0.5:
             fautes.append(
                 f"paume {court} à {max(paumes[cote]):+.2f} — elle ne regarde "
                 f"pas le sol"
             )
 
     etat = "ok" if not fautes else "; ".join(fautes)
-    print(f"  {nom:22s} sol {min(bas) * 100:+5.1f} cm   {etat}")
+    print(f"  {nom:26s} sol {min(bas) * 100:+5.1f} cm   {etat}")
     return not fautes
 
 
@@ -136,9 +165,10 @@ def main():
     noms = demandes or sorted(gg.GESTES)
 
     print(f"\n=== audit du sol, {len(noms)} gestes ===")
+    armature = charger(chemin)
     fautifs = []
     for nom in noms:
-        armature = charger(chemin)
+        remettre_au_repos(armature)
         if not auditer(armature, nom):
             fautifs.append(nom)
 

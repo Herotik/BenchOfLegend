@@ -297,6 +297,58 @@ def bras_tendus(pose, assise):
     return pose
 
 
+def dans_le_plan(pose, assise):
+    """Ramène tous les membres dans le plan sagittal du corps.
+
+    Certains mouvements se font **de profil**, tout entiers : dans une planche
+    jambe levée, rien ne part de côté — la jambe monte dans l'axe du corps, et
+    l'autre reste sous la hanche. Ce que l'estimateur y ajoute de latéral est
+    du bruit, et il s'en ajoute : la cuisse levée sortait à vingt-cinq
+    centièmes vers l'extérieur, la jambe d'appui à dix-sept, du même côté —
+    une dérive commune, donc un biais de mesure et non une posture.
+
+    À ne pas confondre avec `symetriser`, qui apparie la gauche et la droite :
+    ici chaque membre garde le sien, et l'on ne lui retire que sa dérive.
+    """
+    haut = normalise(np.array(assise[0], dtype=float))
+    avant = np.array(assise[1], dtype=float)
+    avant = normalise(avant - haut * np.dot(avant, haut))
+    gauche = normalise(np.cross(haut, avant))
+    for nom, v in pose.items():
+        pose[nom] = normalise(v - np.dot(v, gauche) * gauche)
+    return pose
+
+
+def refleter(pose, assise):
+    """Échange la gauche et la droite : la même pose, de l'autre côté.
+
+    Une planche jambe levée se démontre des **deux** côtés. La vidéo les
+    montre tous les deux, mais pas avec la même amplitude — une jambe y monte
+    de quarante degrés, l'autre atteint tout juste l'horizontale. Prendre le
+    meilleur relevé et le refléter donne une alternance exactement symétrique,
+    ce qu'une démonstration doit être et ce qu'un sujet filmé n'est jamais.
+
+    Le miroir se prend dans le plan sagittal du corps, que l'assise définit —
+    jamais dans un plan du monde : couché sur le ventre, la gauche du
+    personnage n'est plus l'axe X.
+    """
+    haut = normalise(np.array(assise[0], dtype=float))
+    avant = np.array(assise[1], dtype=float)
+    avant = normalise(avant - haut * np.dot(avant, haut))
+    gauche = normalise(np.cross(haut, avant))
+
+    sortie = {}
+    for nom, v in pose.items():
+        if nom.startswith("Left"):
+            jumeau = "Right" + nom[len("Left"):]
+        elif nom.startswith("Right"):
+            jumeau = "Left" + nom[len("Right"):]
+        else:
+            jumeau = nom
+        sortie[jumeau] = v - 2 * np.dot(v, gauche) * gauche
+    return sortie
+
+
 def symetriser(pose, assise):
     """Rend le geste exactement symétrique, gauche et droite en miroir.
 
@@ -424,6 +476,18 @@ def main():
     a.add_argument("--assise", default="debout", choices=sorted(ASSISES))
     a.add_argument("--duree", type=int, default=2400)
     a.add_argument(
+        "--dans-le-plan",
+        nargs="?", const="toutes", default=None, metavar="CLÉS",
+        help="le mouvement se fait de profil : retire aux membres leur dérive "
+        "latérale, qui n'est que du bruit de mesure.",
+    )
+    a.add_argument(
+        "--miroir",
+        nargs="?", const="toutes", default=None, metavar="CLÉS",
+        help="échange la gauche et la droite sur ces clés : sert à démontrer "
+        "des deux côtés un mouvement relevé d'un seul.",
+    )
+    a.add_argument(
         "--symetrique",
         nargs="?", const="toutes", default=None, metavar="CLÉS",
         help="la pose est symétrique par nature : met gauche et droite en "
@@ -491,6 +555,18 @@ def main():
     miroir = cles_visees(args.symetrique, len(poses))
     poses = [
         symetriser(pose, assise) if rang in miroir else pose
+        for rang, pose in enumerate(poses)
+    ]
+    plans = cles_visees(args.dans_le_plan, len(poses))
+    poses = [
+        dans_le_plan(pose, assise) if rang in plans else pose
+        for rang, pose in enumerate(poses)
+    ]
+    # Le reflet **en dernier** : il ne corrige rien, il transpose, et il doit
+    # donc porter sur la pose déjà corrigée.
+    reflets = cles_visees(args.miroir, len(poses))
+    poses = [
+        refleter(pose, assise) if rang in reflets else pose
         for rang, pose in enumerate(poses)
     ]
 
