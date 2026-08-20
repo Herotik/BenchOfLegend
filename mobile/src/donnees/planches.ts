@@ -108,15 +108,25 @@ export const PLANCHES: Record<string, Planche> = {
     images: 20,
     colonnes: 4,
   },
-  // Gainage planche, relevé sur une vidéo de démonstration plutôt que pris
-  // dans une bibliothèque de captation — voir `scripts/geste-depuis-video.py`.
-  // C'est un maintien : le personnage tient la position au lieu de répéter un
-  // mouvement, ce que la durée longue accompagne.
-  planche: {
-    source: require("../../assets/gestes/planche.png"),
+  // Les deux planches, relevées sur une même vidéo de démonstration plutôt que
+  // prises dans une bibliothèque de captation — voir
+  // `scripts/geste-depuis-video.py`.
+  //
+  // Elles **montrent la mise en position**, et pas seulement la position
+  // tenue : le personnage part à quatre pattes et se hisse. C'est la moitié de
+  // ce qu'un débutant a besoin de voir, et c'est ce que la seule pose finale
+  // laissait deviner.
+  "planche-avant-bras": {
+    source: require("../../assets/gestes/planche-avant-bras.png"),
     images: 20,
     colonnes: 4,
-    duree: 3000,
+    duree: 3200,
+  },
+  "planche-haute": {
+    source: require("../../assets/gestes/planche-haute.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 3200,
   },
   // Burpee
   burpee: {

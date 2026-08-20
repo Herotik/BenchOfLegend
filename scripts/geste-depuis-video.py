@@ -341,6 +341,28 @@ def symetriser(pose, assise):
     return pose
 
 
+def bras_au_sol(pose, assise):
+    """Couche le bras **entier** au sol : c'est la position de départ, à plat ventre.
+
+    À plat ventre, coudes repliés le long des côtes, le bras et l'avant-bras
+    reposent tous deux sur le tapis. L'estimateur, lui, plaçait le coude
+    cinquante centimètres **au-dessus** de l'épaule : un corps écrasé au sol est
+    le cas où il se trompe le plus, la profondeur y étant presque entièrement
+    devinée. Le corps descendait alors jusqu'à poser ce coude, et le buste
+    passait sous le plancher.
+
+    On garde de la mesure ce qu'elle sait : l'orientation du bras **vu de
+    dessus**. On lui retire ce qu'elle ne sait pas : sa hauteur.
+    """
+    haut = np.array([0.0, 0.0, 1.0])
+    for cote in COTES.values():
+        bras = pose[f"{cote}Arm"]
+        aplati = bras - haut * np.dot(bras, haut)
+        if np.linalg.norm(aplati) > 1e-3:
+            pose[f"{cote}Arm"] = normalise(aplati)
+    return avant_bras_au_sol(pose, assise)
+
+
 def avant_bras_au_sol(pose, assise):
     """Couche les avant-bras à plat sur le sol, parallèles et vers l'avant.
 
@@ -410,6 +432,12 @@ def main():
         "ne l'est plus à la fin.",
     )
     a.add_argument(
+        "--bras-au-sol",
+        nargs="?", const="toutes", default=None, metavar="CLÉS",
+        help="la clé part à plat ventre : couche le bras entier au sol, en ne "
+        "gardant de la mesure que son orientation vue de dessus.",
+    )
+    a.add_argument(
         "--avant-bras-au-sol",
         nargs="?", const="toutes", default=None, metavar="CLÉS",
         help="le corps porte sur les avant-bras : les couche à plat vers "
@@ -441,6 +469,11 @@ def main():
     au_sol = cles_visees(args.avant_bras_au_sol, len(poses))
     poses = [
         avant_bras_au_sol(pose, assise) if rang in au_sol else pose
+        for rang, pose in enumerate(poses)
+    ]
+    couches = cles_visees(args.bras_au_sol, len(poses))
+    poses = [
+        bras_au_sol(pose, assise) if rang in couches else pose
         for rang, pose in enumerate(poses)
     ]
     tendus = cles_visees(args.bras_tendus, len(poses))

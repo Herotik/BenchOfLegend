@@ -561,216 +561,181 @@ GESTES = {
             }),
         ],
     },
-    # Relevé sur une vidéo de démonstration, images 596,636,676.
+    # Relevé sur une vidéo de démonstration, images 1232,676.
     "planche-avant-bras": {
         "vue": "profil",
-        "duree": 3600,
-        # Assise « ventre », penchée des -9° mesurés sur la vidéo.
-        "assise": ((+0.00, +0.99, +0.15), (+0.00, +0.15, -0.99)),
-        # Sur les avant-bras : ce sont le coude, l'avant-bras et le poing
-        # qui portent, avec les orteils. La main seule ne suffirait pas.
+        "duree": 3200,
+        # Assise « ventre », penchée des -12° mesurés sur la vidéo.
+        "assise": ((+0.00, +0.98, +0.22), (+0.00, +0.22, -0.98)),
+        # Sur les avant-bras : le coude, l'avant-bras et le poing portent,
+        # avec les orteils. À l'entrée, à quatre pattes, ce sont les genoux —
+        # et c'est le refus de rentrer dans le sol qui s'en charge.
         "ancrage": ("LeftForeArm", "RightForeArm", "LeftHand", "RightHand",
                     "LeftFoot", "RightFoot"),
         "aplomb": True,
         "cles": [
             _pose({
-                _os("Spine"): (+0.00, +0.99, +0.15),
-                _os("Spine1"): (+0.00, +0.99, +0.15),
-                _os("Spine2"): (+0.00, +0.99, +0.15),
-                _os("Neck"): (+0.00, +0.94, -0.33),
-                _os("Head"): (+0.00, +0.94, -0.33),
-                _os("LeftArm"): (-0.46, -0.81, +0.37),
-                _os("RightArm"): (+0.46, -0.81, +0.37),
-                _os("LeftForeArm"): (+0.00, +1.00, +0.00),
-                _os("RightForeArm"): (+0.00, +1.00, +0.00),
+                _os("Spine"): (+0.00, +0.98, +0.22),
+                _os("Spine1"): (+0.00, +0.98, +0.22),
+                _os("Spine2"): (+0.00, +0.98, +0.22),
+                _os("Neck"): (+0.00, +0.92, +0.39),
+                _os("Head"): (+0.00, +0.92, +0.39),
+                _os("LeftArm"): (+0.00, +0.00, -1.00),
+                _os("RightArm"): (+0.00, +0.00, -1.00),
+                _os("LeftForeArm"): (+0.00, +0.00, -1.00),
+                _os("RightForeArm"): (+0.00, +0.00, -1.00),
                 _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
                 _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("LeftUpLeg"): (+0.00, -1.00, -0.04),
-                _os("RightUpLeg"): (-0.00, -1.00, -0.04),
-                _os("LeftLeg"): (-0.06, -0.99, +0.10),
-                _os("RightLeg"): (+0.06, -0.99, +0.10),
-                _os("LeftFoot"): (+0.00, +0.00, -1.00),
-                _os("RightFoot"): (+0.00, +0.00, -1.00),
+                _os("LeftUpLeg"): (+0.03, -0.94, -0.35),
+                _os("RightUpLeg"): (-0.03, -0.94, -0.35),
+                _os("LeftLeg"): (+0.01, -0.84, +0.54),
+                _os("RightLeg"): (-0.01, -0.84, +0.54),
+                _os("LeftFoot"): (-0.10, -0.83, -0.55),
+                _os("RightFoot"): (+0.10, -0.83, -0.55),
             }),
             _pose({
-                _os("Spine"): (+0.00, +0.99, +0.15),
-                _os("Spine1"): (+0.00, +0.99, +0.15),
-                _os("Spine2"): (+0.00, +0.99, +0.15),
-                _os("Neck"): (+0.00, +0.93, +0.36),
-                _os("Head"): (+0.00, +0.93, +0.36),
-                _os("LeftArm"): (-0.30, -0.36, -0.88),
-                _os("RightArm"): (+0.30, -0.36, -0.88),
+                _os("Spine"): (+0.00, +0.98, +0.22),
+                _os("Spine1"): (+0.00, +0.98, +0.22),
+                _os("Spine2"): (+0.00, +0.98, +0.22),
+                _os("Neck"): (+0.00, +0.97, +0.25),
+                _os("Head"): (+0.00, +0.97, +0.25),
+                _os("LeftArm"): (-0.21, +0.16, -0.97),
+                _os("RightArm"): (+0.21, +0.16, -0.97),
                 _os("LeftForeArm"): (+0.00, +1.00, +0.00),
                 _os("RightForeArm"): (+0.00, +1.00, +0.00),
                 _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
                 _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("LeftUpLeg"): (+0.06, -0.94, +0.33),
-                _os("RightUpLeg"): (-0.06, -0.94, +0.33),
-                _os("LeftLeg"): (-0.02, -0.83, +0.56),
-                _os("RightLeg"): (+0.02, -0.83, +0.56),
-                _os("LeftFoot"): (+0.00, +0.00, -1.00),
-                _os("RightFoot"): (+0.00, +0.00, -1.00),
-            }),
-            _pose({
-                _os("Spine"): (+0.00, +0.99, +0.15),
-                _os("Spine1"): (+0.00, +0.99, +0.15),
-                _os("Spine2"): (+0.00, +0.99, +0.15),
-                _os("Neck"): (+0.00, +0.98, +0.19),
-                _os("Head"): (+0.00, +0.98, +0.19),
-                _os("LeftArm"): (-0.21, +0.09, -0.97),
-                _os("RightArm"): (+0.21, +0.09, -0.97),
-                _os("LeftForeArm"): (+0.00, +1.00, +0.00),
-                _os("RightForeArm"): (+0.00, +1.00, +0.00),
-                _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("LeftUpLeg"): (+0.03, -0.96, -0.26),
-                _os("RightUpLeg"): (-0.03, -0.96, -0.26),
-                _os("LeftLeg"): (-0.07, -0.98, -0.19),
-                _os("RightLeg"): (+0.07, -0.98, -0.19),
+                _os("LeftUpLeg"): (+0.03, -0.95, -0.32),
+                _os("RightUpLeg"): (-0.03, -0.95, -0.32),
+                _os("LeftLeg"): (-0.07, -0.97, -0.25),
+                _os("RightLeg"): (+0.07, -0.97, -0.25),
                 _os("LeftFoot"): (+0.00, +0.00, -1.00),
                 _os("RightFoot"): (+0.00, +0.00, -1.00),
             }),
         ],
     },
 
-    # Relevé sur une vidéo de démonstration, images 400,430,490.
+    # Relevé sur une vidéo de démonstration, images 1232,490.
     "planche-haute": {
         "vue": "profil",
-        "duree": 3600,
-        # Assise « ventre », penchée des +2° mesurés sur la vidéo.
-        "assise": ((+0.00, +1.00, -0.04), (+0.00, -0.04, -1.00)),
-        # Mains et orteils : les quatre appuis d'une planche haute.
+        "duree": 3200,
+        # Assise « ventre », penchée des -17° mesurés sur la vidéo.
+        "assise": ((+0.00, +0.96, +0.29), (+0.00, +0.29, -0.96)),
+        # Mains et orteils : les quatre appuis d'une planche haute. À
+        # l'entrée, à quatre pattes, ce sont les genoux qui portent — et
+        # c'est le refus de rentrer dans le sol qui s'en charge.
         "ancrage": ("LeftHand", "RightHand", "LeftFoot", "RightFoot"),
         "aplomb": True,
         "cles": [
             _pose({
-                _os("Spine"): (+0.00, +1.00, -0.04),
-                _os("Spine1"): (+0.00, +1.00, -0.04),
-                _os("Spine2"): (+0.00, +1.00, -0.04),
-                _os("Neck"): (+0.00, +0.74, -0.68),
-                _os("Head"): (+0.00, +0.74, -0.68),
-                _os("LeftArm"): (-0.47, -0.84, +0.28),
-                _os("RightArm"): (+0.47, -0.84, +0.28),
-                _os("LeftForeArm"): (-0.02, -0.11, -0.99),
-                _os("RightForeArm"): (+0.02, -0.11, -0.99),
-                _os("LeftHand"): APlat((+0.22, +0.86, -0.45)),
-                _os("RightHand"): APlat((-0.22, +0.86, -0.45)),
-                _os("LeftUpLeg"): (+0.05, -0.99, +0.09),
-                _os("RightUpLeg"): (-0.05, -0.99, +0.09),
-                _os("LeftLeg"): (-0.04, -0.96, +0.28),
-                _os("RightLeg"): (+0.04, -0.96, +0.28),
-                _os("LeftFoot"): (+0.00, +0.00, -1.00),
-                _os("RightFoot"): (+0.00, +0.00, -1.00),
-            }),
-            _pose({
-                _os("Spine"): (+0.00, +1.00, -0.04),
-                _os("Spine1"): (+0.00, +1.00, -0.04),
-                _os("Spine2"): (+0.00, +1.00, -0.04),
-                _os("Neck"): (+0.00, +0.89, -0.45),
-                _os("Head"): (+0.00, +0.89, -0.45),
-                _os("LeftArm"): (-0.42, -0.91, -0.01),
-                _os("RightArm"): (+0.42, -0.91, -0.01),
-                _os("LeftForeArm"): (-0.09, +0.37, -0.92),
-                _os("RightForeArm"): (+0.09, +0.37, -0.92),
-                _os("LeftHand"): APlat((+0.18, +0.82, -0.55)),
-                _os("RightHand"): APlat((-0.18, +0.82, -0.55)),
-                _os("LeftUpLeg"): (-0.03, -1.00, +0.06),
-                _os("RightUpLeg"): (+0.03, -1.00, +0.06),
-                _os("LeftLeg"): (-0.04, -0.99, +0.10),
-                _os("RightLeg"): (+0.04, -0.99, +0.10),
-                _os("LeftFoot"): (+0.00, +0.00, -1.00),
-                _os("RightFoot"): (+0.00, +0.00, -1.00),
-            }),
-            _pose({
-                _os("Spine"): (+0.00, +1.00, -0.04),
-                _os("Spine1"): (+0.00, +1.00, -0.04),
-                _os("Spine2"): (+0.00, +1.00, -0.04),
-                _os("Neck"): (+0.00, +1.00, -0.06),
-                _os("Head"): (+0.00, +1.00, -0.06),
+                _os("Spine"): (+0.00, +0.96, +0.29),
+                _os("Spine1"): (+0.00, +0.96, +0.29),
+                _os("Spine2"): (+0.00, +0.96, +0.29),
+                _os("Neck"): (+0.00, +0.89, +0.46),
+                _os("Head"): (+0.00, +0.89, +0.46),
                 _os("LeftArm"): (+0.00, +0.00, -1.00),
                 _os("RightArm"): (+0.00, +0.00, -1.00),
                 _os("LeftForeArm"): (+0.00, +0.00, -1.00),
                 _os("RightForeArm"): (+0.00, +0.00, -1.00),
                 _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
                 _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("LeftUpLeg"): (-0.02, -0.99, -0.10),
-                _os("RightUpLeg"): (+0.02, -0.99, -0.10),
-                _os("LeftLeg"): (-0.08, -0.99, +0.07),
-                _os("RightLeg"): (+0.08, -0.99, +0.07),
+                _os("LeftUpLeg"): (+0.03, -0.91, -0.42),
+                _os("RightUpLeg"): (-0.03, -0.91, -0.42),
+                _os("LeftLeg"): (+0.01, -0.88, +0.48),
+                _os("RightLeg"): (-0.01, -0.88, +0.48),
+                _os("LeftFoot"): (-0.10, -0.79, -0.61),
+                _os("RightFoot"): (+0.10, -0.79, -0.61),
+            }),
+            _pose({
+                _os("Spine"): (+0.00, +0.96, +0.29),
+                _os("Spine1"): (+0.00, +0.96, +0.29),
+                _os("Spine2"): (+0.00, +0.96, +0.29),
+                _os("Neck"): (+0.00, +0.96, +0.27),
+                _os("Head"): (+0.00, +0.96, +0.27),
+                _os("LeftArm"): (+0.00, +0.00, -1.00),
+                _os("RightArm"): (+0.00, +0.00, -1.00),
+                _os("LeftForeArm"): (+0.00, +0.00, -1.00),
+                _os("RightForeArm"): (+0.00, +0.00, -1.00),
+                _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
+                _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
+                _os("LeftUpLeg"): (-0.02, -0.91, -0.42),
+                _os("RightUpLeg"): (+0.02, -0.91, -0.42),
+                _os("LeftLeg"): (-0.08, -0.96, -0.26),
+                _os("RightLeg"): (+0.08, -0.96, -0.26),
                 _os("LeftFoot"): (+0.00, +0.00, -1.00),
                 _os("RightFoot"): (+0.00, +0.00, -1.00),
             }),
         ],
     },
 
-    # Relevé sur une vidéo de démonstration, images 400,490,1530.
+    # Relevé sur une vidéo de démonstration, images 1232,490,1530.
     "planche-jambe-levee": {
         "vue": "profil",
         "duree": 3600,
-        # Assise « ventre », penchée des -3° mesurés sur la vidéo.
-        "assise": ((+0.00, +1.00, +0.05), (+0.00, +0.05, -1.00)),
+        # Assise « ventre », penchée des -13° mesurés sur la vidéo.
+        "assise": ((+0.00, +0.98, +0.22), (+0.00, +0.22, -0.98)),
         "symetrique": False,
-        # Le pied droit se lève : il ne porte plus. Le nommer parmi les
-        # appuis ferait redescendre le corps pour aller le chercher.
+        # Le pied droit se lève : il ne porte plus. Le nommer parmi les appuis
+        # ferait redescendre le corps pour aller le chercher.
         "ancrage": ("LeftHand", "RightHand", "LeftFoot"),
         "aplomb": True,
         "cles": [
             _pose({
-                _os("Spine"): (+0.00, +1.00, +0.05),
-                _os("Spine1"): (+0.00, +1.00, +0.05),
-                _os("Spine2"): (+0.00, +1.00, +0.05),
-                _os("Neck"): (+0.00, +0.80, -0.60),
-                _os("Head"): (+0.00, +0.80, -0.60),
-                _os("LeftArm"): (-0.47, -0.86, +0.20),
-                _os("RightArm"): (+0.47, -0.86, +0.20),
-                _os("LeftForeArm"): (-0.02, -0.02, -1.00),
-                _os("RightForeArm"): (+0.02, -0.02, -1.00),
-                _os("LeftHand"): APlat((+0.22, +0.90, -0.37)),
-                _os("RightHand"): APlat((-0.22, +0.90, -0.37)),
-                _os("LeftUpLeg"): (+0.05, -1.00, -0.00),
-                _os("RightUpLeg"): (-0.05, -1.00, -0.00),
-                _os("LeftLeg"): (-0.04, -0.98, +0.19),
-                _os("RightLeg"): (+0.04, -0.98, +0.19),
-                _os("LeftFoot"): (+0.00, +0.00, -1.00),
-                _os("RightFoot"): (+0.00, +0.00, -1.00),
-            }),
-            _pose({
-                _os("Spine"): (+0.00, +1.00, +0.05),
-                _os("Spine1"): (+0.00, +1.00, +0.05),
-                _os("Spine2"): (+0.00, +1.00, +0.05),
-                _os("Neck"): (+0.00, +1.00, +0.04),
-                _os("Head"): (+0.00, +1.00, +0.04),
+                _os("Spine"): (+0.00, +0.98, +0.22),
+                _os("Spine1"): (+0.00, +0.98, +0.22),
+                _os("Spine2"): (+0.00, +0.98, +0.22),
+                _os("Neck"): (+0.00, +0.92, +0.39),
+                _os("Head"): (+0.00, +0.92, +0.39),
                 _os("LeftArm"): (+0.00, +0.00, -1.00),
                 _os("RightArm"): (+0.00, +0.00, -1.00),
                 _os("LeftForeArm"): (+0.00, +0.00, -1.00),
                 _os("RightForeArm"): (+0.00, +0.00, -1.00),
                 _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
                 _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("LeftUpLeg"): (-0.02, -0.98, -0.19),
-                _os("RightUpLeg"): (+0.02, -0.98, -0.19),
-                _os("LeftLeg"): (-0.08, -1.00, -0.02),
-                _os("RightLeg"): (+0.08, -1.00, -0.02),
-                _os("LeftFoot"): (+0.00, +0.00, -1.00),
-                _os("RightFoot"): (+0.00, +0.00, -1.00),
+                _os("LeftUpLeg"): (+0.03, -0.93, -0.35),
+                _os("RightUpLeg"): (-0.03, -0.93, -0.35),
+                _os("LeftLeg"): (+0.01, -0.84, +0.54),
+                _os("RightLeg"): (-0.01, -0.84, +0.54),
+                _os("LeftFoot"): (-0.10, -0.83, -0.55),
+                _os("RightFoot"): (+0.10, -0.83, -0.55),
             }),
             _pose({
-                _os("Spine"): (-0.00, +1.00, +0.05),
-                _os("Spine1"): (-0.00, +1.00, +0.05),
-                _os("Spine2"): (-0.00, +1.00, +0.05),
-                _os("Neck"): (-0.16, +0.93, +0.35),
-                _os("Head"): (-0.16, +0.93, +0.35),
+                _os("Spine"): (+0.00, +0.98, +0.22),
+                _os("Spine1"): (+0.00, +0.98, +0.22),
+                _os("Spine2"): (+0.00, +0.98, +0.22),
+                _os("Neck"): (+0.00, +0.98, +0.21),
+                _os("Head"): (+0.00, +0.98, +0.21),
                 _os("LeftArm"): (+0.00, +0.00, -1.00),
                 _os("RightArm"): (+0.00, +0.00, -1.00),
                 _os("LeftForeArm"): (+0.00, +0.00, -1.00),
                 _os("RightForeArm"): (+0.00, +0.00, -1.00),
                 _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
                 _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("LeftUpLeg"): (+0.03, -0.95, -0.32),
-                _os("RightUpLeg"): (-0.00, -1.00, -0.00),
-                _os("LeftLeg"): (-0.16, -0.95, -0.26),
-                _os("RightLeg"): (+0.07, -0.97, +0.25),
-                _os("LeftFoot"): (-0.10, -0.14, -0.98),
-                _os("RightFoot"): (+0.56, -0.18, -0.81),
+                _os("LeftUpLeg"): (-0.02, -0.94, -0.35),
+                _os("RightUpLeg"): (+0.02, -0.94, -0.35),
+                _os("LeftLeg"): (-0.08, -0.98, -0.19),
+                _os("RightLeg"): (+0.08, -0.98, -0.19),
+                _os("LeftFoot"): (+0.00, +0.00, -1.00),
+                _os("RightFoot"): (+0.00, +0.00, -1.00),
+            }),
+            _pose({
+                _os("Spine"): (-0.00, +0.98, +0.22),
+                _os("Spine1"): (-0.00, +0.98, +0.22),
+                _os("Spine2"): (-0.00, +0.98, +0.22),
+                _os("Neck"): (-0.16, +0.85, +0.50),
+                _os("Head"): (-0.16, +0.85, +0.50),
+                _os("LeftArm"): (+0.00, +0.00, -1.00),
+                _os("RightArm"): (+0.00, +0.00, -1.00),
+                _os("LeftForeArm"): (+0.00, +0.00, -1.00),
+                _os("RightForeArm"): (+0.00, +0.00, -1.00),
+                _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
+                _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
+                _os("LeftUpLeg"): (+0.03, -0.88, -0.48),
+                _os("RightUpLeg"): (-0.00, -0.99, -0.17),
+                _os("LeftLeg"): (-0.16, -0.89, -0.42),
+                _os("RightLeg"): (+0.07, -0.99, +0.08),
+                _os("LeftFoot"): (-0.10, +0.03, -0.99),
+                _os("RightFoot"): (+0.56, -0.04, -0.83),
             }),
         ],
     },
@@ -1253,18 +1218,52 @@ def poser_sur(contexte, armature, os_porteurs):
 
     Ce qu'on mesure alors reste de la **chair** : celle que ces os emportent,
     et pas l'os lui-même, qui passe au milieu de la paume.
+
+    ## Et rien ne rentre dans le sol
+
+    Les appuis nommés ne sont pas toujours les points les plus bas. Sur l'image
+    de départ d'une planche — le corps à plat ventre avant de se hisser —, ce
+    qui touche est la poitrine, pas les mains. Descendre jusqu'aux mains
+    enfonçait alors le buste de quelques centimètres et la tête de treize, ce
+    qu'aucun sol ne permet.
+
+    On rattrape donc en second temps : si quoi que ce soit du maillage passe
+    sous zéro, le corps remonte d'autant. Sur les images où les appuis portent
+    vraiment, ce rattrapage ne fait rien.
     """
     contexte.view_layer.update()
     hauteurs = [p.z for p in contacts(contexte, armature, os_porteurs).values()]
     bas = min(hauteurs) if hauteurs else None
 
-    if bas is None or abs(bas) < 1e-4:
-        return
+    if bas is not None and abs(bas) > 1e-4:
+        _translater(contexte, armature, -bas)
 
+    dessous = _plus_bas_du_maillage(contexte)
+    if dessous is not None and dessous < -1e-4:
+        _translater(contexte, armature, -dessous)
+
+
+def _plus_bas_du_maillage(contexte):
+    """Hauteur du point le plus bas du maillage évalué, dans le monde."""
+    depsgraph = contexte.evaluated_depsgraph_get()
+    bas = None
+    for objet in contexte.scene.objects:
+        if objet.type != "MESH":
+            continue
+        evalue = objet.evaluated_get(depsgraph)
+        monde = evalue.matrix_world
+        for v in evalue.data.vertices:
+            z = (monde @ v.co).z
+            bas = z if bas is None else min(bas, z)
+    return bas
+
+
+def _translater(contexte, armature, monte):
+    """Déplace le corps entier de `monte` mètres sur la verticale du monde."""
     bassin = armature.pose.bones[BASSIN]
     matrice = bassin.matrix.copy()
-    matrice.translation -= armature.matrix_world.inverted().to_3x3() @ _vecteur(
-        (0, 0, bas)
+    matrice.translation += armature.matrix_world.inverted().to_3x3() @ _vecteur(
+        (0, 0, monte)
     )
     bassin.matrix = matrice
     contexte.view_layer.update()

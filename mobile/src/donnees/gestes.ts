@@ -97,7 +97,10 @@ export const GESTE_PAR_EXERCICE: Record<string, string> = {
   "Pompes piquées surélevées": "pompe-piquee",
   "Pompes en équilibre contre un mur": "equilibre-mur",
   "Tenue en équilibre contre un mur": "equilibre-mur",
-  "Élévations frontales en gainage": "gainage-elevation",
+  // « En position de planche bras tendus » : le rendu 3D dit la position de
+  // départ mieux que le bonhomme vectoriel, même s'il ne montre pas le bras
+  // qui se lève.
+  "Élévations frontales en gainage": "planche-haute",
   "Développé militaire haltères": "developpe-militaire",
   "Développé militaire barre": "developpe-militaire",
   "Développé Arnold haltères": "developpe-militaire",
@@ -107,7 +110,7 @@ export const GESTE_PAR_EXERCICE: Record<string, string> = {
   "Élévations latérales élastique": "elevations-laterales",
   "Rotations externes élastique": "rotation-externe",
   "Développé militaire kettlebell à un bras": "developpe-militaire",
-  "Touches d'épaules en gainage": "gainage-elevation",
+  "Touches d'épaules en gainage": "planche-haute",
   "Élévations latérales avec bouteilles d'eau": "elevations-laterales",
   "Élévations frontales avec bouteilles d'eau": "elevations-frontales",
   "Oiseau avec bouteilles d'eau buste penché": "oiseau",
@@ -164,9 +167,13 @@ export const GESTE_PAR_EXERCICE: Record<string, string> = {
   "Crunchs jambes levées": "crunch",
   "Relevés de jambes au sol": "releve-jambes",
   "Relevés de jambes suspendu": "releve-jambes-suspendu",
-  "Gainage planche": "planche",
-  "Planche avec touches d'épaules": "planche",
-  "Gainage planche sur un bras": "planche",
+  // Le catalogue distingue les deux appuis, et les démonstrations aussi
+  // désormais : « appui sur les avant-bras » pour le gainage planche, « en
+  // planche bras tendus » pour les touches d'épaules. Un seul rendu pour les
+  // deux faisait mentir la description de l'exercice.
+  "Gainage planche": "planche-avant-bras",
+  "Planche avec touches d'épaules": "planche-haute",
+  "Gainage planche sur un bras": "planche-avant-bras",
   "Gainage latéral": "gainage-lateral",
   "Gainage latéral avec élévation de hanche": "gainage-lateral",
   "Mountain climbers": "mountain-climber",
