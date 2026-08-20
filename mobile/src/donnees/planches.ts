@@ -108,12 +108,15 @@ export const PLANCHES: Record<string, Planche> = {
     images: 20,
     colonnes: 4,
   },
-  // Gainage planche
+  // Gainage planche, relevé sur une vidéo de démonstration plutôt que pris
+  // dans une bibliothèque de captation — voir `scripts/geste-depuis-video.py`.
+  // C'est un maintien : le personnage tient la position au lieu de répéter un
+  // mouvement, ce que la durée longue accompagne.
   planche: {
     source: require("../../assets/gestes/planche.png"),
     images: 20,
     colonnes: 4,
-    duree: 3200,
+    duree: 3000,
   },
   // Burpee
   burpee: {

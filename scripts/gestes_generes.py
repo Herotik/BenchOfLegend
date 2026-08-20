@@ -1308,6 +1308,13 @@ def appliquer(armature, nom, images, contexte):
         # faisaient poser un torse couché avec le roulis d'un torse vertical.
         orientations = {o: (locale @ m) for o, m in orientations.items()}
 
+    # L'orientation du bassin telle que l'assise la veut, mise de côté. La mise
+    # d'aplomb la corrige à chaque image ; sans ce point de départ à retrouver,
+    # la correction **s'ajoute** à celle de l'image précédente et le corps part
+    # en vrille sur la boucle — une planche qui dérivait de bout en bout et
+    # sautait au retour, là où elle doit tenir la pose.
+    assiette = armature.pose.bones[BASSIN].matrix.to_3x3().copy()
+
     # Le bassin est reposé **depuis sa position de repos** à chaque image, et
     # jamais décalé par rapport à l'image précédente : un décalage relatif
     # s'accumulerait, et le corps dériverait de vingt crans sur un tour.
@@ -1344,6 +1351,11 @@ def appliquer(armature, nom, images, contexte):
         if decalage is not None:
             _poser_bassin(armature, ancre, decalage, contexte)
             bassin.keyframe_insert("location", frame=numero)
+        if geste.get("aplomb"):
+            remise = assiette.to_4x4()
+            remise.translation = bassin.matrix.translation
+            bassin.matrix = remise
+            contexte.view_layer.update()
         if assise:
             bassin.rotation_mode = "QUATERNION"
             bassin.keyframe_insert("rotation_quaternion", frame=numero)
