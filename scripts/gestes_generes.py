@@ -188,6 +188,29 @@ BUSTE_PENCHE = {
     _os("RightForeArm"): (-0.18, 0.02, -1),
 }
 
+# Tronc **droit**, à l'horizontale : la posture d'une planche.
+#
+# Laissé à `REPOS`, le tronc garde la courbure naturelle du modèle debout, et
+# une fois couché cette courbure fait pencher les épaules d'une dizaine de
+# centimètres sous le bassin. Le corps n'est alors plus la ligne droite de la
+# tête aux talons que toutes les descriptions du geste réclament, et les bras
+# se plient au lieu d'être tendus.
+PLANCHE_DROITE = {
+    # Le tronc **monte** du bassin vers les épaules, il n'est pas horizontal.
+    # C'est la géométrie du geste : la main est au sol, l'épaule à une longueur
+    # de bras au-dessus, et le bassin plus bas parce que le corps redescend
+    # jusqu'aux orteils. Un tronc horizontal mettait les hanches vingt
+    # centimètres au-dessus de la ligne épaules-chevilles — la faute qu'on
+    # reproche à un débutant qui « fait la montagne ».
+    _os("Spine"): (0, 0.90, 0.44),
+    _os("Spine1"): (0, 0.90, 0.44),
+    _os("Spine2"): (0, 0.90, 0.44),
+    # La nuque se redresse : on regarde entre ses mains, pas ses pieds.
+    _os("Neck"): (0, 0.97, 0.22),
+    _os("Head"): (0, 0.99, 0.12),
+}
+
+
 #: Recul du bassin qui accompagne `BUSTE_PENCHE`, en mètres, dans le monde.
 #: +Y est derrière le personnage, qui regarde vers -Y.
 RECUL_BASSIN = (0, 0.16, 0)
@@ -431,16 +454,18 @@ GESTES = {
         "duree": 800,
         "assise": SUR_LE_VENTRE,
         "symetrique": False,
-        # Bassin à cinquante centimètres : c'est la hauteur d'une planche sur
-        # les mains, épaules au-dessus des poignets.
-        "hauteur": 0.50,
+        # Bassin à trente-deux centimètres. Ce n'est pas la hauteur des
+        # épaules : celles-ci sont plus haut, portées par le tronc incliné, à
+        # une longueur de bras au-dessus des mains posées. Le corps redescend
+        # ensuite jusqu'aux orteils.
+        "hauteur": 0.32,
         "cles": [
             # Les mains ne bougent pas de tout l'exercice — elles sont posées.
             # C'est exactement ce qu'un appui exprime, et ce qu'on n'arrivait
             # pas à obtenir en cherchant les angles à la main.
-            _pose({
-                _os("LeftArm"): Appui((0.18, 0.46, 0.02), (0, 1, 0)),
-                _os("RightArm"): Appui((-0.18, 0.46, 0.02), (0, 1, 0)),
+            _pose(PLANCHE_DROITE, {
+                _os("LeftArm"): Appui((0.18, 0.47, 0.02), (0, 1, 0)),
+                _os("RightArm"): Appui((-0.18, 0.47, 0.02), (0, 1, 0)),
                 # Jambe tendue en arrière, cheville juste au-dessus du sol.
                 # La hanche est à 50 cm et la jambe en fait 90 : le pied ne peut
                 # pas aller plus loin que √(0,90² − 0,42²) ≈ 0,80 m en arrière.
@@ -448,13 +473,13 @@ GESTES = {
                 # personnage paraissait accroupi.
                 _os("RightUpLeg"): Appui((-0.12, -0.80, 0.08), (0, -1, 0.3)),
                 # Genou ramené sous la poitrine : la cheville se rapproche.
-                _os("LeftUpLeg"): Appui((0.14, -0.30, 0.12), (0, 1, 0)),
+                _os("LeftUpLeg"): Appui((0.14, -0.20, 0.15), (0, 1, 0)),
             }),
-            _pose({
-                _os("LeftArm"): Appui((0.18, 0.46, 0.02), (0, 1, 0)),
-                _os("RightArm"): Appui((-0.18, 0.46, 0.02), (0, 1, 0)),
+            _pose(PLANCHE_DROITE, {
+                _os("LeftArm"): Appui((0.18, 0.47, 0.02), (0, 1, 0)),
+                _os("RightArm"): Appui((-0.18, 0.47, 0.02), (0, 1, 0)),
                 _os("LeftUpLeg"): Appui((0.12, -0.80, 0.08), (0, -1, 0.3)),
-                _os("RightUpLeg"): Appui((-0.14, -0.30, 0.12), (0, 1, 0)),
+                _os("RightUpLeg"): Appui((-0.14, -0.20, 0.15), (0, 1, 0)),
             }),
         ],
     },
@@ -858,16 +883,30 @@ def appliquer(armature, nom, images, contexte):
     # jamais décalé par rapport à l'image précédente : un décalage relatif
     # s'accumulerait, et le corps dériverait de vingt crans sur un tour.
     ancre = armature.pose.bones[BASSIN].matrix.translation.copy()
-    decalages = _decalages(geste.get("bassin"), len(geste["cles"]), images)
+    # Un geste qui donne sa hauteur de bassin sans décalage en réclame quand
+    # même le placement : sans ce zéro, la hauteur était calculée puis jamais
+    # posée, et le corps restait à sa hauteur debout — mains à cinquante
+    # centimètres du sol pour une planche.
+    declare = geste.get("bassin")
+    if declare is None and geste.get("hauteur") is not None:
+        declare = (0, 0, 0)
+    decalages = _decalages(declare, len(geste["cles"]), images)
 
     # Hauteur du bassin au-dessus du sol, en mètres. À donner pour les gestes
     # qui plantent des appuis — « le bassin d'une planche est à soixante
     # centimètres » se dit et se relit, contrairement à un décalage relatif.
     hauteur = geste.get("hauteur")
     if hauteur is not None:
+        from mathutils import Vector
+
         monde = armature.matrix_world
-        ancre = ancre.copy()
-        ancre.z += (hauteur - (monde @ ancre).z) / monde.to_scale().z
+        # La correction se calcule dans le **monde** puis se ramène dans
+        # l'armature. Ajouter la hauteur à `ancre.z` revenait à la poser sur le
+        # Z de l'armature, qui n'est pas celui du monde : Mixamo importe le
+        # squelette tourné d'un quart de tour, et le corps partait de côté au
+        # lieu de descendre.
+        monte = Vector((0, 0, hauteur - (monde @ ancre).z))
+        ancre = ancre + monde.inverted().to_3x3() @ monte
 
     for numero, (pose, decalage) in enumerate(
         zip(_parcours(geste["cles"], images, repos), decalages), start=1
