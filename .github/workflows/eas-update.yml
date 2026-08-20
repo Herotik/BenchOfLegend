@@ -1,0 +1,90 @@
+# Publie une mise à jour de l'app mobile depuis GitHub, sans passer par un poste.
+#
+# ## Pourquoi ce workflow existe
+#
+# `eas update` se lance normalement depuis une machine de développement. Sur un
+# poste d'entreprise, ça ne marche pas toujours : npm y échoue avec
+# `ECOMPROMISED / Lock compromised`, un verrou de cache retiré sous ses pieds —
+# antivirus, stratégie de groupe, dossier redirigé, on ne sait pas toujours.
+# Déboguer l'environnement d'un poste géré par une DSI est une bataille sans fin
+# et qu'on ne gagne pas durablement : le prochain poste aura son propre lot.
+#
+# GitHub Actions part d'une machine neuve à chaque fois, avec un npm sain. Ce qui
+# marche ici marchera encore dans six mois, quel que soit le poste devant lequel
+# on est assis.
+#
+# ## Le secret
+#
+# Il faut un jeton Expo, à déposer **dans GitHub** et nulle part ailleurs :
+#
+#   Settings → Secrets and variables → Actions → New repository secret
+#   Nom : EXPO_TOKEN
+#
+# Le créer sur https://expo.dev → Settings → Access tokens. GitHub le chiffre,
+# ne le réaffiche jamais, et le masque dans les journaux d'exécution. C'est toute
+# la différence avec un jeton collé dans une conversation ou dans un fichier :
+# celui-là, personne ne le relit.
+#
+# ## S'en servir
+#
+#   Onglet Actions → « Mise à jour de l'app mobile » → Run workflow
+#
+# On choisit la branche de publication. `preview` alimente les installations de
+# test ; `production` touche ce que les gens ont sur leur téléphone, d'où le fait
+# qu'elle ne soit pas le choix par défaut.
+name: Mise à jour de l'app mobile
+
+on:
+  workflow_dispatch:
+    inputs:
+      canal:
+        description: Canal de publication
+        type: choice
+        default: preview
+        options: [preview, production]
+      message:
+        description: Message associé à la mise à jour
+        type: string
+        default: Mise à jour depuis GitHub
+
+jobs:
+  publier:
+    name: eas update
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Installer eas-cli
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      # `npm ci` et non `npm install` : on veut exactement les versions du
+      # verrou, pas ce que le registre propose aujourd'hui. Une mise à jour
+      # publiée doit être reproductible à l'identique.
+      - name: Installer les dépendances
+        working-directory: mobile
+        run: npm ci
+
+      # Le même contrôle qu'en local. Une mise à jour ne part pas si les types
+      # ne passent pas : l'app publiée arrive sur les téléphones sans qu'on
+      # puisse la reprendre, contrairement à un déploiement web.
+      - name: Vérifier les types
+        working-directory: mobile
+        run: npx tsc --noEmit
+
+      - name: Publier
+        working-directory: mobile
+        run: |
+          eas update \
+            --branch "${{ inputs.canal }}" \
+            --environment "${{ inputs.canal }}" \
+            --message "${{ inputs.message }}" \
+            --non-interactive
