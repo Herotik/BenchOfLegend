@@ -469,7 +469,15 @@ GESTES = {
         # point le plus bas du maillage : couché sur le côté, c'est la cape du
         # personnage qui traîne au sol pendant que ses pieds flottent trente
         # centimètres au-dessus.
-        "ancrage": ("RightForeArm", "RightHand", "RightFoot", "LeftFoot"),
+        #
+        # Le pied gauche n'y est plus : dans un gainage latéral il est **empilé
+        # sur** le droit, une dizaine de centimètres plus haut. Le compter parmi
+        # les points à mettre de niveau aurait fait vriller le corps pour aller
+        # le poser au sol.
+        "ancrage": ("RightForeArm", "RightHand", "RightFoot"),
+        # Sans quoi le corps reste à l'assiette de son assise et les pieds
+        # montent à cinquante centimètres pendant que le coude porte seul.
+        "aplomb": True,
         "cles": [
             # Pas de cinématique inverse ici, et c'est délibéré : elle place le
             # **poignet** et laisse le coude où il veut. Or dans un gainage
@@ -479,6 +487,10 @@ GESTES = {
             _pose({
                 _os("RightArm"): (0, 0.06, -1),
                 _os("RightForeArm"): (0, 1, 0.02),
+                # La main d'appui est **posée**, paume au sol, dans le
+                # prolongement de l'avant-bras. Laissée libre, elle gardait le
+                # roulis d'un corps debout et se retrouvait sur le chant.
+                _os("RightHand"): APlat((0, 1, 0)),
                 # Le bras libre monte vers le plafond, main à la hanche exclue :
                 # levé, il dit que le corps est bien sur le côté.
                 _os("LeftArm"): (0, 0.04, 1),
@@ -494,6 +506,7 @@ GESTES = {
             _pose({
                 _os("RightArm"): (0, 0.06, -1),
                 _os("RightForeArm"): (0, 1, 0.02),
+                _os("RightHand"): APlat((0, 1, 0)),
                 _os("LeftArm"): (0, 0.04, 1),
                 _os("LeftForeArm"): (0, 0.02, 1),
                 _os("LeftUpLeg"): (0, -0.99, 0.02),
@@ -514,11 +527,18 @@ GESTES = {
         "duree": 800,
         "assise": SUR_LE_VENTRE,
         "symetrique": False,
-        # Bassin à trente-deux centimètres. Ce n'est pas la hauteur des
-        # épaules : celles-ci sont plus haut, portées par le tronc incliné, à
-        # une longueur de bras au-dessus des mains posées. Le corps redescend
-        # ensuite jusqu'aux orteils.
-        "hauteur": 0.32,
+        # Bassin à cinquante centimètres. Ce n'est pas la hauteur des épaules :
+        # celles-ci sont plus haut, portées par le tronc incliné, à une longueur
+        # de bras au-dessus des mains posées.
+        #
+        # C'est **la** valeur dont dépend tout le reste, et elle était fausse :
+        # trente-deux centimètres étaient déclarés ici pendant que les appuis
+        # des jambes, quelques lignes plus bas, étaient calculés pour une hanche
+        # à cinquante — la portée d'une jambe de 90 cm y est écrite noir sur
+        # blanc. Dix-huit centimètres d'écart, et les genoux s'enfonçaient
+        # d'autant sous le plancher. Personne ne l'avait vu : rien ne regardait
+        # le sol avant `auditer-gestes.py`.
+        "hauteur": 0.50,
         "cles": [
             # Les mains ne bougent pas de tout l'exercice — elles sont posées.
             # C'est exactement ce qu'un appui exprime, et ce qu'on n'arrivait
@@ -533,16 +553,36 @@ GESTES = {
             # debout, les appuis faisaient traverser chaque membre de l'autre
             # côté et les bras se croisaient.
             _pose(PLANCHE_DROITE, {
-                _os("LeftArm"): Appui((-0.18, 0.47, 0.02), (0, 0.30, 0.95)),
-                _os("RightArm"): Appui((0.18, 0.47, 0.02), (0, 0.30, 0.95)),
+                # Six centimètres, et non deux : un appui vise le **poignet**,
+                # et la paume est cinq centimètres plus bas. Viser le sol avec
+                # le poignet enfonce donc la main d'autant.
+                _os("LeftArm"): Appui((-0.18, 0.47, 0.06), (0, 0.30, 0.95)),
+                _os("RightArm"): Appui((0.18, 0.47, 0.06), (0, 0.30, 0.95)),
                 # Jambe tendue en arrière, cheville juste au-dessus du sol.
                 # La hanche est à 50 cm et la jambe en fait 90 : le pied ne peut
                 # pas aller plus loin que √(0,90² − 0,42²) ≈ 0,80 m en arrière.
                 # Viser au-delà laissait la jambe pendre en diagonale, et le
                 # personnage paraissait accroupi.
-                _os("RightUpLeg"): Appui((0.12, -0.80, 0.08), (0, -0.20, -0.98)),
+                # Les mains **posées**, paume au sol, doigts vers la tête. Un
+                # appui ne place que le poignet : laissée libre, la main gardait
+                # le roulis d'un corps debout et ses doigts traversaient le
+                # plancher de sept centimètres et demi. C'est un majeur qui a
+                # trahi la faute, une fois le sol dessiné.
+                _os("LeftHand"): APlat((0, 1, 0)),
+                _os("RightHand"): APlat((0, 1, 0)),
+                _os("RightUpLeg"): Appui((0.12, -0.80, 0.21), (0, -0.20, -0.98)),
                 # Genou ramené sous la poitrine : la cheville se rapproche.
-                _os("LeftUpLeg"): Appui((-0.14, -0.20, 0.15), (0, 0.35, -0.94)),
+                _os("LeftUpLeg"): Appui((-0.14, -0.20, 0.24), (0, 0.35, -0.94)),
+                # Les pieds **posés**, orteils recourbés sous la cheville. Sans
+                # eux, laissés au repos, ils gardaient l'orientation d'un corps
+                # debout — donc pointés vers le bas une fois le corps à plat
+                # ventre — et traversaient le plancher de douze centimètres. Un
+                # appui vise la cheville, pas l'orteil : c'est pourquoi les
+                # cibles ci-dessus sont à vingt et un centimètres, soit la
+                # longueur du pied plus l'épaisseur des orteils. Les régler à
+                # l'œil sur la position du sol y enfonçait le pied.
+                _os("LeftFoot"): (0, 0, -1),
+                _os("RightFoot"): (0, 0, -1),
             }),
             # Les pôles se lisent dans le repère du corps : à plat ventre,
             # son avant est le **sol**. Le genou mène donc vers le bas et le
@@ -554,10 +594,17 @@ GESTES = {
             # debout, les appuis faisaient traverser chaque membre de l'autre
             # côté et les bras se croisaient.
             _pose(PLANCHE_DROITE, {
-                _os("LeftArm"): Appui((-0.18, 0.47, 0.02), (0, 0.30, 0.95)),
-                _os("RightArm"): Appui((0.18, 0.47, 0.02), (0, 0.30, 0.95)),
-                _os("LeftUpLeg"): Appui((0.12, -0.80, 0.08), (0, -0.20, -0.98)),
-                _os("RightUpLeg"): Appui((-0.14, -0.20, 0.15), (0, 0.35, -0.94)),
+                # Six centimètres, et non deux : un appui vise le **poignet**,
+                # et la paume est cinq centimètres plus bas. Viser le sol avec
+                # le poignet enfonce donc la main d'autant.
+                _os("LeftArm"): Appui((-0.18, 0.47, 0.06), (0, 0.30, 0.95)),
+                _os("RightArm"): Appui((0.18, 0.47, 0.06), (0, 0.30, 0.95)),
+                _os("LeftHand"): APlat((0, 1, 0)),
+                _os("RightHand"): APlat((0, 1, 0)),
+                _os("LeftUpLeg"): Appui((0.12, -0.80, 0.21), (0, -0.20, -0.98)),
+                _os("RightUpLeg"): Appui((-0.14, -0.20, 0.24), (0, 0.35, -0.94)),
+                _os("LeftFoot"): (0, 0, -1),
+                _os("RightFoot"): (0, 0, -1),
             }),
         ],
     },
@@ -1084,6 +1131,50 @@ def contacts(contexte, armature, os_porteurs):
     return sortie
 
 
+def _ajuster_le_plan(points):
+    """Plan des moindres carrés `z = a·x + b·y` passant par les appuis.
+
+    Renvoie `(a, b, centre)`, ou `None` si les points ne définissent aucun
+    plan — deux mains seules, ou un corps vu strictement de profil.
+    """
+    from mathutils import Vector
+
+    if len(points) < 3:
+        return None
+    centre = sum(points, Vector((0, 0, 0))) / len(points)
+    plats = [(p.x - centre.x, p.y - centre.y, p.z - centre.z) for p in points]
+
+    # Le système normal d'une régression à deux variables. Le terme constant
+    # disparaît puisque l'origine est déjà au centre des appuis.
+    xx = sum(x * x for x, _, _ in plats)
+    xy = sum(x * y for x, y, _ in plats)
+    yy = sum(y * y for _, y, _ in plats)
+    xz = sum(x * z for x, _, z in plats)
+    yz = sum(y * z for _, y, z in plats)
+
+    determinant = xx * yy - xy * xy
+    if abs(determinant) >= 1e-8:
+        return (
+            (xz * yy - yz * xy) / determinant,
+            (yz * xx - xz * xy) / determinant,
+            centre,
+        )
+
+    # Appuis alignés : aucun plan ne s'y ajuste, et il n'y a rien à redresser
+    # en travers. On se rabat sur la seule pente que les points désignent.
+    etale = max(plats, key=lambda p: p[0] * p[0] + p[1] * p[1])
+    u = Vector((etale[0], etale[1], 0))
+    if u.length < 0.05:
+        return None
+    u.normalize()
+    le_long = [x * u.x + y * u.y for x, y, _ in plats]
+    variance = sum(s * s for s in le_long)
+    if variance < 1e-6:
+        return None
+    pente = sum(s * z for s, (_, _, z) in zip(le_long, plats)) / variance
+    return pente * u.x, pente * u.y, centre
+
+
 def mettre_d_aplomb(contexte, armature, os_porteurs, remettre=None):
     """Fait pencher le corps entier jusqu'à ce que ses appuis soient de niveau.
 
@@ -1116,6 +1207,13 @@ def mettre_d_aplomb(contexte, armature, os_porteurs, remettre=None):
     droit en l'air. Un centimètre passe inaperçu tant qu'on ne dessine pas le
     sol, et saute aux yeux dès qu'on le dessine.
 
+    Un plan ajusté **deux fois**, aussi, la seconde sans les membres qui ne
+    portent pas. Un pied levé, un pied empilé sur l'autre en gainage latéral :
+    ils figurent parmi les appuis déclarés parce qu'ils portent *par moments*,
+    et les compter fait vriller le corps pour aller les poser au sol. On les
+    reconnaît à ceci qu'ils flottent franchement au-dessus du plan que les
+    autres définissent.
+
     Ça ne remplace pas `poser_sur`, ça le précède : mettre d'aplomb rend les
     appuis parallèles au sol, poser les y amène.
 
@@ -1144,41 +1242,34 @@ def _une_passe_daplomb(contexte, armature, os_porteurs):
 
     contexte.view_layer.update()
 
-    points = list(contacts(contexte, armature, os_porteurs).values())
-    if len(points) < 3:
+    tous = list(contacts(contexte, armature, os_porteurs).values())
+    if len(tous) < 3:
         return False
 
-    centre = sum(points, Vector((0, 0, 0))) / len(points)
-    plats = [(p.x - centre.x, p.y - centre.y, p.z - centre.z) for p in points]
-
-    # Plan z = a·x + b·y, centré sur les appuis. Le système normal est celui
-    # d'une régression à deux variables ; le terme constant disparaît puisque
-    # l'origine est déjà au centre.
-    xx = sum(x * x for x, _, _ in plats)
-    xy = sum(x * y for x, y, _ in plats)
-    yy = sum(y * y for _, y, _ in plats)
-    xz = sum(x * z for x, _, z in plats)
-    yz = sum(y * z for _, y, z in plats)
-
-    determinant = xx * yy - xy * xy
-    # Appuis alignés — les deux mains et rien d'autre, ou un corps de profil
-    # parfait : aucun plan ne s'y ajuste, et il n'y a rien à redresser en
-    # travers. On se rabat sur la seule pente que les points désignent.
-    if abs(determinant) < 1e-8:
-        etale = max(plats, key=lambda p: p[0] * p[0] + p[1] * p[1])
-        u = Vector((etale[0], etale[1], 0))
-        if u.length < 0.05:
+    # Deux ajustements plutôt qu'un, et le second sans les membres qui ne
+    # portent pas. Un pied levé, un pied empilé sur l'autre en gainage
+    # latéral : ces points-là sont déclarés parmi les appuis parce qu'ils le
+    # sont *parfois*, et les compter fait vriller le corps pour aller les
+    # poser au sol. On les reconnaît à ceci qu'ils flottent franchement
+    # au-dessus du plan que les autres définissent.
+    points = tous
+    for _ in range(2):
+        plan = _ajuster_le_plan(points)
+        if plan is None:
             return False
-        u.normalize()
-        le_long = [x * u.x + y * u.y for x, y, _ in plats]
-        variance = sum(s * s for s in le_long)
-        if variance < 1e-6:
-            return False
-        pente = sum(s * z for s, (_, _, z) in zip(le_long, plats)) / variance
-        a, b = pente * u.x, pente * u.y
-    else:
-        a = (xz * yy - yz * xy) / determinant
-        b = (yz * xx - xz * xy) / determinant
+        a, b, centre = plan
+        portants = [
+            p for p in tous
+            if (p.z - centre.z) - a * (p.x - centre.x) - b * (p.y - centre.y) < 0.06
+        ]
+        if len(portants) < 3 or len(portants) == len(points):
+            break
+        points = portants
+
+    plan = _ajuster_le_plan(points)
+    if plan is None:
+        return False
+    a, b, _centre = plan
 
     # La normale du plan trouvé. La coucher sur la verticale, c'est mettre les
     # appuis de niveau.
