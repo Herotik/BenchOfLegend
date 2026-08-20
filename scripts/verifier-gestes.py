@@ -63,6 +63,51 @@ def _saillie(racine, milieu, bout, axe):
     return sum((m - r) * a for m, r, a in zip(milieu, reference, axe))
 
 
+def _direction(valeur):
+    """Direction d'une entrée de pose, ou `None` si c'en est un appui.
+
+    Un appui donne un **point**, pas un axe : les contrôles qui raisonnent sur
+    des directions n'ont rien à en dire, et `atteindre` garantit de toute façon
+    que le membre y arrive proprement. Ce qui reste à vérifier sur un appui,
+    c'est qu'il soit atteignable — voir `appuis_a_portee`.
+    """
+    if valeur is g.REPOS or isinstance(valeur, g.Appui):
+        return None
+    return _normalise(valeur)
+
+
+def appuis_a_portee(pose, geste):
+    """Un appui doit rester à portée du membre, et ne pas passer sous le sol.
+
+    Hors de portée, `atteindre` tend le membre sans atteindre la cible : le
+    geste reste rendable mais ne dit plus ce qu'on croyait. Sous le sol, c'est
+    une faute de frappe — le sol est à zéro.
+    """
+    # Longueurs mesurées sur le squelette Mixamo, en mètres.
+    portees = {"Arm": BRAS + AVANT_BRAS, "UpLeg": CUISSE + TIBIA}
+    hauteur = geste.get("hauteur")
+    fautes = []
+    for nom, valeur in pose.items():
+        if not isinstance(valeur, g.Appui):
+            continue
+        court = nom.removeprefix("mixamorig:")
+        membre = "Arm" if court.endswith("Arm") else "UpLeg"
+        if valeur.cible[2] < -0.01:
+            fautes.append(f"{court} : appui sous le sol (z = {valeur.cible[2]:+.2f} m)")
+        if hauteur is None:
+            fautes.append(f"{court} : appui déclaré sans hauteur de bassin")
+            continue
+        # Distance approchée entre la hanche et la cible ; l'épaule est plus
+        # haut, mais l'ordre de grandeur suffit à repérer une cible aberrante.
+        d = sum((c - r) ** 2 for c, r in zip(valeur.cible, (0, 0, hauteur))) ** 0.5
+        if d > portees[membre] + 0.35:
+            fautes.append(
+                f"{court} : appui à {d:.2f} m du bassin, hors de portée "
+                f"(membre de {portees[membre]:.2f} m)"
+            )
+    return fautes
+
+
 def genou_a_lendroit(pose, geste):
     """Le genou doit être en avant du segment hanche→cheville.
 
@@ -76,13 +121,13 @@ def genou_a_lendroit(pose, geste):
     avant = _normalise(geste.get("assise", (None, (0, -1, 0)))[1])
     fautes = []
     for cote in ("Left", "Right"):
-        cuisse = pose.get(g._os(f"{cote}UpLeg"))
-        tibia = pose.get(g._os(f"{cote}Leg"))
-        if cuisse is g.REPOS or tibia is g.REPOS or cuisse is None or tibia is None:
+        cuisse = _direction(pose.get(g._os(f"{cote}UpLeg")))
+        tibia = _direction(pose.get(g._os(f"{cote}Leg")))
+        if cuisse is None or tibia is None:
             continue
         hanche = (0.0, 0.0, 0.0)
-        genou = _somme(hanche, _normalise(cuisse), CUISSE)
-        cheville = _somme(genou, _normalise(tibia), TIBIA)
+        genou = _somme(hanche, cuisse, CUISSE)
+        cheville = _somme(genou, tibia, TIBIA)
         avance = _saillie(hanche, genou, cheville, avant)
         if avance < -SEUIL:
             fautes.append(
@@ -98,12 +143,12 @@ def dos_plat(pose, _geste):
     Un dos qui s'enroule est ce qu'on corrige chez un débutant ; une
     démonstration ne peut pas l'enseigner.
     """
-    vertebres = [pose.get(g._os(n)) for n in ("Spine", "Spine1", "Spine2")]
-    if any(v is g.REPOS or v is None for v in vertebres):
+    vertebres = [_direction(pose.get(g._os(n))) for n in ("Spine", "Spine1", "Spine2")]
+    if any(v is None for v in vertebres):
         return []
 
     def inclinaison(v):
-        x, y, z = _normalise(v)
+        x, y, z = v
         return (y * y + x * x) ** 0.5, z
 
     angles = []
@@ -132,12 +177,12 @@ def symetrie(pose, geste):
         return []
     fautes = []
     for membre in ("Shoulder", "Arm", "ForeArm", "UpLeg", "Leg"):
-        gauche = pose.get(g._os(f"Left{membre}"))
-        droite = pose.get(g._os(f"Right{membre}"))
-        if gauche is g.REPOS or droite is g.REPOS or gauche is None or droite is None:
+        gauche = _direction(pose.get(g._os(f"Left{membre}")))
+        droite = _direction(pose.get(g._os(f"Right{membre}")))
+        if gauche is None or droite is None:
             continue
-        gx, gy, gz = _normalise(gauche)
-        dx, dy, dz = _normalise(droite)
+        gx, gy, gz = gauche
+        dx, dy, dz = droite
         if abs(gx + dx) > 0.05 or abs(gy - dy) > 0.05 or abs(gz - dz) > 0.05:
             fautes.append(
                 f"{membre} : gauche {gx:+.2f},{gy:+.2f},{gz:+.2f} et droite "
@@ -151,7 +196,7 @@ def directions_utilisables(pose, _geste):
     return [
         f"{nom.removeprefix('mixamorig:')} : direction nulle"
         for nom, v in pose.items()
-        if v is not g.REPOS and sum(x * x for x in v) < 1e-6
+        if _direction(v) is not None and sum(x * x for x in v) < 1e-6
     ]
 
 
@@ -185,6 +230,7 @@ CONTROLES = (
     dos_plat,
     symetrie,
     assise_utilisable,
+    appuis_a_portee,
 )
 
 

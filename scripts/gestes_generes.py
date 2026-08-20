@@ -82,6 +82,40 @@ de captation font pareil, l'app reste cohérente.
 #: Marque un os qu'on ne touche pas : il garde l'orientation du modèle importé.
 REPOS = None
 
+
+class Appui:
+    """Un membre qui **touche** quelque chose, décrit par un point et non un axe.
+
+    Une main de planche est posée sous l'épaule, un pied de fente est planté au
+    sol : ce qu'on connaît est l'endroit, pas l'angle. `atteindre` en déduit les
+    deux directions, exactement.
+
+    `cible` est la position de l'extrémité — poignet ou cheville — dans le
+    monde, en mètres, le sol à zéro. `pole` dit de quel côté l'articulation
+    plie : vers l'arrière pour un coude, vers l'avant pour un genou.
+
+    Se déclare sur l'os **racine** du membre — `LeftArm` ou `LeftUpLeg` —, et
+    couvre aussi l'os suivant de la chaîne.
+    """
+
+    __slots__ = ("cible", "pole")
+
+    def __init__(self, cible, pole):
+        self.cible = tuple(cible)
+        self.pole = tuple(pole)
+
+    def __repr__(self):
+        return f"Appui(cible={self.cible}, pole={self.pole})"
+
+
+#: Les chaînes qu'un appui pilote : racine → (milieu, extrémité).
+CHAINES = {
+    "mixamorig:LeftArm": ("mixamorig:LeftForeArm", "mixamorig:LeftHand"),
+    "mixamorig:RightArm": ("mixamorig:RightForeArm", "mixamorig:RightHand"),
+    "mixamorig:LeftUpLeg": ("mixamorig:LeftLeg", "mixamorig:LeftFoot"),
+    "mixamorig:RightUpLeg": ("mixamorig:RightLeg", "mixamorig:RightFoot"),
+}
+
 # Les os sont posés **du parent vers l'enfant**. Viser un os déplace tous ceux
 # qu'il porte ; le faire dans le désordre reviendrait à corriger un bras après
 # avoir bougé l'épaule qui le tient.
@@ -360,62 +394,58 @@ GESTES = {
         "duree": 2600,
         "assise": SUR_LE_COTE,
         "symetrique": False,
+        "hauteur": 0.42,
         "cles": [
-            # Sur le côté droit : l'avant-bras droit porte, le gauche se pose à
-            # la hanche. Les jambes restent tendues dans l'axe du corps.
+            # L'avant-bras du dessous est planté au sol, sous l'épaule ; les
+            # pieds le sont aussi, en bout de corps. Le bassin monte entre les
+            # deux poses : c'est **ça**, un gainage latéral, et la version
+            # précédente donnait un personnage simplement couché sur le flanc.
             _pose({
-                _os("RightArm"): (0, 0.10, -1),
-                _os("RightForeArm"): (0, 0.95, -0.30),
+                _os("RightArm"): Appui((0, 0.50, 0), (0, 1, 0)),
                 _os("LeftArm"): (0, 0.10, 1),
-                _os("LeftForeArm"): (0, -0.20, 1),
-                _os("LeftUpLeg"): (0, -1, 0.04),
-                _os("LeftLeg"): (0, -1, -0.02),
-                _os("RightUpLeg"): (0, -1, -0.04),
-                _os("RightLeg"): (0, -1, 0.02),
+                _os("LeftForeArm"): (0, -0.30, 0.95),
+                _os("LeftUpLeg"): Appui((0, -0.86, 0.10), (0, -1, 0)),
+                _os("RightUpLeg"): Appui((0, -0.86, 0.04), (0, -1, 0)),
             }),
             _pose({
-                _os("RightArm"): (0, 0.10, -1),
-                _os("RightForeArm"): (0, 0.95, -0.30),
+                _os("RightArm"): Appui((0, 0.50, 0), (0, 1, 0)),
                 _os("LeftArm"): (0, 0.10, 1),
-                _os("LeftForeArm"): (0, -0.20, 1),
-                _os("LeftUpLeg"): (0, -1, 0.04),
-                _os("LeftLeg"): (0, -1, -0.02),
-                _os("RightUpLeg"): (0, -1, -0.04),
-                _os("RightLeg"): (0, -1, 0.02),
+                _os("LeftForeArm"): (0, -0.30, 0.95),
+                _os("LeftUpLeg"): Appui((0, -0.86, 0.10), (0, -1, 0)),
+                _os("RightUpLeg"): Appui((0, -0.86, 0.04), (0, -1, 0)),
             }),
         ],
+        # La hanche monte et redescend : le seul mouvement du geste.
+        "bassin": [(0, 0, -0.09), (0, 0, 0.03)],
     },
     "mountain-climber": {
         "vue": "profil",
         "duree": 800,
         "assise": SUR_LE_VENTRE,
         "symetrique": False,
+        # Bassin à cinquante centimètres : c'est la hauteur d'une planche sur
+        # les mains, épaules au-dessus des poignets.
+        "hauteur": 0.50,
         "cles": [
-            # En appui facial : bras tendus vers le sol, un genou vient sous la
-            # poitrine pendant que l'autre reste tendu.
+            # Les mains ne bougent pas de tout l'exercice — elles sont posées.
+            # C'est exactement ce qu'un appui exprime, et ce qu'on n'arrivait
+            # pas à obtenir en cherchant les angles à la main.
             _pose({
-                _os("LeftArm"): (0.16, 0.30, -0.94),
-                _os("LeftForeArm"): (0.10, 0.10, -0.99),
-                _os("RightArm"): (-0.16, 0.30, -0.94),
-                _os("RightForeArm"): (-0.10, 0.10, -0.99),
-                _os("LeftUpLeg"): (0.08, 0.55, -0.83),
-                _os("LeftLeg"): (0.05, -0.72, -0.69),
-                _os("RightUpLeg"): (-0.06, -1, 0.04),
-                _os("RightLeg"): (-0.04, -1, -0.02),
+                _os("LeftArm"): Appui((0.18, 0.42, 0), (0, 1, 0)),
+                _os("RightArm"): Appui((-0.18, 0.42, 0), (0, 1, 0)),
+                # Jambe tendue en arrière, pointe au sol.
+                _os("RightUpLeg"): Appui((-0.12, -1.02, 0.08), (0, -1, 0)),
+                # Genou ramené sous la poitrine, pied décollé.
+                _os("LeftUpLeg"): Appui((0.14, -0.10, 0.22), (0, 1, 0)),
             }),
             _pose({
-                _os("LeftArm"): (0.16, 0.30, -0.94),
-                _os("LeftForeArm"): (0.10, 0.10, -0.99),
-                _os("RightArm"): (-0.16, 0.30, -0.94),
-                _os("RightForeArm"): (-0.10, 0.10, -0.99),
-                _os("LeftUpLeg"): (0.06, -1, 0.04),
-                _os("LeftLeg"): (0.04, -1, -0.02),
-                _os("RightUpLeg"): (-0.08, 0.55, -0.83),
-                _os("RightLeg"): (-0.05, -0.72, -0.69),
+                _os("LeftArm"): Appui((0.18, 0.42, 0), (0, 1, 0)),
+                _os("RightArm"): Appui((-0.18, 0.42, 0), (0, 1, 0)),
+                _os("LeftUpLeg"): Appui((0.12, -1.02, 0.08), (0, -1, 0)),
+                _os("RightUpLeg"): Appui((-0.14, -0.10, 0.22), (0, 1, 0)),
             }),
         ],
     },
-
     "rowing": {
         "vue": "trois-quarts",
         "duree": 2000,
@@ -454,11 +484,37 @@ def _parcours(cles, images, repos):
     `repos` fournit la direction des os laissés à `REPOS`, mesurée sur le modèle.
     """
     from mathutils import Vector
-    resolue = lambda pose: {  # noqa: E731
-        nom: Vector(repos[nom] if pose[nom] is REPOS else pose[nom]).normalized()
-        for nom in pose
-        if nom in repos
-    }
+    def resolue(pose):
+        sortie = {}
+        for nom, valeur in pose.items():
+            if nom not in repos:
+                continue
+            if isinstance(valeur, Appui):
+                # Un appui n'est pas une direction : il se garde tel quel et se
+                # résoudra une fois la chaîne parente posée, quand on saura où
+                # se trouve l'épaule ou la hanche.
+                sortie[nom] = valeur
+            else:
+                sortie[nom] = Vector(
+                    repos[nom] if valeur is REPOS else valeur
+                ).normalized()
+        return sortie
+
+    def entre(a, b, e):
+        if isinstance(a, Appui) and isinstance(b, Appui):
+            # Un point s'interpole **linéairement** : le normaliser le
+            # ramènerait sur la sphère unité et la main décrirait un arc au
+            # lieu d'aller d'un appui à l'autre.
+            return Appui(
+                tuple(x + (y - x) * e for x, y in zip(a.cible, b.cible)),
+                tuple(x + (y - x) * e for x, y in zip(a.pole, b.pole)),
+            )
+        if isinstance(a, Appui) or isinstance(b, Appui):
+            raise SystemExit(
+                "Un membre passe d'un appui à une direction libre d'une pose à "
+                "l'autre ; il faut choisir l'un ou l'autre pour tout le geste."
+            )
+        return a.lerp(b, e).normalized()
 
     # Deux clés se parcourent 0→1→0 ; trois, 0→1→2→1→0.
     boucle = [resolue(c) for c in cles]
@@ -541,6 +597,61 @@ def _decalages(declare, cles, images):
         a, b = boucle[rang], boucle[rang + 1]
         suite.append(tuple(x + (y - x) * e for x, y in zip(a, b)))
     return suite
+
+
+def atteindre(racine, cible, pole, longueurs):
+    """Où pointer les deux os d'un membre pour que son extrémité touche `cible`.
+
+    ## Pourquoi il en faut une
+
+    Écrire les directions à la main suffit tant que le membre est libre. Dès
+    qu'il **prend appui**, ce n'est plus la direction qu'on connaît mais le
+    point : une main de planche est posée sous l'épaule, un pied de fente est
+    planté au sol. Chercher à la main les deux angles qui amènent la paume au
+    bon endroit, c'est résoudre un triangle de tête — et se tromper, ce qui a
+    donné un gainage latéral où le personnage était couché au lieu d'être en
+    appui.
+
+    Une chaîne à deux os se résout pourtant exactement, par le théorème d'Al-
+    Kashi : la distance racine-cible et les deux longueurs déterminent l'angle
+    au coude, et il ne reste qu'à choisir de quel côté il plie. C'est ce que
+    `pole` indique — vers l'arrière pour un coude, vers l'avant pour un genou.
+
+    Renvoie les deux directions, à passer à `viser` comme les autres.
+    """
+    from mathutils import Vector
+
+    racine, cible, pole = Vector(racine), Vector(cible), Vector(pole)
+    l1, l2 = longueurs
+
+    vers = cible - racine
+    distance = vers.length
+    if distance < 1e-5:
+        # Cible confondue avec la racine : aucune direction n'a de sens, on
+        # laisse le membre tendu vers le pôle plutôt que de diviser par zéro.
+        return pole.normalized(), pole.normalized()
+
+    axe = vers / distance
+    # Hors de portée : le membre se tend vers la cible sans l'atteindre. C'est
+    # le comportement d'un vrai bras, et il vaut mieux que de forcer un pli.
+    distance = min(distance, (l1 + l2) * 0.999)
+
+    # Projection du coude sur l'axe, puis sa hauteur au-dessus.
+    le_long = (distance * distance + l1 * l1 - l2 * l2) / (2 * distance)
+    ecart = max(0.0, l1 * l1 - le_long * le_long) ** 0.5
+
+    # Le pôle, débarrassé de sa part parallèle à l'axe : il ne dit que le côté.
+    cote = pole - axe * pole.dot(axe)
+    if cote.length < 1e-5:
+        # Pôle aligné sur l'axe : il ne désigne aucun côté. On en prend un
+        # perpendiculaire quelconque plutôt que de renvoyer une direction nulle.
+        cote = axe.cross(Vector((0, 0, 1)))
+        if cote.length < 1e-5:
+            cote = axe.cross(Vector((1, 0, 0)))
+    cote.normalize()
+
+    coude = racine + axe * le_long + cote * ecart
+    return (coude - racine).normalized(), (cible - coude).normalized()
 
 
 def poser_au_sol(contexte, armature):
@@ -702,6 +813,19 @@ def appliquer(armature, nom, images, contexte):
     }
     repos_bassin = armature.pose.bones[BASSIN].matrix.to_3x3().copy()
 
+    # Longueurs réelles des membres, mesurées sur ce squelette-ci : la
+    # résolution des appuis en dépend, et les coder en dur les ferait mentir sur
+    # un personnage plus grand ou plus petit.
+    echelle = armature.matrix_world.to_scale().x
+    longueurs = {
+        racine: (
+            armature.pose.bones[racine].bone.length * echelle,
+            armature.pose.bones[milieu].bone.length * echelle,
+        )
+        for racine, (milieu, _) in CHAINES.items()
+        if racine in armature.pose.bones and milieu in armature.pose.bones
+    }
+
     geste = GESTES[nom]
 
     # La bascule **d'abord** : elle tourne tout le corps, et les os visés
@@ -724,6 +848,15 @@ def appliquer(armature, nom, images, contexte):
     ancre = armature.pose.bones[BASSIN].matrix.translation.copy()
     decalages = _decalages(geste.get("bassin"), len(geste["cles"]), images)
 
+    # Hauteur du bassin au-dessus du sol, en mètres. À donner pour les gestes
+    # qui plantent des appuis — « le bassin d'une planche est à soixante
+    # centimètres » se dit et se relit, contrairement à un décalage relatif.
+    hauteur = geste.get("hauteur")
+    if hauteur is not None:
+        monde = armature.matrix_world
+        ancre = ancre.copy()
+        ancre.z += (hauteur - (monde @ ancre).z) / monde.to_scale().z
+
     for numero, (pose, decalage) in enumerate(
         zip(_parcours(geste["cles"], images, repos), decalages), start=1
     ):
@@ -734,16 +867,36 @@ def appliquer(armature, nom, images, contexte):
         if assise:
             bassin.rotation_mode = "QUATERNION"
             bassin.keyframe_insert("rotation_quaternion", frame=numero)
+        resolus = {}
         for os_nom in ORDRE:
             os_pose = armature.pose.bones[os_nom]
-            viser(armature, os_pose, pose[os_nom], orientations[os_nom], contexte)
+            voulu = resolus.pop(os_nom, None) or pose[os_nom]
+
+            if isinstance(voulu, Appui):
+                # Résolu **ici** et pas plus tôt : la position de l'épaule
+                # dépend de toute la chaîne posée avant elle.
+                milieu = CHAINES[os_nom][0]
+                voulu, suivant = atteindre(
+                    armature.matrix_world @ os_pose.head,
+                    voulu.cible,
+                    voulu.pole,
+                    longueurs[os_nom],
+                )
+                resolus[milieu] = suivant
+
+            viser(armature, os_pose, voulu, orientations[os_nom], contexte)
             os_pose.rotation_mode = "QUATERNION"
             os_pose.keyframe_insert("rotation_quaternion", frame=numero)
 
         # **Après** avoir posé les membres, jamais avant : c'est la pose finie
         # qui dit où est le point le plus bas. Un corps ancré puis plié
         # repasserait sous le sol.
-        if geste.get("ancrage", True):
+        #
+        # Un geste qui plante ses appuis au sol donne sa hauteur de bassin à la
+        # place : les deux ne peuvent pas décider en même temps, et c'est la
+        # hauteur qui commande, sans quoi descendre le corps décollerait les
+        # mains du point où on vient de les poser.
+        if hauteur is None and geste.get("ancrage", True):
             poser_au_sol(contexte, armature)
             bassin.keyframe_insert("location", frame=numero)
 
