@@ -517,6 +517,53 @@ GESTES = {
             }),
         ],
     },
+    # Relevé sur une vidéo de démonstration, images 504,528.
+    "planche-relevee": {
+        "vue": "profil",
+        "duree": 3000,
+        "assise": SUR_LE_VENTRE,
+        "symetrique": False,
+        # Les appuis d'une planche haute : ce sont eux qui touchent le sol, et
+        # non le point le plus bas du maillage.
+        "ancrage": ("LeftHand", "RightHand", "LeftFoot", "RightFoot"),
+        "cles": [
+            _pose({
+                _os("Spine"): (+0.00, +1.00, -0.00),
+                _os("Spine1"): (+0.00, +1.00, -0.00),
+                _os("Spine2"): (+0.00, +1.00, -0.00),
+                _os("Neck"): (-0.10, +0.77, -0.64),
+                _os("Head"): (-0.10, +0.77, -0.64),
+                _os("LeftArm"): (-0.18, -0.20, -0.96),
+                _os("RightArm"): (+0.33, -0.29, -0.90),
+                _os("LeftForeArm"): (+0.31, +0.04, -0.95),
+                _os("RightForeArm"): (+0.18, -0.09, -0.98),
+                _os("LeftUpLeg"): (-0.05, -0.99, -0.10),
+                _os("RightUpLeg"): (-0.03, -0.98, -0.19),
+                _os("LeftLeg"): (-0.10, -0.99, +0.03),
+                _os("RightLeg"): (+0.05, -1.00, +0.01),
+                _os("LeftFoot"): (+0.12, -0.21, -0.97),
+                _os("RightFoot"): (+0.54, +0.14, -0.83),
+            }),
+            _pose({
+                _os("Spine"): (+0.00, +1.00, -0.00),
+                _os("Spine1"): (+0.00, +1.00, -0.00),
+                _os("Spine2"): (+0.00, +1.00, -0.00),
+                _os("Neck"): (-0.10, +0.75, -0.65),
+                _os("Head"): (-0.10, +0.75, -0.65),
+                _os("LeftArm"): (-0.17, -0.21, -0.96),
+                _os("RightArm"): (+0.33, -0.29, -0.90),
+                _os("LeftForeArm"): (+0.31, +0.04, -0.95),
+                _os("RightForeArm"): (+0.18, -0.09, -0.98),
+                _os("LeftUpLeg"): (-0.05, -0.99, -0.10),
+                _os("RightUpLeg"): (-0.03, -0.98, -0.18),
+                _os("LeftLeg"): (-0.11, -0.99, +0.04),
+                _os("RightLeg"): (+0.03, -1.00, +0.02),
+                _os("LeftFoot"): (+0.12, -0.22, -0.97),
+                _os("RightFoot"): (+0.54, +0.13, -0.84),
+            }),
+        ],
+    },
+
     "rowing": {
         "vue": "trois-quarts",
         "duree": 2000,
