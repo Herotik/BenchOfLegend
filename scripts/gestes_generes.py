@@ -156,7 +156,7 @@ BUSTE_PENCHE = {
 
 #: Recul du bassin qui accompagne `BUSTE_PENCHE`, en mètres, dans le monde.
 #: +Y est derrière le personnage, qui regarde vers -Y.
-RECUL_BASSIN = (0, 0.16, -0.04)
+RECUL_BASSIN = (0, 0.16, 0)
 
 
 # Assises du corps, pour `assise` : (direction bassin→tête, direction du regard).
@@ -325,7 +325,7 @@ GESTES = {
     "fente": {
         "vue": "profil",
         "duree": 2200,
-        "bassin": [(0, 0, 0), (0, -0.10, -0.22)],
+        "bassin": [(0, 0, 0), (0, -0.10, 0)],
         "symetrique": False,
         "cles": [
             _pose(),
@@ -343,10 +343,10 @@ GESTES = {
     "mollets": {
         "vue": "profil",
         "duree": 1400,
-        # Le corps entier monte : aucune articulation ne porte le geste, c'est
-        # une translation. Sans décalage animé du bassin, il n'y aurait rien à
-        # voir — c'est l'exercice qui semblait hors de portée.
-        "bassin": [(0, 0, 0), (0, 0, 0.07)],
+        # Aucun décalage : le talon décolle, le pied pivote, et c'est l'ancrage
+        # au sol qui fait monter le corps. Le lui imposer à la main donnerait la
+        # même image mais pour de mauvaises raisons, et le moindre changement de
+        # pose la fausserait.
         "cles": [
             _pose(),
             _pose({
@@ -359,7 +359,6 @@ GESTES = {
         "vue": "profil",
         "duree": 2600,
         "assise": SUR_LE_COTE,
-        "bassin": [(0, 0, -0.10), (0, 0, 0.02)],
         "symetrique": False,
         "cles": [
             # Sur le côté droit : l'avant-bras droit porte, le gauche se pose à
@@ -544,6 +543,56 @@ def _decalages(declare, cles, images):
     return suite
 
 
+def poser_au_sol(contexte, armature):
+    """Descend le corps jusqu'à ce que son point le plus bas touche le sol.
+
+    ## Pourquoi il faut un sol
+
+    Sans lui, on ne pose pas un corps : on le fait flotter. Debout ou couché,
+    ça ne se voit pas — la caméra recadre et personne ne sait à quelle hauteur
+    était le personnage. Mais dès qu'un geste prend **appui**, tout son sens
+    tient à ce que les mains et les pieds reposent sur un même plan avec le
+    corps au-dessus. Une planche dont les mains flottent trente centimètres
+    sous le sol n'est plus une planche : le premier mountain climber rendu ici
+    donnait un personnage en équilibre sur la tête.
+
+    Le point le plus bas est pris sur le **maillage évalué**, pas sur le
+    squelette : c'est la paume et la semelle qui touchent, pas l'os du poignet
+    ni celui de la cheville, et l'écart se compte en centimètres.
+
+    Un saut est la seule exception légitime — le corps y quitte le sol pour de
+    bon. Ces gestes-là déclarent `ancrage: False`.
+    """
+    contexte.view_layer.update()
+    depsgraph = contexte.evaluated_depsgraph_get()
+
+    bas = None
+    for objet in contexte.scene.objects:
+        if objet.type != "MESH":
+            continue
+        evalue = objet.evaluated_get(depsgraph)
+        for coin in evalue.bound_box:
+            z = (evalue.matrix_world @ _vecteur(coin)).z
+            bas = z if bas is None else min(bas, z)
+
+    if bas is None or abs(bas) < 1e-4:
+        return
+
+    bassin = armature.pose.bones[BASSIN]
+    matrice = bassin.matrix.copy()
+    matrice.translation -= armature.matrix_world.inverted().to_3x3() @ _vecteur(
+        (0, 0, bas)
+    )
+    bassin.matrix = matrice
+    contexte.view_layer.update()
+
+
+def _vecteur(triplet):
+    from mathutils import Vector
+
+    return Vector(triplet)
+
+
 def _poser_bassin(armature, ancre, decalage, contexte):
     """Place le bassin à sa position de repos, décalée de `decalage` (monde)."""
     from mathutils import Vector
@@ -676,5 +725,12 @@ def appliquer(armature, nom, images, contexte):
             viser(armature, os_pose, pose[os_nom], orientations[os_nom], contexte)
             os_pose.rotation_mode = "QUATERNION"
             os_pose.keyframe_insert("rotation_quaternion", frame=numero)
+
+        # **Après** avoir posé les membres, jamais avant : c'est la pose finie
+        # qui dit où est le point le plus bas. Un corps ancré puis plié
+        # repasserait sous le sol.
+        if geste.get("ancrage", True):
+            poser_au_sol(contexte, armature)
+            bassin.keyframe_insert("location", frame=numero)
 
     return list(range(1, images + 1))
