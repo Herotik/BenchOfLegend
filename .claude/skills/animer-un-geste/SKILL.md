@@ -27,8 +27,15 @@ disait « le bassin est à 1,17 m au lieu de 0,50 ».
 
 **Une vidéo, quand on en a une.** C'est de loin le meilleur : elle contient
 déjà la réponse, et `scripts/geste-depuis-video.py` en tire les directions de
-tous les os. YouTube ne passe pas le proxy, mais un fichier fourni par
-l'utilisateur, si.
+tous les os.
+
+Le proxy est en **liste blanche** : GitHub, PyPI et `storage.googleapis.com`
+passent, aucun hébergeur vidéo ne passe — ni YouTube, ni Vimeo, ni archive.org,
+ni même Wikipédia. Vérifié, pas supposé. Deux entrées restent donc ouvertes :
+un fichier que l'utilisateur dépose, ou un **relevé** qu'il produit lui-même
+avec `scripts/relever-video.py` — un `.npz` d'articulations plus une planche
+de vignettes numérotées, quelques centaines de kilo-octets au lieu de la
+vidéo. `geste-depuis-video.py` accepte l'un comme l'autre.
 
     pip install opencv-python-headless mediapipe
     curl -o /tmp/pg/pose_landmarker.task https://storage.googleapis.com/\
@@ -96,6 +103,11 @@ Trois choses manquent systématiquement, et chacune a livré une faute :
   retirer `symetrique: False` : le contrôle devient une garantie.
 
   Les autres options disent chacune un fait physique, jamais un réglage :
+  `--jambes-tendues` (debout, le genou tombe sur la ligne hanche-cheville ;
+  l'estimateur le renvoie deux centimètres en arrière, une hyperextension),
+  `--bras-libres` (les bras ne travaillent pas : les rendre au modèle plutôt
+  que de copier la garde de boxe de la démonstratrice — la même planche sert
+  souvent la version au poids du corps et la version avec haltères),
   `--avant-bras-au-sol` (le coude porte, l'avant-bras repose de tout son long),
   `--bras-au-sol` (le bras entier repose ; on garde de la mesure son
   orientation vue de dessus, on lui retire sa hauteur), `--dans-le-plan` (le
@@ -141,7 +153,12 @@ jugé s'est révélé inversé, et les deux mains étaient à plat… dos au sol
 
 ### 2. Écrire la pose
 
-Dans `scripts/gestes_generes.py`. Les règles qui coûtent cher quand on les
+Dans `scripts/gestes_generes.py`, et **par `scripts/poser-geste.py`** plutôt
+qu'à la main : le fichier fait plus de mille lignes, les gestes s'y suivent, et
+repérer les bornes du bon bloc à l'œil marche deux fois sur trois. La
+troisième, on coupe au milieu du geste précédent et l'on obtient une
+parenthèse non fermée quatre cents lignes plus haut. L'outil relit et compile
+avant d'écrire. Les règles qui coûtent cher quand on les
 oublie, toutes apprises à la dure :
 
 **Un membre qui touche quelque chose se décrit par un `Appui`**, jamais par des

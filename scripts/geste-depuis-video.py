@@ -101,8 +101,25 @@ def normalise(v):
     return v / n if n > 1e-9 else v
 
 
-def landmarks(video, numeros):
-    """Positions des articulations, en mètres, pour les images demandées."""
+def landmarks(source, numeros):
+    """Positions des articulations, en mètres, pour les images demandées.
+
+    `source` est soit une vidéo, soit un **relevé** `.npz` déjà extrait par
+    `scripts/relever-video.py`. Le second cas n'est pas un raccourci : la
+    session qui écrit les animations est derrière un proxy en liste blanche et
+    ne peut atteindre aucun hébergeur vidéo. Le relevé, lui, se transmet — il
+    ne contient que des positions d'articulations, et pèse une fraction du
+    film.
+    """
+    if source.endswith(".npz"):
+        releve = np.load(source)["monde"]
+        for n in numeros:
+            if n >= len(releve):
+                sys.exit(f"Le relevé ne va pas jusqu'à l'image {n}.")
+            if np.isnan(releve[n]).any():
+                sys.exit(f"Aucune pose détectée sur l'image {n} du relevé.")
+        return [releve[n] for n in numeros]
+
     import cv2
     import mediapipe as mp
     from mediapipe.tasks import python
@@ -435,6 +452,48 @@ def avant_bras_au_sol(pose, assise):
     return pose
 
 
+#: Marque un os qu'on rend au modèle : il sera écrit `REPOS` dans le geste.
+LIBRE = "libre"
+
+
+def bras_libres(pose):
+    """Rend les bras au modèle : ils ne font pas partie de l'exercice.
+
+    Une démonstratrice tient souvent ses poings en garde, devant le visage.
+    C'est son style, pas le mouvement, et le personnage le copiait fidèlement.
+    Pire : la même démonstration sert les fentes au poids du corps **et** les
+    fentes haltères, où les bras pendent le long du corps.
+
+    Les rendre au repos les laisse tomber naturellement, comme le modèle les
+    tient. À n'utiliser que quand les bras ne travaillent pas — sur un développé
+    ou un rowing, ce serait effacer l'exercice.
+
+    S'applique **en dernier** : les autres corrections calculent sur des
+    vecteurs, et un os rendu au repos n'en est plus un.
+    """
+    for cote in COTES.values():
+        for os_nom in ("Arm", "ForeArm", "Hand"):
+            pose[f"{cote}{os_nom}"] = LIBRE
+    return pose
+
+
+def jambes_tendues(pose):
+    """Aligne le tibia sur la cuisse : la jambe est droite, pas cambrée.
+
+    Debout, une jambe est tendue — le genou tombe sur la ligne hanche-cheville.
+    L'estimateur, lui, le renvoie deux centimètres **en arrière** de cette
+    ligne : une hyperextension, un genou qui plie du mauvais côté. C'est du
+    bruit de mesure sur une articulation quasi alignée, mais c'est aussi une
+    posture qu'on ne veut pas démontrer.
+
+    Ne vaut évidemment que pour les clés où la jambe **est** tendue : sur le
+    point bas d'une fente, les deux genoux font quatre-vingts degrés.
+    """
+    for cote in COTES.values():
+        pose[f"{cote}Leg"] = pose[f"{cote}UpLeg"].copy()
+    return pose
+
+
 def pieds_sur_pointes(pose):
     """Remet les deux pieds à la verticale, orteils au sol.
 
@@ -470,11 +529,17 @@ def pose_du_geste(p, repere, assise):
 
 def main():
     a = argparse.ArgumentParser()
-    a.add_argument("video")
+    a.add_argument("source", help="une vidéo, ou un relevé .npz")
     a.add_argument("geste")
     a.add_argument("--images", required=True, help="numéros d'images, séparés par des virgules")
     a.add_argument("--assise", default="debout", choices=sorted(ASSISES))
     a.add_argument("--duree", type=int, default=2400)
+    a.add_argument(
+        "--vue", default="profil", choices=("profil", "face", "trois-quarts"),
+        help="sous quel angle le geste se lit. Un mouvement de profil se rend "
+        "de profil, un mouvement latéral de face — sans quoi il se fait dans "
+        "l'axe de la caméra et disparaît.",
+    )
     a.add_argument(
         "--dans-le-plan",
         nargs="?", const="toutes", default=None, metavar="CLÉS",
@@ -508,6 +573,18 @@ def main():
         "l'avant, sans toucher au bras qui, lui, porte l'élévation du buste.",
     )
     a.add_argument(
+        "--bras-libres",
+        nargs="?", const="toutes", default=None, metavar="CLÉS",
+        help="les bras ne font pas partie de l'exercice : les rend au modèle "
+        "plutôt que de copier la garde de la démonstratrice.",
+    )
+    a.add_argument(
+        "--jambes-tendues",
+        nargs="?", const="toutes", default=None, metavar="CLÉS",
+        help="la jambe est droite sur ces clés : aligne le tibia sur la "
+        "cuisse, plutôt que de garder l'hyperextension du relevé.",
+    )
+    a.add_argument(
         "--pieds-sur-pointes",
         nargs="?", const="toutes", default=None, metavar="CLÉS",
         help="le corps porte sur la pointe des pieds : les remet tous deux "
@@ -524,7 +601,7 @@ def main():
     args = a.parse_args()
 
     numeros = [int(n) for n in args.images.split(",")]
-    releves = landmarks(args.video, numeros)
+    releves = landmarks(args.source, numeros)
     reperes = [repere_du_corps(p) for p in releves]
 
     haut, regard, pente = assise_inclinee(ASSISES[args.assise], reperes)
@@ -538,6 +615,11 @@ def main():
     couches = cles_visees(args.bras_au_sol, len(poses))
     poses = [
         bras_au_sol(pose, assise) if rang in couches else pose
+        for rang, pose in enumerate(poses)
+    ]
+    droites = cles_visees(args.jambes_tendues, len(poses))
+    poses = [
+        jambes_tendues(pose) if rang in droites else pose
         for rang, pose in enumerate(poses)
     ]
     tendus = cles_visees(args.bras_tendus, len(poses))
@@ -569,13 +651,18 @@ def main():
         refleter(pose, assise) if rang in reflets else pose
         for rang, pose in enumerate(poses)
     ]
+    libres = cles_visees(args.bras_libres, len(poses))
+    poses = [
+        bras_libres(pose) if rang in libres else pose
+        for rang, pose in enumerate(poses)
+    ]
 
     def triplet(v):
         return "({:+.2f}, {:+.2f}, {:+.2f})".format(*v)
 
     print(f'    # Relevé sur une vidéo de démonstration, images {args.images}.')
     print(f'    "{args.geste}": {{')
-    print(f'        "vue": "profil",')
+    print(f'        "vue": "{args.vue}",')
     print(f'        "duree": {args.duree},')
     print(f'        # Assise « {args.assise} » penchée de {pente:+.0f}°, mesurés sur la vidéo.')
     print(f'        "assise": ({triplet(haut)}, {triplet(regard)}),')
@@ -588,6 +675,9 @@ def main():
     for pose in poses:
         print("            _pose({")
         for nom, d in pose.items():
+            if d is LIBRE:
+                print(f'                _os("{nom}"): REPOS,')
+                continue
             print(f'                _os("{nom}"): ({d[0]:+.2f}, {d[1]:+.2f}, {d[2]:+.2f}),')
         print("            }),")
     print("        ],")

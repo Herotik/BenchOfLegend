@@ -138,6 +138,19 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 4400,
   },
+  // Fente avant, relevée sur une vidéo de démonstration. Elle sert les fentes
+  // au poids du corps **et** les fentes haltères : le personnage ne porte
+  // aucune charge, et les deux exercices ont le même mouvement.
+  //
+  // Rien à changer dans `gestes.ts` pour qu'elle prenne effet : les deux
+  // exercices pointaient déjà sur le slug « fente », qui n'avait pas encore de
+  // planche et tombait donc sur le bonhomme vectoriel.
+  fente: {
+    source: require("../../assets/gestes/fente.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 3000,
+  },
   // Burpee
   burpee: {
     source: require("../../assets/gestes/burpee.png"),
