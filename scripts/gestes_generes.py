@@ -205,9 +205,11 @@ PLANCHE_DROITE = {
     _os("Spine"): (0, 0.90, 0.44),
     _os("Spine1"): (0, 0.90, 0.44),
     _os("Spine2"): (0, 0.90, 0.44),
-    # La nuque se redresse : on regarde entre ses mains, pas ses pieds.
-    _os("Neck"): (0, 0.97, 0.22),
-    _os("Head"): (0, 0.99, 0.12),
+    # La nuque se redresse franchement : sur toutes les photos du geste, le
+    # regard porte **devant** les mains et la tête prolonge la ligne du dos.
+    # Rentrée dans les épaules, elle donnait un personnage sans cou.
+    _os("Neck"): (0, 0.88, 0.47),
+    _os("Head"): (0, 0.93, 0.37),
 }
 
 
@@ -413,44 +415,58 @@ GESTES = {
         ],
     },
     "gainage-lateral": {
-        # De trois-quarts, et non de profil : la caméra de profil regarde pile
-        # dans l'axe du regard d'un corps au sol, si bien qu'on ne voit plus
-        # de quel côté il est tourné. Un gainage latéral y devient
-        # indiscernable d'un corps couché sur le dos.
+        # De trois-quarts : de profil, un corps couché est regardé dans l'axe de
+        # son regard et l'on ne voit plus de quel côté il est tourné.
         "vue": "trois-quarts",
         "duree": 2600,
         "assise": SUR_LE_COTE,
         "symetrique": False,
-        "hauteur": 0.42,
+        # L'ancrage porte sur les os qui **portent** vraiment, et non sur le
+        # point le plus bas du maillage : couché sur le côté, c'est la cape du
+        # personnage qui traîne au sol pendant que ses pieds flottent trente
+        # centimètres au-dessus.
+        "ancrage": ("RightForeArm", "RightHand", "RightFoot", "LeftFoot"),
         "cles": [
-            # L'avant-bras du dessous est planté au sol, sous l'épaule ; les
-            # pieds le sont aussi, en bout de corps. Le bassin monte entre les
-            # deux poses : c'est **ça**, un gainage latéral, et la version
-            # précédente donnait un personnage simplement couché sur le flanc.
+            # Pas de cinématique inverse ici, et c'est délibéré : elle place le
+            # **poignet** et laisse le coude où il veut. Or dans un gainage
+            # latéral, c'est le coude qui porte. Deux directions le disent
+            # mieux qu'un point — le bras descend à la verticale, l'avant-bras
+            # se couche au sol vers la tête.
             _pose({
-                _os("RightArm"): Appui((0, 0.44, 0.04), (0, 1, 0)),
-                _os("LeftArm"): (0, 0.10, 1),
-                _os("LeftForeArm"): (0, -0.30, 0.95),
-                _os("LeftUpLeg"): Appui((0, -0.78, 0.10), (0, -1, 0.3)),
-                _os("RightUpLeg"): Appui((0, -0.78, 0.05), (0, -1, 0.3)),
+                _os("RightArm"): (0, 0.06, -1),
+                _os("RightForeArm"): (0, 1, 0.02),
+                # Le bras libre monte vers le plafond, main à la hanche exclue :
+                # levé, il dit que le corps est bien sur le côté.
+                _os("LeftArm"): (0, 0.04, 1),
+                _os("LeftForeArm"): (0, 0.02, 1),
+                # Jambes tendues et empilées : la gauche est au-dessus, puisque
+                # le corps repose sur son côté droit.
+                _os("LeftUpLeg"): (0, -0.97, -0.14),
+                _os("LeftLeg"): (0, -0.99, -0.10),
+                _os("RightUpLeg"): (0, -0.97, -0.22),
+                _os("RightLeg"): (0, -0.99, -0.14),
             }),
+            # La hanche s'affaisse puis remonte : le seul mouvement du geste.
             _pose({
-                _os("RightArm"): Appui((0, 0.44, 0.04), (0, 1, 0)),
-                _os("LeftArm"): (0, 0.10, 1),
-                _os("LeftForeArm"): (0, -0.30, 0.95),
-                _os("LeftUpLeg"): Appui((0, -0.78, 0.10), (0, -1, 0.3)),
-                _os("RightUpLeg"): Appui((0, -0.78, 0.05), (0, -1, 0.3)),
+                _os("RightArm"): (0, 0.06, -1),
+                _os("RightForeArm"): (0, 1, 0.02),
+                _os("LeftArm"): (0, 0.04, 1),
+                _os("LeftForeArm"): (0, 0.02, 1),
+                _os("LeftUpLeg"): (0, -0.99, 0.02),
+                _os("LeftLeg"): (0, -0.99, -0.06),
+                _os("RightUpLeg"): (0, -0.99, -0.06),
+                _os("RightLeg"): (0, -0.99, -0.10),
             }),
         ],
-        # La hanche monte et redescend : le seul mouvement du geste.
-        "bassin": [(0, 0, -0.09), (0, 0, 0.03)],
+        "bassin": [(0, 0, -0.06), (0, 0, 0.02)],
     },
     "mountain-climber": {
-        # De trois-quarts, et non de profil : la caméra de profil regarde pile
-        # dans l'axe du regard d'un corps au sol, si bien qu'on ne voit plus
-        # de quel côté il est tourné. Un gainage latéral y devient
-        # indiscernable d'un corps couché sur le dos.
-        "vue": "trois-quarts",
+        # De profil, comme toutes les photos de l'exercice : le corps à plat
+        # ventre s'y lit d'un trait, de la main posée au talon tendu. Le
+        # trois-quarts avait été essayé pour lever une ambiguïté qui venait en
+        # réalité d'ailleurs — le personnage regardait le ciel — et il ne
+        # montrait plus que le dos et la cape.
+        "vue": "profil",
         "duree": 800,
         "assise": SUR_LE_VENTRE,
         "symetrique": False,
@@ -697,6 +713,35 @@ def atteindre(racine, cible, pole, longueurs):
 
     coude = racine + axe * le_long + cote * ecart
     return (coude - racine).normalized(), (cible - coude).normalized()
+
+
+def poser_sur(contexte, armature, os_porteurs):
+    """Descend le corps jusqu'à ce que les os nommés touchent le sol.
+
+    Le point le plus bas du **maillage** ne convient pas toujours : le
+    personnage porte une cape, et couché sur le côté c'est elle qui traîne au
+    sol pendant que ses pieds flottent trente centimètres au-dessus. Nommer les
+    os qui portent — l'avant-bras et les pieds d'un gainage latéral — remet la
+    décision là où elle appartient, dans le geste.
+    """
+    contexte.view_layer.update()
+    bas = None
+    for nom in os_porteurs:
+        pb = armature.pose.bones[f"mixamorig:{nom}"]
+        for bout in (pb.head, pb.tail):
+            z = (armature.matrix_world @ bout).z
+            bas = z if bas is None else min(bas, z)
+
+    if bas is None or abs(bas) < 1e-4:
+        return
+
+    bassin = armature.pose.bones[BASSIN]
+    matrice = bassin.matrix.copy()
+    matrice.translation -= armature.matrix_world.inverted().to_3x3() @ _vecteur(
+        (0, 0, bas)
+    )
+    bassin.matrix = matrice
+    contexte.view_layer.update()
 
 
 def poser_au_sol(contexte, armature):
@@ -962,8 +1007,12 @@ def appliquer(armature, nom, images, contexte):
         # place : les deux ne peuvent pas décider en même temps, et c'est la
         # hauteur qui commande, sans quoi descendre le corps décollerait les
         # mains du point où on vient de les poser.
-        if hauteur is None and geste.get("ancrage", True):
-            poser_au_sol(contexte, armature)
+        ancrage = geste.get("ancrage", True)
+        if hauteur is None and ancrage:
+            if isinstance(ancrage, (list, tuple)):
+                poser_sur(contexte, armature, ancrage)
+            else:
+                poser_au_sol(contexte, armature)
             bassin.keyframe_insert("location", frame=numero)
 
     return list(range(1, images + 1))
