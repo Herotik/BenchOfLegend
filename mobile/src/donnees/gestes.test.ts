@@ -54,6 +54,15 @@ describe("table des gestes", () => {
     expect(inconnus).toEqual([]);
   });
 
+  it("couvre **tous** les exercices du catalogue", () => {
+    // Le contrôle qui compte. Sans lui, un exercice ajouté au catalogue
+    // arriverait dans l'app sans démonstration, et personne ne le verrait
+    // avant qu'un utilisateur tombe dessus en pleine séance.
+    const sansGeste = EXERCISES.map((e) => e.name).filter((nom) => !gesteDe(nom));
+    expect(sansGeste).toEqual([]);
+    expect(EXERCISES.length).toBeGreaterThan(140);
+  });
+
   it("ne vise que des gestes qui existent", () => {
     const { slugs } = planchesDeclarees();
     const orphelins = Object.entries(GESTE_PAR_EXERCICE)
@@ -68,8 +77,11 @@ describe("table des gestes", () => {
     expect(fichiers.filter((f) => !existsSync(f))).toEqual([]);
   });
 
-  it("rend null pour un exercice sans geste, sans lever", () => {
-    expect(gesteDe("Marche rapide sur tapis")).toBeNull();
+  it("rend null sans lever pour un nom qu'il ne connaît pas", () => {
+    // Un nom absent du catalogue **exprès** : tous ceux qui y figurent ont
+    // désormais un geste, et prendre l'un d'eux ferait de ce test le
+    // contraire de celui qui le précède.
+    expect(gesteDe("Exercice qui n'existe pas")).toBeNull();
     expect(gesteDe(null)).toBeNull();
     expect(gesteDe(undefined)).toBeNull();
     expect(gesteDe("")).toBeNull();
