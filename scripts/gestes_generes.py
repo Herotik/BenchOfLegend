@@ -630,7 +630,9 @@ def basculer_bassin(armature, haut, regard, repos, contexte):
     signifier « comme le modèle se tient » une fois le corps couché : un torse
     resterait sinon vertical sur un corps à l'horizontale.
     """
-    from mathutils import Vector
+    import math
+
+    from mathutils import Matrix, Vector
 
     contexte.view_layer.update()
 
@@ -648,7 +650,19 @@ def basculer_bassin(armature, haut, regard, repos, contexte):
     vers_haut = debout.rotation_difference(h)
     apres = vers_haut @ devant
     apres = (apres - h * apres.dot(h)).normalized()
-    rotation = (apres.rotation_difference(r) @ vers_haut).to_matrix()
+
+    # Le demi-tour est un cas à part, et c'est celui qui donnait un personnage
+    # en équilibre sur la tête. Entre deux directions **opposées**,
+    # `rotation_difference` doit choisir un axe parmi une infinité de
+    # possibilités et en prend un arbitraire — alors qu'ici un seul convient :
+    # la colonne elle-même. C'est exactement le cas du corps à plat ventre, où
+    # aligner la colonne laisse le regard tourné vers le plafond.
+    if apres.dot(r) < -0.999:
+        vers_regard = Matrix.Rotation(math.pi, 3, h)
+    else:
+        vers_regard = apres.rotation_difference(r).to_matrix()
+
+    rotation = (vers_regard @ vers_haut.to_matrix())
 
     monde = armature.matrix_world.to_3x3()
     locale = monde.inverted() @ rotation @ monde

@@ -155,7 +155,37 @@ def directions_utilisables(pose, _geste):
     ]
 
 
-CONTROLES = (directions_utilisables, genou_a_lendroit, dos_plat, symetrie)
+def assise_utilisable(_pose, geste):
+    """Le haut et le regard d'une assise doivent définir un repère.
+
+    Colinéaires, ils n'en définissent aucun. Et le cas **opposé** mérite d'être
+    signalé à part : c'est celui du corps à plat ventre, où aligner la colonne
+    laisse le regard tourné vers le plafond. La rotation qui reste à faire est
+    alors un demi-tour, dont l'axe n'est pas déterminé par les deux directions
+    seules — il a donné un personnage en équilibre sur la tête avant qu'on le
+    traite explicitement.
+    """
+    assise = geste.get("assise")
+    if not assise:
+        return []
+    haut, regard = _normalise(assise[0]), _normalise(assise[1])
+    produit = sum(a * b for a, b in zip(haut, regard))
+    if abs(produit) > 0.99:
+        return [
+            f"assise dégénérée : haut {haut} et regard {regard} sont "
+            f"{'opposés' if produit < 0 else 'confondus'}, ils ne définissent "
+            "aucun repère"
+        ]
+    return []
+
+
+CONTROLES = (
+    directions_utilisables,
+    genou_a_lendroit,
+    dos_plat,
+    symetrie,
+    assise_utilisable,
+)
 
 
 def main():
