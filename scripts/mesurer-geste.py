@@ -120,15 +120,38 @@ for numero in (numeros[0], numeros[len(numeros) // 2]):
         print(f"  {membre} : le gauche est à {ecart * 100:+.0f} cm sur la gauche du "
               f"corps {'← CROISÉS' if ecart < -0.02 else ''}")
 
+    # De quel côté regarde la paume. Une main peut être posée bien à plat et
+    # l'être **à l'envers**, dos au sol : la direction des doigts est la même,
+    # seul le roulis change, et rien ne le disait avant ce contrôle.
+    #
+    # Le sens se tranche par le pouce, jamais par un signe supposé — c'est
+    # comme ça qu'il avait été pris à l'envers. Main droite à plat sur une
+    # table, doigts vers le nord : le pouce pointe à l'ouest. Donc la normale
+    # vaut `pouce × doigts` à droite, et `doigts × pouce` à gauche.
+    for cote, nom in (("Left", "G"), ("Right", "D")):
+        os_main = arm.pose.bones[f"mixamorig:{cote}Hand"]
+        os_pouce = arm.pose.bones[f"mixamorig:{cote}HandThumb1"]
+        doigts = ((arm.matrix_world @ os_main.tail)
+                  - (arm.matrix_world @ os_main.head)).normalized()
+        vers = (arm.matrix_world @ os_pouce.tail) - (arm.matrix_world @ os_main.head)
+        vers = (vers - doigts * vers.dot(doigts)).normalized()
+        paume = (doigts.cross(vers) if cote == "Left" else vers.cross(doigts))
+        etat = ("vers le sol" if paume.z < -0.5
+                else "À L’ENVERS, dos au sol" if paume.z > 0.5 else "sur le chant")
+        print(f"  paume {nom} : {tuple(round(c, 2) for c in paume)} — {etat}")
+
     # Les appuis, os par os. Un geste au sol se juge d'abord là-dessus : si un
     # appui déclaré flotte, la posture est fausse quoi que disent les autres
     # mesures. C'est la faute qu'une planche relevée en vidéo a livrée deux fois
     # de suite — corps parfaitement droit, chevilles en l'air.
+    #
+    # Mesuré sur la **chair**, comme l'ancrage lui-même : l'os de la main passe
+    # au milieu de la paume et se tient six centimètres au-dessus du sol quand
+    # celle-ci est parfaitement posée. Le lire sur l'os faisait crier au loup à
+    # chaque appui correct.
     ancrage = gg.GESTES[geste].get("ancrage", True)
     if isinstance(ancrage, (list, tuple)):
         print("  --- appuis ---")
-        for nom in ancrage:
-            pb = arm.pose.bones[f"mixamorig:{nom}"]
-            bas = min((arm.matrix_world @ bout).z for bout in (pb.head, pb.tail))
-            print(f"  {nom:14s} touche à z={bas * 100:+5.1f} cm "
-                  f"{'← EN L’AIR' if bas > 0.05 else ''}")
+        for nom, point in gg.contacts(bpy.context, arm, ancrage).items():
+            print(f"  {nom:14s} touche à z={point.z * 100:+5.1f} cm "
+                  f"{'← EN L’AIR' if point.z > 0.015 else ''}")

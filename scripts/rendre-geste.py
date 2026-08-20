@@ -89,7 +89,10 @@ def arguments():
         sys.exit(0)
 
     if len(apres) < 2:
-        sys.exit("Usage : ... -- <fichier.fbx> <dossier-sortie> [--images N] [--taille N] [--vue profil|face] [--essai]")
+        sys.exit(
+            "Usage : ... -- <fichier.fbx> <dossier-sortie> [--images N] "
+            "[--taille N] [--vue profil|face] [--essai] [--sol]"
+        )
 
     def valeur(nom, defaut):
         return apres[apres.index(nom) + 1] if nom in apres else defaut
@@ -105,6 +108,11 @@ def arguments():
         "echelle": float(valeur("--echelle", 0)) or None,
         "geste": valeur("--geste", None),
         "essai": "--essai" in apres,
+        # Le sol ne part **pas** dans l'app : la vignette y est détourée et un
+        # plancher la fermerait. Il sert à juger un geste au sol, où l'œil n'a
+        # sinon aucun repère — une main posée et une main flottant à trois
+        # centimètres sont indiscernables sur fond blanc.
+        "sol": "--sol" in apres,
     }
 
 
@@ -181,7 +189,30 @@ def encombrement(images):
     return mini, maxi
 
 
-def placer_camera(mini, maxi, vue, echelle):
+def direction_de_vue(vue):
+    """Où se tient la caméra par rapport au sujet, et comment elle est tournée.
+
+    Sortie en commun pour le cadrage et pour l'éclairage de contrôle : une
+    ombre ne se voit que si elle tombe **du côté de la caméra**, ce qui demande
+    de savoir de quel côté elle est.
+    """
+    # Z est la verticale dans Blender ; Mixamo exporte le personnage face à -Y.
+    if vue == "face":
+        return Vector((0, -1, 0)), (math.radians(90), 0, 0)
+    if vue == "trois-quarts":
+        # Pour les gestes qui plient le buste. De face, un corps penché est
+        # tellement raccourci qu'un oiseau ne se distingue plus d'une élévation
+        # latérale ; de profil, l'écartement des bras disparaît dans l'axe de
+        # la caméra. Le trois-quarts montre les deux.
+        oblique = math.sqrt(0.5)
+        return Vector((-oblique, -oblique, 0)), (math.radians(90), 0, math.radians(-45))
+    # De profil, tourné vers la droite de l'image — même convention que les
+    # motifs vectoriels, pour qu'un exercice ne change pas d'orientation selon
+    # qu'il est rendu ou dessiné.
+    return Vector((-1, 0, 0)), (math.radians(90), 0, math.radians(-90))
+
+
+def placer_camera(mini, maxi, vue, echelle, plongee=0.0):
     """Caméra orthographique.
 
     Avec `echelle`, le champ est imposé et **identique pour tous les gestes** :
@@ -192,29 +223,25 @@ def placer_camera(mini, maxi, vue, echelle):
     centre = (mini + maxi) / 2
     taille = maxi - mini
 
-    # Z est la verticale dans Blender ; Mixamo exporte le personnage face à -Y.
+    direction, rotation = direction_de_vue(vue)
     if vue == "face":
-        direction = Vector((0, -1, 0))
-        rotation = (math.radians(90), 0, 0)
         largeur = taille.x
     elif vue == "trois-quarts":
-        # Pour les gestes qui plient le buste. De face, un corps penché est
-        # tellement raccourci qu'un oiseau ne se distingue plus d'une élévation
-        # latérale ; de profil, l'écartement des bras disparaît dans l'axe de
-        # la caméra. Le trois-quarts montre les deux.
-        oblique = math.sqrt(0.5)
-        direction = Vector((-oblique, -oblique, 0))
-        rotation = (math.radians(90), 0, math.radians(-45))
         largeur = (taille.x + taille.y) * 0.5
     else:
-        # De profil, tourné vers la droite de l'image — même convention que les
-        # motifs vectoriels, pour qu'un exercice ne change pas d'orientation
-        # selon qu'il est rendu ou dessiné.
-        direction = Vector((-1, 0, 0))
-        rotation = (math.radians(90), 0, math.radians(-90))
         largeur = taille.y
 
     recul = max(taille) * 3 + 5
+    # Une caméra strictement horizontale voit le sol **par la tranche** : le
+    # plancher devient une ligne d'un pixel, invisible, et l'on n'a rien gagné
+    # à le poser. Quelques degrés de plongée suffisent à l'étaler sous le
+    # personnage. Réservé au contrôle : les vignettes de l'app gardent leur
+    # cadrage de face, qui ne doit pas changer d'un geste à l'autre.
+    if plongee:
+        angle = math.radians(plongee)
+        direction = direction * math.cos(angle) + Vector((0, 0, 1)) * math.sin(angle)
+        rotation = (rotation[0] - angle, rotation[1], rotation[2])
+
     bpy.ops.object.camera_add(location=centre + direction * recul, rotation=rotation)
     camera = bpy.context.object
     camera.data.type = "ORTHO"
@@ -223,7 +250,7 @@ def placer_camera(mini, maxi, vue, echelle):
     bpy.context.scene.camera = camera
 
 
-def eclairer(mini, maxi):
+def eclairer(mini, maxi, sol=False, vue="profil"):
     """Trois soleils : principale, adoucissante, contre-jour.
 
     Des soleils et non des sources d'aire : leur intensité est une irradiance,
@@ -234,11 +261,26 @@ def eclairer(mini, maxi):
     centre = (mini + maxi) / 2
     portee = max(maxi - mini) + 2
 
-    sources = [
-        (Vector((-1.0, -1.0, 1.2)), 4.0),
-        (Vector((1.2, -0.8, 0.2)), 1.6),
-        (Vector((0.4, 1.4, 0.8)), 2.2),
-    ]
+    if sol:
+        # Éclairage de contrôle, pas de vignette. Les trois sources d'usage
+        # viennent de côté et se remplissent mutuellement les ombres : sur un
+        # plancher, elles ne montrent rien.
+        #
+        # Une seule source ici, placée **à l'opposé de la caméra** : l'ombre
+        # tombe alors du côté de l'objectif, en avant du corps, où on la voit.
+        # Posée à la verticale elle se cachait sous les mains, et le plancher
+        # n'apprenait pas davantage qu'un fond blanc.
+        vers_camera, _ = direction_de_vue(vue)
+        sources = [
+            (-vers_camera * 0.75 + Vector((0, 0, 1.0)), 3.2),
+            (vers_camera * 0.9 + Vector((0, 0, 0.3)), 0.9),
+        ]
+    else:
+        sources = [
+            (Vector((-1.0, -1.0, 1.2)), 4.0),
+            (Vector((1.2, -0.8, 0.2)), 1.6),
+            (Vector((0.4, 1.4, 0.8)), 2.2),
+        ]
     for decalage, energie in sources:
         bpy.ops.object.light_add(type="SUN", location=centre + decalage * portee)
         lampe = bpy.context.object
@@ -246,13 +288,59 @@ def eclairer(mini, maxi):
         # Un soleil éclaire selon son orientation, jamais selon sa position.
         direction = (centre - lampe.location).normalized()
         lampe.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
+        if sol:
+            # Une ombre de soleil est projetée dans une carte étalée par défaut
+            # sur deux cents mètres. À cette échelle, un personnage d'un mètre
+            # quatre-vingt tient dans neuf pixels, et l'ombre d'une main dans
+            # moins d'un : elle disparaît purement et simplement. Ramener la
+            # portée à celle du sujet la fait apparaître.
+            lampe.data.shadow_cascade_max_distance = portee * 2
+            lampe.data.shadow_buffer_bias = 0.005
 
     # Un fond de ciel discret : sans lui, tout ce que les trois sources ne
     # touchent pas tombe au noir pur, ce qui creuse les plis d'un vêtement.
     monde = bpy.data.worlds.new("Monde")
     monde.use_nodes = True
-    monde.node_tree.nodes["Background"].inputs[1].default_value = 0.35
+    # Un ciel plus sombre quand on veut voir le contact : c'est lui qui
+    # remplit les ombres, et une ombre remplie ne dit plus rien.
+    monde.node_tree.nodes["Background"].inputs[1].default_value = 0.12 if sol else 0.35
     bpy.context.scene.world = monde
+
+
+def poser_le_sol(mini, maxi):
+    """Un plancher à hauteur zéro, pour vérifier ce qui touche vraiment.
+
+    Sans lui, un geste au sol se juge sans repère : le personnage flotte sur du
+    blanc, et l'on ne distingue pas une paume posée d'une paume à trois
+    centimètres. C'est ce qui a laissé passer, coup sur coup, des chevilles en
+    l'air puis des mains enfoncées dans le plancher.
+
+    Il ne reçoit **que** l'ombre : la surface reste claire et discrète, pour
+    qu'on regarde le personnage et non le décor.
+    """
+    largeur = max(maxi - mini) * 4 + 4
+    centre = (mini + maxi) / 2
+    bpy.ops.mesh.primitive_plane_add(size=largeur, location=(centre.x, centre.y, 0))
+    sol = bpy.context.object
+    matiere = bpy.data.materials.new("Sol")
+    matiere.use_nodes = True
+    principe = matiere.node_tree.nodes["Principled BSDF"]
+    # Un gris moyen, pas un blanc : sous quatre soleils, un sol clair sature
+    # et l'ombre portée disparaît dans le blanc au lieu de s'y détacher.
+    principe.inputs["Base Color"].default_value = (0.34, 0.34, 0.37, 1)
+    principe.inputs["Roughness"].default_value = 0.9
+    sol.data.materials.append(matiere)
+
+    # Sans ombre portée, un plancher ne prouve rien : le personnage se
+    # superpose au sol sans qu'on sache s'il le touche. C'est l'ombre au pied
+    # de la main qui répond, et l'occlusion ambiante qui la creuse au contact.
+    scene = bpy.context.scene
+    scene.eevee.use_shadows = True
+    scene.eevee.use_soft_shadows = True
+    scene.eevee.use_gtao = True
+    scene.eevee.gtao_distance = 0.2
+    scene.eevee.shadow_cascade_size = "4096"
+    return sol
 
 
 def configurer_rendu(taille, sortie):
@@ -311,8 +399,12 @@ def main():
     debut, fin = numeros[0], numeros[-1]
 
     mini, maxi = encombrement(numeros)
-    placer_camera(mini, maxi, vue, o["echelle"])
-    eclairer(mini, maxi)
+    # **Avant** la caméra et l'éclairage, et après l'encombrement : le sol ne
+    # doit pas entrer dans le cadrage, qui se règle sur le personnage seul.
+    if o["sol"]:
+        poser_le_sol(mini, maxi)
+    placer_camera(mini, maxi, vue, o["echelle"], plongee=14 if o["sol"] else 0)
+    eclairer(mini, maxi, sol=o["sol"], vue=vue)
     configurer_rendu(o["taille"], o["sortie"])
 
     for rang, numero in enumerate(numeros):

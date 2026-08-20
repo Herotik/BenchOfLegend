@@ -75,6 +75,10 @@ def _direction(valeur):
     """
     if valeur is g.REPOS or valeur is g.SUIVRE or isinstance(valeur, g.Appui):
         return None
+    # Une main posée à plat porte bien une direction — plus le roulis de sa
+    # paume, dont les contrôles n'ont rien à dire.
+    if isinstance(valeur, g.APlat):
+        valeur = valeur.direction
     return _normalise(valeur)
 
 
@@ -242,11 +246,17 @@ def symetrie(pose, geste):
 
 def directions_utilisables(pose, _geste):
     """Une direction nulle ne définit aucune orientation."""
-    return [
-        f"{nom.removeprefix('mixamorig:')} : direction nulle"
-        for nom, v in pose.items()
-        if _direction(v) is not None and sum(x * x for x in v) < 1e-6
-    ]
+    fautes = []
+    for nom, valeur in pose.items():
+        direction = _direction(valeur)
+        if direction is None:
+            continue
+        # Repassé par `_direction`, qui déballe une main posée à plat : c'est
+        # sa direction qu'on éprouve, pas l'objet qui la porte.
+        brute = valeur.direction if isinstance(valeur, g.APlat) else valeur
+        if sum(x * x for x in brute) < 1e-6:
+            fautes.append(f"{nom.removeprefix('mixamorig:')} : direction nulle")
+    return fautes
 
 
 def assise_utilisable(_pose, geste):

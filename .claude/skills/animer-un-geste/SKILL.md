@@ -80,6 +80,26 @@ Trois choses manquent systématiquement, et chacune a livré une faute :
   orienté ni omoplate. La main se relève avec l'index (`INDEX`), la tête avec
   les **oreilles** — s'en remettre au nez enfonce le menton dans la poitrine.
 
+- **La profondeur.** Les deux premières coordonnées se lisent sur les pixels,
+  la troisième s'infère et se trompe. Un sujet filmé de trois quarts a son
+  écartement de bras en partie dans cette profondeur : `--bras-tendus` remet
+  les bras porteurs à la verticale plutôt que d'y croire.
+
+### 1 ter. Ce qui touche le sol est la chair, pas l'os
+
+L'os de la main passe au milieu de la paume : le poser à zéro enfonce la main
+de trois centimètres dans le plancher. `contacts()` mesure les sommets du
+maillage que chaque os d'appui emporte — lui et sa descendance, la main avec
+ses doigts, le pied avec ses orteils.
+
+Et une main **posée** n'est pas encore une main **à plat** : la direction des
+doigts ne dit rien du roulis, et une paume peut regarder de côté ou le
+plafond. D'où `APlat(direction, paume)`. Le sens de la paume se tranche par le
+**pouce**, jamais par un signe supposé : main droite à plat sur une table,
+doigts vers le nord, le pouce pointe à l'ouest — donc la normale vaut
+`pouce × doigts` à droite et `doigts × pouce` à gauche. Le signe posé au
+jugé s'est révélé inversé, et les deux mains étaient à plat… dos au sol.
+
 ### 2. Écrire la pose
 
 Dans `scripts/gestes_generes.py`. Les règles qui coûtent cher quand on les
@@ -130,6 +150,25 @@ corps couché sur le dos, ce que l'image seule laisse ambigu et ce qui a coûté
 plusieurs tours. Les **appuis**, eux, se lisent en premier sur un geste au sol :
 si un os déclaré porteur flotte, la posture est fausse quoi que disent les
 autres mesures.
+
+### 4 bis. Matérialiser le sol pour juger à l'œil
+
+    blender -b -noaudio -P scripts/rendre-geste.py -- <corps.fbx> <sortie> \
+        --geste <nom> --echelle 2.4 --images 1 --sol
+
+Sur fond blanc, une main posée et une main flottant à trois centimètres sont
+indiscernables : c'est ce qui a laissé passer des chevilles en l'air, puis des
+mains enfoncées dans le plancher. `--sol` pose un plancher, fait plonger la
+caméra de quatorze degrés — sans quoi le plan est vu par la tranche — et
+n'allume qu'une source, à l'opposé de l'objectif, pour que l'ombre tombe du
+côté où on la voit.
+
+Un détail qui a coûté quatre essais : la carte d'ombre d'un soleil s'étale par
+défaut sur deux cents mètres, où l'ombre d'une main tient dans moins d'un
+pixel. `shadow_cascade_max_distance` la ramène à la taille du sujet.
+
+Ce mode ne sert **qu'au contrôle** : la vignette de l'app est détourée, un
+plancher la fermerait.
 
 ### 5. Rendre, et seulement alors
 

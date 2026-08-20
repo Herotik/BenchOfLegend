@@ -98,6 +98,30 @@ SUIVRE = "suivre"
 MAINS = ("mixamorig:LeftHand", "mixamorig:RightHand")
 
 
+class APlat:
+    """Une main posée : sa direction **et** le côté vers lequel la paume regarde.
+
+    Une direction seule ne suffit pas à poser une main. Doigts vers l'avant, la
+    main peut encore tourner autour de son propre axe : à plat, sur le chant,
+    ou dos au sol. Les trois ont la même direction. C'est ce qui a donné une
+    paume mesurée à 96° du sol — ouverte, doigts écartés, et debout sur sa
+    tranche.
+
+    `paume` est la direction du monde vers laquelle la paume fait face : le sol
+    pour une planche, c'est-à-dire `(0, 0, -1)`. Une main dos au sol se dit
+    tout aussi bien, avec `(0, 0, 1)`.
+    """
+
+    __slots__ = ("direction", "paume")
+
+    def __init__(self, direction, paume=(0, 0, -1)):
+        self.direction = tuple(direction)
+        self.paume = tuple(paume)
+
+    def __repr__(self):
+        return f"APlat(direction={self.direction}, paume={self.paume})"
+
+
 class Appui:
     """Un membre qui **touche** quelque chose, décrit par un point et non un axe.
 
@@ -564,8 +588,8 @@ GESTES = {
                 _os("RightArm"): (+0.00, +0.00, -1.00),
                 _os("LeftForeArm"): (+0.00, +0.00, -1.00),
                 _os("RightForeArm"): (+0.00, +0.00, -1.00),
-                _os("LeftHand"): (+0.00, +1.00, +0.00),
-                _os("RightHand"): (+0.00, +1.00, +0.00),
+                _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
+                _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
                 _os("LeftUpLeg"): (-0.05, -0.97, -0.23),
                 _os("RightUpLeg"): (-0.03, -0.95, -0.31),
                 _os("LeftLeg"): (-0.10, -0.99, -0.09),
@@ -583,8 +607,8 @@ GESTES = {
                 _os("RightArm"): (+0.00, +0.00, -1.00),
                 _os("LeftForeArm"): (+0.00, +0.00, -1.00),
                 _os("RightForeArm"): (+0.00, +0.00, -1.00),
-                _os("LeftHand"): (+0.00, +1.00, +0.00),
-                _os("RightHand"): (+0.00, +1.00, +0.00),
+                _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
+                _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
                 _os("LeftUpLeg"): (-0.05, -0.97, -0.23),
                 _os("RightUpLeg"): (-0.03, -0.95, -0.31),
                 _os("LeftLeg"): (-0.11, -0.99, -0.09),
@@ -638,7 +662,7 @@ def _parcours(cles, images, repos):
         for nom, valeur in pose.items():
             if nom not in repos:
                 continue
-            if isinstance(valeur, Appui) or valeur is SUIVRE:
+            if isinstance(valeur, (Appui, APlat)) or valeur is SUIVRE:
                 # Ni l'un ni l'autre n'est une direction. Un appui se résoudra
                 # une fois la chaîne parente posée, quand on saura où se trouve
                 # l'épaule ou la hanche ; un os qui suit ne se vise jamais.
@@ -657,6 +681,16 @@ def _parcours(cles, images, repos):
                 "Un os suit son parent dans une pose et vise une direction "
                 "dans l'autre ; il faut choisir l'un ou l'autre pour tout le "
                 "geste, sans quoi il n'y a rien à interpoler entre les deux."
+            )
+        if isinstance(a, APlat) and isinstance(b, APlat):
+            return APlat(
+                Vector(a.direction).lerp(Vector(b.direction), e).normalized(),
+                Vector(a.paume).lerp(Vector(b.paume), e).normalized(),
+            )
+        if isinstance(a, APlat) or isinstance(b, APlat):
+            raise SystemExit(
+                "Une main est posée à plat dans une pose et libre dans l'autre ; "
+                "il faut choisir l'un ou l'autre pour tout le geste."
             )
         if isinstance(a, Appui) and isinstance(b, Appui):
             # Un point s'interpole **linéairement** : le normaliser le
@@ -695,8 +729,25 @@ def _direction(armature, os_pose):
     return (armature.matrix_world.to_3x3() @ os_pose.matrix.col[1].to_3d()).normalized()
 
 
-def viser(armature, os_pose, direction, repos, contexte):
+def viser(armature, os_pose, direction, repos, contexte, face=None):
     """Oriente l'os vers `direction`, exprimée dans le monde.
+
+    ## Le roulis, quand il compte
+
+    `face` sert aux os dont la rotation **autour** de leur axe se voit : la
+    main, et elle seule pour l'instant. Une main posée à plat et une main
+    posée sur le chant ont exactement la même direction — du poignet vers les
+    doigts — et ne diffèrent que par ce roulis. C'est ce qui donnait une paume
+    à 96° du sol : ouverte, doigts écartés, et debout sur sa tranche.
+
+    `face` est la direction du monde vers laquelle la **paume** doit regarder.
+
+    Sur ce squelette, la paume est l'axe local **+Z** de l'os de la main. Le
+    signe s'obtient par le pouce, et pas autrement : main droite à plat sur une
+    table, doigts vers le nord, le pouce pointe à l'ouest — donc la normale
+    vaut `pouce × doigts` à droite et `doigts × pouce` à gauche. Poser ce signe
+    au jugé, comme au premier essai, retourne les deux mains dos au sol : à
+    plat, et à l'envers.
 
     ## Pourquoi partir du **repos** et non de la pose courante
 
@@ -715,10 +766,30 @@ def viser(armature, os_pose, direction, repos, contexte):
 
     `repos` est cette orientation de repos, en espace armature.
     """
-    from mathutils import Vector
+    import math
+
+    from mathutils import Matrix, Vector
+
     cible = (armature.matrix_world.inverted().to_3x3() @ Vector(direction)).normalized()
     depuis = repos.col[1].normalized()
-    oriente = (depuis.rotation_difference(cible).to_matrix() @ repos).to_4x4()
+    tourne = depuis.rotation_difference(cible).to_matrix() @ repos
+
+    if face is not None:
+        voulue = (armature.matrix_world.inverted().to_3x3() @ Vector(face)).normalized()
+        # Ce qu'on cherche est une rotation **autour de l'axe de l'os** : elle
+        # seule laisse la direction intacte. On compare donc les deux normales
+        # débarrassées de leur part le long de l'axe, et l'angle signé entre
+        # elles est le roulis à rattraper.
+        actuelle = tourne.col[2].to_3d().normalized()
+        a = (actuelle - cible * actuelle.dot(cible))
+        b = (voulue - cible * voulue.dot(cible))
+        if a.length > 1e-4 and b.length > 1e-4:
+            a.normalize()
+            b.normalize()
+            angle = math.atan2(a.cross(b).dot(cible), a.dot(b))
+            tourne = Matrix.Rotation(angle, 3, cible) @ tourne
+
+    oriente = tourne.to_4x4()
     # La position, elle, vient de la chaîne telle qu'elle est **maintenant** :
     # un os suit son parent quand celui-ci tourne.
     oriente.translation = os_pose.matrix.translation
@@ -811,6 +882,87 @@ def atteindre(racine, cible, pole, longueurs):
     return (coude - racine).normalized(), (cible - coude).normalized()
 
 
+#: Sommets portés par chaque os d'appui, retenus d'un appel à l'autre. Le
+#: dépouillement des groupes de sommets coûte une seconde ; le refaire à chaque
+#: image d'un rendu le multiplierait par vingt.
+_CHAIR = {}
+
+
+def _chair_portee(contexte, armature, os_porteurs):
+    """Quels sommets du maillage chaque os d'appui emporte avec lui.
+
+    On prend l'os **et sa descendance** : une main porte ses doigts, un pied
+    ses orteils, et ce sont eux qui touchent le sol. Le partage se lit dans les
+    groupes de sommets, c'est-à-dire dans le poids que le modèle a lui-même
+    attribué à chaque os.
+    """
+    cle = (armature.name, tuple(os_porteurs))
+    if cle in _CHAIR:
+        return _CHAIR[cle]
+
+    familles = {}
+    for nom in os_porteurs:
+        racine = armature.pose.bones[f"mixamorig:{nom}"]
+        familles[nom] = {racine.name} | {
+            enfant.name for enfant in racine.children_recursive
+        }
+
+    sortie = {nom: [] for nom in os_porteurs}
+    for objet in contexte.scene.objects:
+        if objet.type != "MESH" or objet.find_armature() is not armature:
+            continue
+        noms = {groupe.index: groupe.name for groupe in objet.vertex_groups}
+        for nom, famille in familles.items():
+            groupes = {i for i, n in noms.items() if n in famille}
+            if not groupes:
+                continue
+            # Plus de la moitié du poids : le sommet appartient franchement à
+            # ce membre. En dessous, il est partagé avec le voisin et bouge
+            # aussi avec lui — le compter fausserait le contact.
+            choisis = [
+                v.index
+                for v in objet.data.vertices
+                if sum(e.weight for e in v.groups if e.group in groupes) > 0.5
+            ]
+            if choisis:
+                sortie[nom].append((objet, choisis))
+
+    _CHAIR[cle] = sortie
+    return sortie
+
+
+def contacts(contexte, armature, os_porteurs):
+    """Point le plus bas de la **chair** de chaque appui, dans le monde.
+
+    ## Pourquoi pas l'os
+
+    Parce que ce n'est pas lui qui touche. L'os de la main passe au milieu de
+    la paume : le poser à zéro enfonce la chair de trois centimètres dans le
+    sol. Sur une planche, où mains et pieds portent tout le corps, l'erreur se
+    voit aussitôt qu'on matérialise le plancher — et jusque-là, elle passait
+    inaperçue faute de repère.
+    """
+    depsgraph = contexte.evaluated_depsgraph_get()
+    sortie = {}
+    for nom, morceaux in _chair_portee(contexte, armature, os_porteurs).items():
+        bas = None
+        for objet, indices in morceaux:
+            evalue = objet.evaluated_get(depsgraph)
+            monde = evalue.matrix_world
+            for i in indices:
+                p = monde @ evalue.data.vertices[i].co
+                if bas is None or p.z < bas.z:
+                    bas = p
+        if bas is None:
+            # Un squelette sans maillage — le banc de mesure en importe un.
+            # L'os reste alors la meilleure approximation disponible.
+            bas = armature.matrix_world @ armature.pose.bones[
+                f"mixamorig:{nom}"
+            ].tail
+        sortie[nom] = bas
+    return sortie
+
+
 def mettre_d_aplomb(contexte, armature, os_porteurs):
     """Fait pencher le corps entier jusqu'à ce que ses appuis soient de niveau.
 
@@ -833,60 +985,88 @@ def mettre_d_aplomb(contexte, armature, os_porteurs):
 
     ## Comment
 
-    On prend le point de contact de chaque os porteur, on cherche la direction
-    horizontale selon laquelle ils s'étalent — des mains vers les pieds, pour
-    une planche —, on ajuste la droite de leurs hauteurs le long de cette
-    direction, et l'on fait tourner le corps de la pente trouvée.
+    On prend le point de contact de chaque appui et l'on cherche le **plan**
+    des moindres carrés qui les traverse, puis on fait tourner le corps pour
+    coucher ce plan à l'horizontale.
+
+    Un plan, et non une droite le long du corps : sur une planche, les appuis
+    s'étalent aussi en largeur, et la première version — qui ne corrigeait que
+    la pente tête-pieds — laissait un centimètre de gîte, main droite et pied
+    droit en l'air. Un centimètre passe inaperçu tant qu'on ne dessine pas le
+    sol, et saute aux yeux dès qu'on le dessine.
 
     Ça ne remplace pas `poser_sur`, ça le précède : mettre d'aplomb rend les
     appuis parallèles au sol, poser les y amène.
+
+    Deux passes plutôt qu'une : le point de contact d'un membre est le sommet
+    le plus bas de sa chair, et ce n'est plus le même une fois le corps tourné.
+    La seconde passe rattrape ce glissement, la troisième n'a jamais rien à
+    corriger.
     """
+    for _ in range(3):
+        if not _une_passe_daplomb(contexte, armature, os_porteurs):
+            return
+
+
+def _une_passe_daplomb(contexte, armature, os_porteurs):
+    """Une correction d'assiette. Renvoie vrai s'il reste à faire."""
     import math
 
-    from mathutils import Matrix, Vector
+    from mathutils import Vector
 
     contexte.view_layer.update()
 
-    points = []
-    for nom in os_porteurs:
-        pb = armature.pose.bones[f"mixamorig:{nom}"]
-        bouts = [armature.matrix_world @ bout for bout in (pb.head, pb.tail)]
-        # Le point qui touche est le plus bas des deux : le bout des doigts
-        # pour une main posée, la pointe pour un pied.
-        points.append(min(bouts, key=lambda p: p.z))
-
-    if len(points) < 2:
-        return
+    points = list(contacts(contexte, armature, os_porteurs).values())
+    if len(points) < 3:
+        return False
 
     centre = sum(points, Vector((0, 0, 0))) / len(points)
-    plats = [Vector((p.x - centre.x, p.y - centre.y)) for p in points]
+    plats = [(p.x - centre.x, p.y - centre.y, p.z - centre.z) for p in points]
 
-    # Direction d'étalement des appuis. Deux appuis groupés au même endroit —
-    # les deux mains seules — n'en désignent aucune, et il n'y a alors rien à
-    # redresser.
-    etale = max(plats, key=lambda v: v.length)
-    if etale.length < 0.05:
-        return
-    u = etale.normalized()
+    # Plan z = a·x + b·y, centré sur les appuis. Le système normal est celui
+    # d'une régression à deux variables ; le terme constant disparaît puisque
+    # l'origine est déjà au centre.
+    xx = sum(x * x for x, _, _ in plats)
+    xy = sum(x * y for x, y, _ in plats)
+    yy = sum(y * y for _, y, _ in plats)
+    xz = sum(x * z for x, _, z in plats)
+    yz = sum(y * z for _, y, z in plats)
 
-    # Droite des moindres carrés z = pente × distance, l'origine étant au
-    # centre des appuis.
-    le_long = [v.dot(u) for v in plats]
-    hauteurs = [p.z - centre.z for p in points]
-    variance = sum(s * s for s in le_long)
-    if variance < 1e-6:
-        return
-    pente = sum(s * z for s, z in zip(le_long, hauteurs)) / variance
+    determinant = xx * yy - xy * xy
+    # Appuis alignés — les deux mains et rien d'autre, ou un corps de profil
+    # parfait : aucun plan ne s'y ajuste, et il n'y a rien à redresser en
+    # travers. On se rabat sur la seule pente que les points désignent.
+    if abs(determinant) < 1e-8:
+        etale = max(plats, key=lambda p: p[0] * p[0] + p[1] * p[1])
+        u = Vector((etale[0], etale[1], 0))
+        if u.length < 0.05:
+            return False
+        u.normalize()
+        le_long = [x * u.x + y * u.y for x, y, _ in plats]
+        variance = sum(s * s for s in le_long)
+        if variance < 1e-6:
+            return False
+        pente = sum(s * z for s, (_, _, z) in zip(le_long, plats)) / variance
+        a, b = pente * u.x, pente * u.y
+    else:
+        a = (xz * yy - yz * xy) / determinant
+        b = (yz * xx - xz * xy) / determinant
 
-    angle = math.atan(pente)
+    # La normale du plan trouvé. La coucher sur la verticale, c'est mettre les
+    # appuis de niveau.
+    normale = Vector((-a, -b, 1.0)).normalized()
+    angle = normale.angle(Vector((0, 0, 1)))
     # Une correction de plus d'un quart de tour ne redresse rien : elle dit que
     # les appuis nommés ne sont pas ceux qui portent. Mieux vaut ne rien faire
     # et laisser la faute visible.
-    if abs(angle) > math.pi / 4:
-        return
+    if angle > math.pi / 4:
+        return False
+    # Un dixième de degré sur un corps d'un mètre quatre-vingt, c'est trois
+    # dixièmes de millimètre au bout : plus rien à gagner.
+    if angle < math.radians(0.1):
+        return False
 
-    axe = Vector((-u.y, u.x, 0)).normalized()
-    rotation = Matrix.Rotation(angle, 3, axe)
+    rotation = normale.rotation_difference(Vector((0, 0, 1))).to_matrix()
 
     monde = armature.matrix_world.to_3x3()
     locale = monde.inverted() @ rotation @ monde
@@ -896,24 +1076,24 @@ def mettre_d_aplomb(contexte, armature, os_porteurs):
     tourne.translation = bassin.matrix.translation
     bassin.matrix = tourne
     contexte.view_layer.update()
+    return True
 
 
 def poser_sur(contexte, armature, os_porteurs):
-    """Descend le corps jusqu'à ce que les os nommés touchent le sol.
+    """Descend le corps jusqu'à ce que les membres nommés touchent le sol.
 
-    Le point le plus bas du **maillage** ne convient pas toujours : le
+    Le point le plus bas du maillage **entier** ne convient pas toujours : le
     personnage porte une cape, et couché sur le côté c'est elle qui traîne au
     sol pendant que ses pieds flottent trente centimètres au-dessus. Nommer les
     os qui portent — l'avant-bras et les pieds d'un gainage latéral — remet la
     décision là où elle appartient, dans le geste.
+
+    Ce qu'on mesure alors reste de la **chair** : celle que ces os emportent,
+    et pas l'os lui-même, qui passe au milieu de la paume.
     """
     contexte.view_layer.update()
-    bas = None
-    for nom in os_porteurs:
-        pb = armature.pose.bones[f"mixamorig:{nom}"]
-        for bout in (pb.head, pb.tail):
-            z = (armature.matrix_world @ bout).z
-            bas = z if bas is None else min(bas, z)
+    hauteurs = [p.z for p in contacts(contexte, armature, os_porteurs).values()]
+    bas = min(hauteurs) if hauteurs else None
 
     if bas is None or abs(bas) < 1e-4:
         return
@@ -1188,7 +1368,14 @@ def appliquer(armature, nom, images, contexte):
                 )
                 resolus[milieu] = suivant
 
-            viser(armature, os_pose, voulu, orientations[os_nom], contexte)
+            paume = None
+            if isinstance(voulu, APlat):
+                voulu, paume = voulu.direction, voulu.paume
+
+            viser(
+                armature, os_pose, voulu, orientations[os_nom], contexte,
+                face=paume,
+            )
             os_pose.rotation_mode = "QUATERNION"
             os_pose.keyframe_insert("rotation_quaternion", frame=numero)
 
