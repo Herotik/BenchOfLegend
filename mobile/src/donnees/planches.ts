@@ -235,6 +235,16 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 2600,
   },
+  // Huit cents millisecondes : c'est un geste **rapide**, et la démonstration
+  // doit le dire. Deux poses seulement, genou droit puis genou gauche, ce qui
+  // fait un grand pas d'une image à l'autre — la boucle se referme donc moins
+  // finement que sur les gestes lents, et c'est le rythme qui le veut.
+  "mountain-climber": {
+    source: require("../../assets/gestes/mountain-climber.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 800,
+  },
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
 
