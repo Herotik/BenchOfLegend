@@ -212,7 +212,7 @@ def direction_de_vue(vue):
     return Vector((-1, 0, 0)), (math.radians(90), 0, math.radians(-90))
 
 
-def placer_camera(mini, maxi, vue, echelle, plongee=0.0):
+def placer_camera(mini, maxi, vue, echelle, plongee=0.0, perspective=False):
     """Caméra orthographique.
 
     Avec `echelle`, le champ est imposé et **identique pour tous les gestes** :
@@ -237,16 +237,39 @@ def placer_camera(mini, maxi, vue, echelle, plongee=0.0):
     # à le poser. Quelques degrés de plongée suffisent à l'étaler sous le
     # personnage. Réservé au contrôle : les vignettes de l'app gardent leur
     # cadrage de face, qui ne doit pas changer d'un geste à l'autre.
+    #
+    # Il en faut une trentaine, pas dix : à quatorze degrés le damier du sol
+    # s'écrase au quart et se lit comme un mur derrière le personnage au lieu
+    # d'un plancher sous lui.
     if plongee:
         angle = math.radians(plongee)
         direction = direction * math.cos(angle) + Vector((0, 0, 1)) * math.sin(angle)
         rotation = (rotation[0] - angle, rotation[1], rotation[2])
 
+    champ = echelle if echelle else max(largeur, taille.z) * 1.15
+
+    if perspective:
+        # Une caméra orthographique ne fait pas **converger** les fuyantes : un
+        # damier au sol y garde des cases identiques d'un bout à l'autre et se
+        # lit comme un mur derrière le personnage. C'est précisément le repère
+        # qu'on cherchait, et l'orthographique le refuse par construction.
+        #
+        # La perspective est donc réservée au contrôle. Les vignettes de l'app
+        # gardent l'orthographique, qui seule garantit qu'un personnage a la
+        # même taille d'un exercice à l'autre.
+        focale = 50.0
+        capteur = 36.0
+        recul = champ / (2 * math.tan(math.atan(capteur / (2 * focale))))
+
     bpy.ops.object.camera_add(location=centre + direction * recul, rotation=rotation)
     camera = bpy.context.object
-    camera.data.type = "ORTHO"
-    # 15 % de marge : le personnage respire sans flotter dans le vide.
-    camera.data.ortho_scale = echelle if echelle else max(largeur, taille.z) * 1.15
+    if perspective:
+        camera.data.type = "PERSP"
+        camera.data.lens = focale
+    else:
+        camera.data.type = "ORTHO"
+        # 15 % de marge : le personnage respire sans flotter dans le vide.
+        camera.data.ortho_scale = champ
     bpy.context.scene.camera = camera
 
 
@@ -315,8 +338,14 @@ def poser_le_sol(mini, maxi):
     centimètres. C'est ce qui a laissé passer, coup sur coup, des chevilles en
     l'air puis des mains enfoncées dans le plancher.
 
-    Il ne reçoit **que** l'ombre : la surface reste claire et discrète, pour
-    qu'on regarde le personnage et non le décor.
+    Le sol est un **damier au décimètre**, et pas un aplat. Un aplat de couleur
+    unie ne donne aucun repère : rien n'y indique où passe le plan, et une main
+    posée s'y confond avec une main qui lévite — c'est ce qui restait illisible
+    après même qu'on eut posé le plancher. Un damier, lui, apporte trois
+    choses : une échelle, une perspective qui dit où est le plan sous le corps,
+    et un contraste sur lequel l'ombre se détache.
+
+    Dix centimètres par case, ce qui donne une main sur une case et demie.
     """
     largeur = max(maxi - mini) * 4 + 4
     centre = (mini + maxi) / 2
@@ -324,11 +353,30 @@ def poser_le_sol(mini, maxi):
     sol = bpy.context.object
     matiere = bpy.data.materials.new("Sol")
     matiere.use_nodes = True
-    principe = matiere.node_tree.nodes["Principled BSDF"]
-    # Un gris moyen, pas un blanc : sous quatre soleils, un sol clair sature
-    # et l'ombre portée disparaît dans le blanc au lieu de s'y détacher.
-    principe.inputs["Base Color"].default_value = (0.34, 0.34, 0.37, 1)
-    principe.inputs["Roughness"].default_value = 0.9
+    noeuds = matiere.node_tree.nodes
+    liens = matiere.node_tree.links
+
+    principe = noeuds["Principled BSDF"]
+    # Mat, sans reflet : un sol brillant renverrait le personnage et
+    # brouillerait justement la zone qu'on cherche à lire, celle du contact.
+    principe.inputs["Roughness"].default_value = 0.95
+    principe.inputs["Specular IOR Level" if "Specular IOR Level"
+                    in principe.inputs else "Specular"].default_value = 0.05
+
+    damier = noeuds.new("ShaderNodeTexChecker")
+    # Deux gris moyens : assez contrastés pour se compter, assez sombres pour
+    # que l'ombre s'y voie encore. Sous quatre soleils, un damier blanc et noir
+    # saturerait d'un côté et avalerait l'ombre de l'autre.
+    damier.inputs["Color1"].default_value = (0.52, 0.52, 0.55, 1)
+    damier.inputs["Color2"].default_value = (0.30, 0.30, 0.33, 1)
+    damier.inputs["Scale"].default_value = 10.0
+
+    reperes = noeuds.new("ShaderNodeTexCoord")
+    # Coordonnées **objet** : elles sont en mètres et centrées sur le plan, ce
+    # qui rend la taille des cases indépendante de celle du plancher — lequel
+    # s'agrandit avec l'encombrement du geste.
+    liens.new(reperes.outputs["Object"], damier.inputs["Vector"])
+    liens.new(damier.outputs["Color"], principe.inputs["Base Color"])
     sol.data.materials.append(matiere)
 
     # Sans ombre portée, un plancher ne prouve rien : le personnage se
@@ -403,7 +451,11 @@ def main():
     # doit pas entrer dans le cadrage, qui se règle sur le personnage seul.
     if o["sol"]:
         poser_le_sol(mini, maxi)
-    placer_camera(mini, maxi, vue, o["echelle"], plongee=14 if o["sol"] else 0)
+    placer_camera(
+        mini, maxi, vue, o["echelle"],
+        plongee=32 if o["sol"] else 0,
+        perspective=o["sol"],
+    )
     eclairer(mini, maxi, sol=o["sol"], vue=vue)
     configurer_rendu(o["taille"], o["sortie"])
 
