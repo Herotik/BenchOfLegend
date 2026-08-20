@@ -63,12 +63,17 @@ def _saillie(racine, milieu, bout, axe):
     return sum((m - r) * a for m, r, a in zip(milieu, reference, axe))
 
 
-def genou_a_lendroit(pose):
+def genou_a_lendroit(pose, geste):
     """Le genou doit être en avant du segment hanche→cheville.
 
     C'est l'invariant le plus simple qui distingue une jambe humaine d'une patte
     d'oiseau, et celui qui manquait.
+
+    « En avant » se mesure dans le repère **du corps**, pas du monde : un
+    personnage couché sur le dos a toujours des genoux qui plient du bon côté,
+    mais ce côté n'est plus -Y. C'est l'assise du geste qui le dit.
     """
+    avant = _normalise(geste.get("assise", (None, (0, -1, 0)))[1])
     fautes = []
     for cote in ("Left", "Right"):
         cuisse = pose.get(g._os(f"{cote}UpLeg"))
@@ -78,8 +83,7 @@ def genou_a_lendroit(pose):
         hanche = (0.0, 0.0, 0.0)
         genou = _somme(hanche, _normalise(cuisse), CUISSE)
         cheville = _somme(genou, _normalise(tibia), TIBIA)
-        # -Y est l'avant du personnage.
-        avance = _saillie(hanche, genou, cheville, (0, -1, 0))
+        avance = _saillie(hanche, genou, cheville, avant)
         if avance < -SEUIL:
             fautes.append(
                 f"genou {cote} plié à l'envers : il dépasse de "
@@ -88,7 +92,7 @@ def genou_a_lendroit(pose):
     return fautes
 
 
-def dos_plat(pose):
+def dos_plat(pose, _geste):
     """Les trois vertèbres doivent pointer à peu près dans la même direction.
 
     Un dos qui s'enroule est ce qu'on corrige chez un débutant ; une
@@ -115,12 +119,17 @@ def dos_plat(pose):
     return []
 
 
-def symetrie(pose):
+def symetrie(pose, geste):
     """Gauche et droite doivent se répondre en miroir : X opposé, Y et Z égaux.
 
-    Toutes ces poses sont symétriques. Un signe oublié se voit ici avant de se
-    voir à l'écran.
+    La plupart de ces poses sont symétriques, et un signe oublié s'y voit ici
+    avant de se voir à l'écran. Quelques gestes ne le sont pas **par nature** —
+    une fente, un gainage latéral, un mountain climber travaillent un côté à la
+    fois — et le déclarent par `symetrique: False`. Sans cette échappatoire, le
+    contrôle crierait au loup sur les seuls gestes où l'asymétrie est le sujet.
     """
+    if geste.get("symetrique", True) is False:
+        return []
     fautes = []
     for membre in ("Shoulder", "Arm", "ForeArm", "UpLeg", "Leg"):
         gauche = pose.get(g._os(f"Left{membre}"))
@@ -137,7 +146,7 @@ def symetrie(pose):
     return fautes
 
 
-def directions_utilisables(pose):
+def directions_utilisables(pose, _geste):
     """Une direction nulle ne définit aucune orientation."""
     return [
         f"{nom.removeprefix('mixamorig:')} : direction nulle"
@@ -154,7 +163,7 @@ def main():
     for nom in sorted(g.GESTES):
         for rang, pose in enumerate(g.GESTES[nom]["cles"]):
             for controle in CONTROLES:
-                for faute in controle(pose):
+                for faute in controle(pose, g.GESTES[nom]):
                     print(f"  ✗ {nom} · pose {rang + 1} — {faute}")
                     total += 1
 

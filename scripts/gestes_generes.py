@@ -99,8 +99,10 @@ ORDRE = [
     "mixamorig:RightForeArm",
     "mixamorig:LeftUpLeg",
     "mixamorig:LeftLeg",
+    "mixamorig:LeftFoot",
     "mixamorig:RightUpLeg",
     "mixamorig:RightLeg",
+    "mixamorig:RightFoot",
 ]
 
 BASSIN = "mixamorig:Hips"
@@ -155,6 +157,20 @@ BUSTE_PENCHE = {
 #: Recul du bassin qui accompagne `BUSTE_PENCHE`, en mètres, dans le monde.
 #: +Y est derrière le personnage, qui regarde vers -Y.
 RECUL_BASSIN = (0, 0.16, -0.04)
+
+
+# Assises du corps, pour `assise` : (direction bassin→tête, direction du regard).
+#
+# Le personnage debout regarde vers -Y et sa tête pointe vers +Z. Coucher le
+# corps, c'est simplement dire où vont ces deux directions.
+#
+# La tête part vers **+Y**, c'est-à-dire la gauche de l'image en vue de profil.
+# C'est la convention des motifs vectoriels, et un exercice ne doit pas changer
+# de sens selon qu'il est dessiné ou rendu.
+SUR_LE_DOS = ((0, 1, 0), (0, 0, 1))
+SUR_LE_VENTRE = ((0, 1, 0), (0, 0, -1))
+#: Sur le côté droit : c'est donc le bras droit qui porte.
+SUR_LE_COTE = ((0, 1, 0), (-1, 0, 0))
 
 
 def _pose(*couches):
@@ -275,6 +291,132 @@ GESTES = {
             }),
         ],
     },
+    # ---- Cinq épreuves, pour juger si le procédé tient hors du debout -------
+    "developpe-couche": {
+        "vue": "profil",
+        "duree": 2200,
+        "assise": SUR_LE_DOS,
+        "cles": [
+            # Couché sur le dos : le haut du corps suit le bassin sans qu'on ait
+            # à le dire, les membres se décrivent dans le monde. +Z est donc le
+            # plafond, -Y les pieds.
+            _pose({
+                _os("LeftArm"): (0.85, -0.30, -0.35),
+                _os("LeftForeArm"): (0.30, -0.10, 0.95),
+                _os("RightArm"): (-0.85, -0.30, -0.35),
+                _os("RightForeArm"): (-0.30, -0.10, 0.95),
+                _os("LeftUpLeg"): (0.10, -0.70, 0.70),
+                _os("LeftLeg"): (0.06, -0.60, -0.80),
+                _os("RightUpLeg"): (-0.10, -0.70, 0.70),
+                _os("RightLeg"): (-0.06, -0.60, -0.80),
+            }),
+            _pose({
+                _os("LeftArm"): (0.28, -0.10, 0.95),
+                _os("LeftForeArm"): (0.12, 0, 1),
+                _os("RightArm"): (-0.28, -0.10, 0.95),
+                _os("RightForeArm"): (-0.12, 0, 1),
+                _os("LeftUpLeg"): (0.10, -0.70, 0.70),
+                _os("LeftLeg"): (0.06, -0.60, -0.80),
+                _os("RightUpLeg"): (-0.10, -0.70, 0.70),
+                _os("RightLeg"): (-0.06, -0.60, -0.80),
+            }),
+        ],
+    },
+    "fente": {
+        "vue": "profil",
+        "duree": 2200,
+        "bassin": [(0, 0, 0), (0, -0.10, -0.22)],
+        "symetrique": False,
+        "cles": [
+            _pose(),
+            # Une jambe part devant, l'autre reste derrière ; les deux genoux
+            # plient, le buste ne s'incline pas. Le bassin descend, ce que seul
+            # un décalage animé permet — rien ici ne tourne pour le faire.
+            _pose({
+                _os("LeftUpLeg"): (0.10, -0.62, -0.78),
+                _os("LeftLeg"): (0.05, 0.10, -0.99),
+                _os("RightUpLeg"): (-0.10, 0.15, -0.98),
+                _os("RightLeg"): (-0.05, 0.95, -0.31),
+            }),
+        ],
+    },
+    "mollets": {
+        "vue": "profil",
+        "duree": 1400,
+        # Le corps entier monte : aucune articulation ne porte le geste, c'est
+        # une translation. Sans décalage animé du bassin, il n'y aurait rien à
+        # voir — c'est l'exercice qui semblait hors de portée.
+        "bassin": [(0, 0, 0), (0, 0, 0.07)],
+        "cles": [
+            _pose(),
+            _pose({
+                _os("LeftFoot"): (0.05, -0.55, -0.83),
+                _os("RightFoot"): (-0.05, -0.55, -0.83),
+            }),
+        ],
+    },
+    "gainage-lateral": {
+        "vue": "profil",
+        "duree": 2600,
+        "assise": SUR_LE_COTE,
+        "bassin": [(0, 0, -0.10), (0, 0, 0.02)],
+        "symetrique": False,
+        "cles": [
+            # Sur le côté droit : l'avant-bras droit porte, le gauche se pose à
+            # la hanche. Les jambes restent tendues dans l'axe du corps.
+            _pose({
+                _os("RightArm"): (0, 0.10, -1),
+                _os("RightForeArm"): (0, 0.95, -0.30),
+                _os("LeftArm"): (0, 0.10, 1),
+                _os("LeftForeArm"): (0, -0.20, 1),
+                _os("LeftUpLeg"): (0, -1, 0.04),
+                _os("LeftLeg"): (0, -1, -0.02),
+                _os("RightUpLeg"): (0, -1, -0.04),
+                _os("RightLeg"): (0, -1, 0.02),
+            }),
+            _pose({
+                _os("RightArm"): (0, 0.10, -1),
+                _os("RightForeArm"): (0, 0.95, -0.30),
+                _os("LeftArm"): (0, 0.10, 1),
+                _os("LeftForeArm"): (0, -0.20, 1),
+                _os("LeftUpLeg"): (0, -1, 0.04),
+                _os("LeftLeg"): (0, -1, -0.02),
+                _os("RightUpLeg"): (0, -1, -0.04),
+                _os("RightLeg"): (0, -1, 0.02),
+            }),
+        ],
+    },
+    "mountain-climber": {
+        "vue": "profil",
+        "duree": 800,
+        "assise": SUR_LE_VENTRE,
+        "symetrique": False,
+        "cles": [
+            # En appui facial : bras tendus vers le sol, un genou vient sous la
+            # poitrine pendant que l'autre reste tendu.
+            _pose({
+                _os("LeftArm"): (0.16, 0.30, -0.94),
+                _os("LeftForeArm"): (0.10, 0.10, -0.99),
+                _os("RightArm"): (-0.16, 0.30, -0.94),
+                _os("RightForeArm"): (-0.10, 0.10, -0.99),
+                _os("LeftUpLeg"): (0.08, 0.55, -0.83),
+                _os("LeftLeg"): (0.05, -0.72, -0.69),
+                _os("RightUpLeg"): (-0.06, -1, 0.04),
+                _os("RightLeg"): (-0.04, -1, -0.02),
+            }),
+            _pose({
+                _os("LeftArm"): (0.16, 0.30, -0.94),
+                _os("LeftForeArm"): (0.10, 0.10, -0.99),
+                _os("RightArm"): (-0.16, 0.30, -0.94),
+                _os("RightForeArm"): (-0.10, 0.10, -0.99),
+                _os("LeftUpLeg"): (0.06, -1, 0.04),
+                _os("LeftLeg"): (0.04, -1, -0.02),
+                _os("RightUpLeg"): (-0.08, 0.55, -0.83),
+                _os("RightLeg"): (-0.05, -0.72, -0.69),
+            }),
+        ],
+    },
+
     "rowing": {
         "vue": "trois-quarts",
         "duree": 2000,
@@ -374,15 +516,100 @@ def viser(armature, os_pose, direction, repos, contexte):
     contexte.view_layer.update()
 
 
-def _deplacer_bassin(armature, decalage, contexte):
-    """Recule le bassin, en mètres et dans le monde."""
+def _decalages(declare, cles, images):
+    """Décalage du bassin à chaque image, ou `None` partout s'il n'y en a pas.
+
+    Accepte un seul triplet — le bassin ne bouge alors pas du geste — ou un
+    triplet par pose clé, ce qui le fait monter et descendre. C'est ce dont un
+    mollet debout a besoin : rien ne tourne, tout le corps se translate.
+    """
+    if declare is None:
+        return [None] * images
+    if not isinstance(declare[0], (tuple, list)):
+        return [tuple(declare)] * images
+    if len(declare) != cles:
+        raise SystemExit(
+            f"Le geste déclare {len(declare)} décalages de bassin pour {cles} poses."
+        )
+
+    boucle = list(declare) + list(reversed(declare))[1:]
+    segments = max(1, len(boucle) - 1)
+    suite = []
+    for i in range(images):
+        u = (i / images) * segments
+        rang = min(int(u), segments - 1)
+        e = _adoucir(u - rang)
+        a, b = boucle[rang], boucle[rang + 1]
+        suite.append(tuple(x + (y - x) * e for x, y in zip(a, b)))
+    return suite
+
+
+def _poser_bassin(armature, ancre, decalage, contexte):
+    """Place le bassin à sa position de repos, décalée de `decalage` (monde)."""
     from mathutils import Vector
-    contexte.view_layer.update()
+
     bassin = armature.pose.bones[BASSIN]
     matrice = bassin.matrix.copy()
-    matrice.translation += armature.matrix_world.inverted().to_3x3() @ Vector(decalage)
+    matrice.translation = ancre + armature.matrix_world.inverted().to_3x3() @ Vector(
+        decalage
+    )
     bassin.matrix = matrice
     contexte.view_layer.update()
+
+
+def basculer_bassin(armature, haut, regard, repos, contexte):
+    """Couche, suspend ou retourne le corps entier, en orientant le bassin.
+
+    ## Pourquoi le bassin ne se vise pas comme les autres os
+
+    `viser` ne demande qu'une direction, ce qui suffit à un bras : le roulis
+    hérité du repos y passe inaperçu. Sur le bassin, ce roulis **est** le geste.
+    Un corps allongé sur le dos et un corps allongé sur le côté ont la même
+    colonne — de la tête aux pieds — et ne diffèrent que par la rotation autour
+    d'elle. Une direction seule ne peut pas les distinguer.
+
+    On en donne donc deux : `haut`, la direction qui va du bassin vers la tête,
+    et `regard`, celle vers laquelle le corps fait face. La composante de
+    `regard` parallèle à `haut` est retirée : deux directions non
+    perpendiculaires ne définiraient aucun repère.
+
+    C'est ce qui ouvre les développés couchés, les gainages latéraux, les
+    suspensions — tout ce qui ne se fait pas debout.
+
+    Renvoie la rotation appliquée, **exprimée dans le monde**. Les directions de
+    repos des autres os passent par elle, de sorte que `REPOS` continue de
+    signifier « comme le modèle se tient » une fois le corps couché : un torse
+    resterait sinon vertical sur un corps à l'horizontale.
+    """
+    from mathutils import Vector
+
+    contexte.view_layer.update()
+
+    # Tout se calcule dans le monde : c'est le repère dans lequel les gestes
+    # sont écrits, et le seul où « le haut » et « le regard » veulent dire
+    # quelque chose.
+    h = Vector(haut).normalized()
+    r = Vector(regard)
+    r = (r - h * r.dot(h)).normalized()
+
+    # Deux rotations enchaînées : la colonne d'abord, le roulis ensuite.
+    # Construire le repère à la main obligerait à savoir quel axe local de
+    # Mixamo désigne l'avant — ce qu'on cherche justement à ne jamais savoir.
+    debout, devant = Vector((0, 0, 1)), Vector((0, -1, 0))
+    vers_haut = debout.rotation_difference(h)
+    apres = vers_haut @ devant
+    apres = (apres - h * apres.dot(h)).normalized()
+    rotation = (apres.rotation_difference(r) @ vers_haut).to_matrix()
+
+    monde = armature.matrix_world.to_3x3()
+    locale = monde.inverted() @ rotation @ monde
+
+    bassin = armature.pose.bones[BASSIN]
+    oriente = (locale @ repos).to_4x4()
+    oriente.translation = bassin.matrix.translation
+    bassin.matrix = oriente
+    contexte.view_layer.update()
+    return rotation
 
 
 def appliquer(armature, nom, images, contexte):
@@ -410,18 +637,40 @@ def appliquer(armature, nom, images, contexte):
     orientations = {
         o: armature.pose.bones[o].matrix.to_3x3().copy() for o in ORDRE
     }
+    repos_bassin = armature.pose.bones[BASSIN].matrix.to_3x3().copy()
 
     geste = GESTES[nom]
-    decalage = geste.get("bassin")
-    # Une seule fois, et non à chaque image : le décalage s'ajoute à la pose
-    # courante, et le rappliquer vingt fois ferait reculer le bassin de vingt
-    # crans. Il ne varie pas sur ces gestes, il suffit de le poser en clé.
-    if decalage:
-        _deplacer_bassin(armature, decalage, contexte)
 
-    for numero, pose in enumerate(_parcours(geste["cles"], images, repos), start=1):
-        if decalage:
-            armature.pose.bones[BASSIN].keyframe_insert("location", frame=numero)
+    # La bascule **d'abord** : elle tourne tout le corps, et les os visés
+    # ensuite le sont dans le monde — leurs directions ne dépendent donc pas
+    # d'elle. L'inverse effacerait chaque pose au moment de coucher le corps.
+    assise = geste.get("assise")
+    if assise:
+        rotation = basculer_bassin(
+            armature, assise[0], assise[1], repos_bassin, contexte
+        )
+        # `REPOS` veut dire « comme le modèle se tient » ; une fois le corps
+        # couché, cela doit vouloir dire « couché comme lui ». Sans ce passage,
+        # un os laissé au repos garderait sa direction debout et le torse
+        # resterait vertical sur un corps à l'horizontale.
+        repos = {o: (rotation @ d) for o, d in repos.items()}
+
+    # Le bassin est reposé **depuis sa position de repos** à chaque image, et
+    # jamais décalé par rapport à l'image précédente : un décalage relatif
+    # s'accumulerait, et le corps dériverait de vingt crans sur un tour.
+    ancre = armature.pose.bones[BASSIN].matrix.translation.copy()
+    decalages = _decalages(geste.get("bassin"), len(geste["cles"]), images)
+
+    for numero, (pose, decalage) in enumerate(
+        zip(_parcours(geste["cles"], images, repos), decalages), start=1
+    ):
+        bassin = armature.pose.bones[BASSIN]
+        if decalage is not None:
+            _poser_bassin(armature, ancre, decalage, contexte)
+            bassin.keyframe_insert("location", frame=numero)
+        if assise:
+            bassin.rotation_mode = "QUATERNION"
+            bassin.keyframe_insert("rotation_quaternion", frame=numero)
         for os_nom in ORDRE:
             os_pose = armature.pose.bones[os_nom]
             viser(armature, os_pose, pose[os_nom], orientations[os_nom], contexte)
