@@ -138,12 +138,26 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 4400,
   },
-  // La fente avant **n'est pas encore ici**, et c'est délibéré. Le geste
-  // existe dans `gestes_generes.py`, le pas ne glisse plus, mais au point bas
-  // la jambe arrière s'étend presque à l'horizontale, genou à quinze
-  // centimètres et pied flottant : le pied arrière est occulté dans la vidéo
-  // et l'estimateur ne le voit pas. Un bonhomme vectoriel juste vaut mieux
-  // qu'un rendu 3D faux — c'est tout l'intérêt d'avoir gardé les deux.
+  // Fente avant, relevée sur une vidéo de démonstration. Elle sert les fentes
+  // au poids du corps **et** les fentes haltères : le personnage ne porte
+  // aucune charge, et les deux exercices ont le même mouvement.
+  //
+  // C'est la planche qui se déplace le plus du registre — le pied arrière
+  // reste planté et le corps avance de soixante-huit centimètres au-dessus de
+  // lui. Sans ce clou, les deux pieds s'écartaient autour d'un bassin
+  // immobile : un grand écart, pas un pas.
+  //
+  // Un défaut connu subsiste : au point bas, le pied arrière ne touche pas
+  // tout à fait le sol. Il est occulté par le corps dans la vidéo, et
+  // l'estimateur le renvoie orteils vers l'arrière, pointant dans le vide. La
+  // correction propre demande que la cinématique inverse puisse poser une
+  // cheville sans figer la hauteur du bassin.
+  fente: {
+    source: require("../../assets/gestes/fente.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 3000,
+  },
   // Burpee
   burpee: {
     source: require("../../assets/gestes/burpee.png"),
