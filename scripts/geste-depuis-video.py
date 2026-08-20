@@ -281,6 +281,69 @@ def bras_tendus(pose, assise):
     return pose
 
 
+def symetriser(pose, assise):
+    """Rend le geste exactement symétrique, gauche et droite en miroir.
+
+    ## Pourquoi il faut le demander, et pourquoi ça marche
+
+    Un sujet filmé n'est jamais parfaitement symétrique, et l'estimateur ajoute
+    son propre bruit — surtout en profondeur. Sur la planche de référence, les
+    deux cuisses partaient du même côté au lieu de s'écarter en miroir : une
+    torsion de quelques degrés, invisible en soi, qui suffisait à décoller une
+    main et un pied de cinq millimètres en diagonale.
+
+    Quatre appuis ne peuvent d'ailleurs pas être remis de niveau par une
+    rotation si le corps est vrillé : trois points définissent un plan, le
+    quatrième n'y tombe que si la posture le veut bien. La symétrie le veut.
+
+    On la demande explicitement, parce qu'elle ne va pas de soi : une fente,
+    un mountain climber, un gainage latéral sont asymétriques par nature.
+
+    Le miroir se prend dans le plan sagittal du **corps** — celui que l'assise
+    définit —, jamais dans un plan du monde : couché sur le ventre, la gauche
+    du personnage n'est plus l'axe X.
+    """
+    haut = normalise(np.array(assise[0], dtype=float))
+    avant = np.array(assise[1], dtype=float)
+    avant = normalise(avant - haut * np.dot(avant, haut))
+    gauche = normalise(np.cross(haut, avant))
+
+    def miroir(v):
+        return v - 2 * np.dot(v, gauche) * gauche
+
+    for nom in list(pose):
+        if nom.startswith("Left"):
+            jumeau = "Right" + nom[len("Left"):]
+            if jumeau not in pose:
+                continue
+            moyenne = normalise(pose[nom] + miroir(pose[jumeau]))
+            pose[nom], pose[jumeau] = moyenne, miroir(moyenne)
+        elif not nom.startswith("Right"):
+            # Colonne, nuque, tête : elles sont **dans** le plan sagittal. Un
+            # dos qui part de côté est du bruit, pas une intention.
+            pose[nom] = normalise(pose[nom] - np.dot(pose[nom], gauche) * gauche)
+    return pose
+
+
+def pieds_sur_pointes(pose):
+    """Remet les deux pieds à la verticale, orteils au sol.
+
+    Même raison que pour les bras : l'estimateur place mal ce qui tombe dans
+    la profondeur. Sur la planche de référence, le pied gauche sortait presque
+    vertical et le droit écarté de trente-quatre degrés vers l'extérieur — une
+    asymétrie que la vidéo ne montre pas, et qui saute aux yeux sur un rendu.
+
+    Un corps en appui sur la pointe des pieds les a tous deux sous la
+    cheville : le pied descend, les orteils se recourbent dessous. C'est la
+    même figure des deux côtés, et c'est ce que dit toute description de
+    l'exercice.
+    """
+    bas = np.array([0.0, 0.0, -1.0])
+    for cote in COTES.values():
+        pose[f"{cote}Foot"] = bas
+    return pose
+
+
 def pose_du_geste(p, repere, assise):
     """Directions de tous les os, prêtes à être écrites dans un geste."""
     sortie = {}
@@ -303,6 +366,18 @@ def main():
     a.add_argument("--assise", default="debout", choices=sorted(ASSISES))
     a.add_argument("--duree", type=int, default=2400)
     a.add_argument(
+        "--symetrique",
+        action="store_true",
+        help="le geste est symétrique par nature : met gauche et droite en "
+        "miroir exact et remet la colonne dans le plan sagittal",
+    )
+    a.add_argument(
+        "--pieds-sur-pointes",
+        action="store_true",
+        help="le corps porte sur la pointe des pieds : les remet tous deux "
+        "verticaux, orteils sous la cheville",
+    )
+    a.add_argument(
         "--bras-tendus",
         action="store_true",
         help="le corps porte sur des bras tendus : les redresse à la verticale "
@@ -319,6 +394,12 @@ def main():
     poses = [pose_du_geste(p, r, assise) for p, r in zip(releves, reperes)]
     if args.bras_tendus:
         poses = [bras_tendus(pose, assise) for pose in poses]
+    if args.pieds_sur_pointes:
+        poses = [pieds_sur_pointes(pose) for pose in poses]
+    # En dernier : les corrections précédentes portent sur un membre à la fois
+    # et peuvent elles-mêmes rompre le miroir.
+    if args.symetrique:
+        poses = [symetriser(pose, assise) for pose in poses]
 
     def triplet(v):
         return "({:+.2f}, {:+.2f}, {:+.2f})".format(*v)
@@ -329,7 +410,11 @@ def main():
     print(f'        "duree": {args.duree},')
     print(f'        # Assise « {args.assise} » penchée de {pente:+.0f}°, mesurés sur la vidéo.')
     print(f'        "assise": ({triplet(haut)}, {triplet(regard)}),')
-    print(f'        "symetrique": False,')
+    # Un relevé brut n'est jamais symétrique : le contrôle de symétrie n'aurait
+    # rien à en dire d'utile. Symétrisé, en revanche, il devient une garantie
+    # qu'on veut voir tenir.
+    if not args.symetrique:
+        print(f'        "symetrique": False,')
     print(f'        "cles": [')
     for pose in poses:
         print("            _pose({")

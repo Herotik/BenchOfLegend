@@ -28,6 +28,14 @@ import math
 import os
 import sys
 
+# Pas de bytecode en cache. Ce script sert à éprouver des corrections : on y
+# introduit une faute exprès, on vérifie qu'elle est vue, on rétablit. Or
+# Python juge un `.pyc` valide sur la date **à la seconde** et la taille du
+# source — et une direction changée de `+0.08` en `+0.20` garde exactement la
+# même taille. Le rétablissement passait alors inaperçu, et le script criait
+# une faute déjà corrigée.
+sys.dont_write_bytecode = True
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import gestes_generes as g  # noqa: E402
 

@@ -562,15 +562,14 @@ GESTES = {
         ],
     },
     # Relevé sur une vidéo de démonstration (planche haute), images 504 et
-    # 528, avec --bras-tendus : les bras porteurs sont redressés à la
-    # verticale, la profondeur estimée n'étant pas assez sûre pour placer
-    # les mains sous les épaules.
+    # 528, avec --bras-tendus, --pieds-sur-pointes et --symetrique : les
+    # membres qui portent suivent le critère écrit, la profondeur estimée
+    # n'étant pas assez sûre pour les placer.
     "planche-relevee": {
         "vue": "profil",
         "duree": 3000,
         # Assise « ventre », penchée des 7° mesurés sur la vidéo.
         "assise": ((+0.00, +0.99, +0.13), (+0.00, +0.13, -0.99)),
-        "symetrique": False,
         # Les appuis d'une planche haute : ce sont eux qui touchent le sol,
         # et non le point le plus bas du maillage.
         "ancrage": ("LeftHand", "RightHand", "LeftFoot", "RightFoot"),
@@ -582,39 +581,39 @@ GESTES = {
                 _os("Spine"): (+0.00, +0.99, +0.13),
                 _os("Spine1"): (+0.00, +0.99, +0.13),
                 _os("Spine2"): (+0.00, +0.99, +0.13),
-                _os("Neck"): (-0.18, +0.98, +0.11),
-                _os("Head"): (-0.18, +0.98, +0.11),
+                _os("Neck"): (+0.00, +0.99, +0.11),
+                _os("Head"): (+0.00, +0.99, +0.11),
                 _os("LeftArm"): (+0.00, +0.00, -1.00),
                 _os("RightArm"): (+0.00, +0.00, -1.00),
                 _os("LeftForeArm"): (+0.00, +0.00, -1.00),
                 _os("RightForeArm"): (+0.00, +0.00, -1.00),
                 _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
                 _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("LeftUpLeg"): (-0.05, -0.97, -0.23),
-                _os("RightUpLeg"): (-0.03, -0.95, -0.31),
-                _os("LeftLeg"): (-0.10, -0.99, -0.09),
-                _os("RightLeg"): (+0.05, -0.99, -0.12),
-                _os("LeftFoot"): (+0.12, -0.08, -0.99),
-                _os("RightFoot"): (+0.54, +0.24, -0.80),
+                _os("LeftUpLeg"): (-0.01, -0.96, -0.27),
+                _os("RightUpLeg"): (+0.01, -0.96, -0.27),
+                _os("LeftLeg"): (-0.08, -0.99, -0.11),
+                _os("RightLeg"): (+0.08, -0.99, -0.11),
+                _os("LeftFoot"): (+0.00, +0.00, -1.00),
+                _os("RightFoot"): (+0.00, +0.00, -1.00),
             }),
             _pose({
                 _os("Spine"): (+0.00, +0.99, +0.13),
                 _os("Spine1"): (+0.00, +0.99, +0.13),
                 _os("Spine2"): (+0.00, +0.99, +0.13),
-                _os("Neck"): (-0.18, +0.98, +0.09),
-                _os("Head"): (-0.18, +0.98, +0.09),
+                _os("Neck"): (+0.00, +1.00, +0.10),
+                _os("Head"): (+0.00, +1.00, +0.10),
                 _os("LeftArm"): (+0.00, +0.00, -1.00),
                 _os("RightArm"): (+0.00, +0.00, -1.00),
                 _os("LeftForeArm"): (+0.00, +0.00, -1.00),
                 _os("RightForeArm"): (+0.00, +0.00, -1.00),
                 _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
                 _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("LeftUpLeg"): (-0.05, -0.97, -0.23),
-                _os("RightUpLeg"): (-0.03, -0.95, -0.31),
-                _os("LeftLeg"): (-0.11, -0.99, -0.09),
-                _os("RightLeg"): (+0.03, -0.99, -0.11),
-                _os("LeftFoot"): (+0.12, -0.10, -0.99),
-                _os("RightFoot"): (+0.54, +0.23, -0.81),
+                _os("LeftUpLeg"): (-0.01, -0.96, -0.27),
+                _os("RightUpLeg"): (+0.01, -0.96, -0.27),
+                _os("LeftLeg"): (-0.07, -0.99, -0.10),
+                _os("RightLeg"): (+0.07, -0.99, -0.10),
+                _os("LeftFoot"): (+0.00, +0.00, -1.00),
+                _os("RightFoot"): (+0.00, +0.00, -1.00),
             }),
         ],
     },
@@ -963,7 +962,7 @@ def contacts(contexte, armature, os_porteurs):
     return sortie
 
 
-def mettre_d_aplomb(contexte, armature, os_porteurs):
+def mettre_d_aplomb(contexte, armature, os_porteurs, remettre=None):
     """Fait pencher le corps entier jusqu'à ce que ses appuis soient de niveau.
 
     ## Ce que ça répare
@@ -998,14 +997,21 @@ def mettre_d_aplomb(contexte, armature, os_porteurs):
     Ça ne remplace pas `poser_sur`, ça le précède : mettre d'aplomb rend les
     appuis parallèles au sol, poser les y amène.
 
-    Deux passes plutôt qu'une : le point de contact d'un membre est le sommet
-    le plus bas de sa chair, et ce n'est plus le même une fois le corps tourné.
-    La seconde passe rattrape ce glissement, la troisième n'a jamais rien à
-    corriger.
+    Plusieurs passes plutôt qu'une : le point de contact d'un membre est le
+    sommet le plus bas de sa chair, et ce n'est plus le même une fois le corps
+    tourné.
+
+    `remettre` est rappelé après chaque rotation, avant de remesurer. Il sert
+    aux mains posées à plat, dont l'orientation est donnée dans le **monde** et
+    ne doit donc pas suivre le corps : les remettre déplace leur point de
+    contact, ce qui change le plan à ajuster. Les corriger une seule fois à la
+    fin décollait les pieds d'un centimètre.
     """
-    for _ in range(3):
+    for _ in range(4):
         if not _une_passe_daplomb(contexte, armature, os_porteurs):
             return
+        if remettre is not None:
+            remettre()
 
 
 def _une_passe_daplomb(contexte, armature, os_porteurs):
@@ -1395,7 +1401,35 @@ def appliquer(armature, nom, images, contexte):
                 # assise écrite à la main qu'on ne veut surtout pas voir
                 # corrigée dans le dos de celui qui l'a écrite.
                 if geste.get("aplomb"):
-                    mettre_d_aplomb(contexte, armature, ancrage)
+                    # Les mains posées se reposent après chaque rotation.
+                    # Mettre d'aplomb tourne le corps **entier**, mains
+                    # comprises, et une paume orientée avant cette rotation en
+                    # ressort penchée de l'angle corrigé — cinq degrés ici,
+                    # soit près d'un centimètre de jour sous le talon de la
+                    # main. Or `APlat` dit une orientation dans le **monde**.
+                    # Les remettre est sans effet de bord : la main ne porte
+                    # aucun os posé.
+                    a_plat = {
+                        nom: valeur
+                        for nom, valeur in pose.items()
+                        if isinstance(valeur, APlat)
+                    }
+
+                    def reposer_les_mains():
+                        for nom, valeur in a_plat.items():
+                            viser(
+                                armature, armature.pose.bones[nom],
+                                valeur.direction, orientations[nom], contexte,
+                                face=valeur.paume,
+                            )
+
+                    mettre_d_aplomb(
+                        contexte, armature, ancrage, remettre=reposer_les_mains
+                    )
+                    for nom in a_plat:
+                        armature.pose.bones[nom].keyframe_insert(
+                            "rotation_quaternion", frame=numero
+                        )
                     # Sans cette clé-là, la mise d'aplomb existait dans la pose
                     # vivante et disparaissait de l'animation : la rotation du
                     # bassin n'était mémorisée qu'en début de tour, avant
@@ -1403,6 +1437,7 @@ def appliquer(armature, nom, images, contexte):
                     # d'origine dès que le rendu relisait les clés.
                     bassin.rotation_mode = "QUATERNION"
                     bassin.keyframe_insert("rotation_quaternion", frame=numero)
+
                 poser_sur(contexte, armature, ancrage)
             else:
                 poser_au_sol(contexte, armature)

@@ -82,8 +82,18 @@ Trois choses manquent systématiquement, et chacune a livré une faute :
 
 - **La profondeur.** Les deux premières coordonnées se lisent sur les pixels,
   la troisième s'infère et se trompe. Un sujet filmé de trois quarts a son
-  écartement de bras en partie dans cette profondeur : `--bras-tendus` remet
-  les bras porteurs à la verticale plutôt que d'y croire.
+  écartement de bras en partie dans cette profondeur. Trois options rendent au
+  relevé ce que la mesure ne sait pas donner, et chacune dit une hypothèse :
+  `--bras-tendus` (les bras porteurs descendent à la verticale, main à plat),
+  `--pieds-sur-pointes` (les deux pieds sous la cheville), `--symetrique`
+  (gauche et droite en miroir exact, colonne dans le plan sagittal).
+
+  `--symetrique` mérite qu'on insiste : quatre appuis ne peuvent pas être remis
+  de niveau par une rotation si le corps est vrillé — trois points définissent
+  un plan, le quatrième n'y tombe que si la posture le veut. Cinq degrés de
+  torsion dans les cuisses suffisaient à laisser une main et un pied à cinq
+  millimètres du sol, en diagonale. Et une fois le geste symétrisé, on peut
+  retirer `symetrique: False` : le contrôle devient une garantie.
 
 ### 1 ter. Ce qui touche le sol est la chair, pas l'os
 
