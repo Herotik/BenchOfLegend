@@ -247,6 +247,22 @@ def milieu(p, paire):
     return (p[paire["G"]] + p[paire["D"]]) / 2
 
 
+def cles_visees(valeur, total):
+    """Quelles poses clés une correction touche.
+
+    Les corrections ne valent pas pour toutes les images d'un geste. Une entrée
+    en position part à plat ventre, coudes pliés : y redresser les bras à la
+    verticale décrirait une posture que personne ne tient. On désigne donc les
+    clés concernées — `--bras-tendus 2` pour la seule troisième, `2,3` pour
+    deux d'entre elles, l'option nue pour toutes.
+    """
+    if valeur is None:
+        return set()
+    if valeur in ("", "toutes"):
+        return set(range(total))
+    return {int(x) for x in valeur.split(",")}
+
+
 def bras_tendus(pose, assise):
     """Remet les bras porteurs à la verticale, mains à plat sur le sol.
 
@@ -325,6 +341,26 @@ def symetriser(pose, assise):
     return pose
 
 
+def avant_bras_au_sol(pose, assise):
+    """Couche les avant-bras à plat sur le sol, parallèles et vers l'avant.
+
+    Sur une planche sur les avant-bras, c'est le **coude** qui porte et
+    l'avant-bras qui repose de tout son long. L'estimateur, lui, le renvoyait
+    plongeant de trente degrés sous l'horizontale — une pente qu'aucun sol ne
+    permet. Le corps ne montait donc jamais : posé sur le poing, coude enfoncé,
+    il restait à plat ventre d'un bout à l'autre du geste.
+
+    On ne touche **pas** au bras : c'est lui qui porte l'élévation du buste, et
+    elle change tout au long de la montée. Seul l'avant-bras est contraint, et
+    il l'est du début à la fin — il ne quitte pas le sol.
+    """
+    devant = normalise(np.array([assise[0][0], assise[0][1], 0.0]))
+    for cote in COTES.values():
+        pose[f"{cote}ForeArm"] = devant
+        pose[f"{cote}Hand"] = devant
+    return pose
+
+
 def pieds_sur_pointes(pose):
     """Remet les deux pieds à la verticale, orteils au sol.
 
@@ -367,21 +403,31 @@ def main():
     a.add_argument("--duree", type=int, default=2400)
     a.add_argument(
         "--symetrique",
-        action="store_true",
-        help="le geste est symétrique par nature : met gauche et droite en "
-        "miroir exact et remet la colonne dans le plan sagittal",
+        nargs="?", const="toutes", default=None, metavar="CLÉS",
+        help="la pose est symétrique par nature : met gauche et droite en "
+        "miroir exact et remet la colonne dans le plan sagittal. Se donne par "
+        "clés, comme les autres : une planche jambe levée l'est à l'entrée et "
+        "ne l'est plus à la fin.",
+    )
+    a.add_argument(
+        "--avant-bras-au-sol",
+        nargs="?", const="toutes", default=None, metavar="CLÉS",
+        help="le corps porte sur les avant-bras : les couche à plat vers "
+        "l'avant, sans toucher au bras qui, lui, porte l'élévation du buste.",
     )
     a.add_argument(
         "--pieds-sur-pointes",
-        action="store_true",
+        nargs="?", const="toutes", default=None, metavar="CLÉS",
         help="le corps porte sur la pointe des pieds : les remet tous deux "
-        "verticaux, orteils sous la cheville",
+        "verticaux, orteils sous la cheville. Nue, l'option vaut pour toutes "
+        "les clés ; sinon donner leurs rangs, « 1,2 ».",
     )
     a.add_argument(
         "--bras-tendus",
-        action="store_true",
+        nargs="?", const="toutes", default=None, metavar="CLÉS",
         help="le corps porte sur des bras tendus : les redresse à la verticale "
-        "et pose les mains à plat, plutôt que de recopier un relevé bruité",
+        "et pose les mains à plat, plutôt que de recopier un relevé bruité. "
+        "Mêmes rangs que ci-dessus.",
     )
     args = a.parse_args()
 
@@ -392,14 +438,28 @@ def main():
     haut, regard, pente = assise_inclinee(ASSISES[args.assise], reperes)
     assise = (haut, regard)
     poses = [pose_du_geste(p, r, assise) for p, r in zip(releves, reperes)]
-    if args.bras_tendus:
-        poses = [bras_tendus(pose, assise) for pose in poses]
-    if args.pieds_sur_pointes:
-        poses = [pieds_sur_pointes(pose) for pose in poses]
+    au_sol = cles_visees(args.avant_bras_au_sol, len(poses))
+    poses = [
+        avant_bras_au_sol(pose, assise) if rang in au_sol else pose
+        for rang, pose in enumerate(poses)
+    ]
+    tendus = cles_visees(args.bras_tendus, len(poses))
+    pointes = cles_visees(args.pieds_sur_pointes, len(poses))
+    poses = [
+        bras_tendus(pose, assise) if rang in tendus else pose
+        for rang, pose in enumerate(poses)
+    ]
+    poses = [
+        pieds_sur_pointes(pose) if rang in pointes else pose
+        for rang, pose in enumerate(poses)
+    ]
     # En dernier : les corrections précédentes portent sur un membre à la fois
     # et peuvent elles-mêmes rompre le miroir.
-    if args.symetrique:
-        poses = [symetriser(pose, assise) for pose in poses]
+    miroir = cles_visees(args.symetrique, len(poses))
+    poses = [
+        symetriser(pose, assise) if rang in miroir else pose
+        for rang, pose in enumerate(poses)
+    ]
 
     def triplet(v):
         return "({:+.2f}, {:+.2f}, {:+.2f})".format(*v)
@@ -413,7 +473,7 @@ def main():
     # Un relevé brut n'est jamais symétrique : le contrôle de symétrie n'aurait
     # rien à en dire d'utile. Symétrisé, en revanche, il devient une garantie
     # qu'on veut voir tenir.
-    if not args.symetrique:
+    if len(miroir) < len(poses):
         print(f'        "symetrique": False,')
     print(f'        "cles": [')
     for pose in poses:
