@@ -86,19 +86,29 @@ jobs:
         working-directory: mobile
         run: npm ci
 
-      # Les mêmes contrôles qu'en local. Une mise à jour ne part pas s'ils
-      # échouent : elle arrive sur des téléphones sans qu'on puisse la
-      # reprendre, contrairement à un déploiement web qu'on redéploie.
+      # Les contrôles qui gardent une publication mobile. Elle arrive sur des
+      # téléphones sans qu'on puisse la reprendre, contrairement à un
+      # déploiement web qu'on redéploie — d'où le fait de ne pas publier à
+      # l'aveugle.
       #
-      # `npm run lint` n'y figure pas volontairement : le dépôt porte une dette
-      # connue de 42 signalements, la commande sort donc en erreur et bloquerait
-      # toute publication. La remettre ici demandera d'abord de solder cette
-      # dette.
+      # Deux commandes qu'on lance en local sont volontairement absentes :
+      #
+      #  · `npm run lint` — le dépôt porte une dette connue de 42 signalements,
+      #    la commande sort en erreur et bloquerait toute publication. La
+      #    remettre ici demandera d'abord de solder cette dette.
+      #
+      #  · `tsc` à la racine — `tsconfig.json` inclut `.next/types/**`, où Next
+      #    **génère** `PageProps` et `LayoutProps`. Sans `next build` préalable
+      #    ces types n'existent pas et le contrôle échoue sur du code
+      #    parfaitement valide. En local le dossier `.next` traîne, ce qui
+      #    masque la dépendance. Vérifier le site demanderait de le construire,
+      #    donc une base de données et des variables d'environnement — pour
+      #    garder une publication *mobile*. Le rapport n'y est pas.
+      #
+      # Les tests unitaires, eux, couvrent `lib/` : toute la logique que le
+      # serveur et l'app se partagent.
       - name: Tests unitaires
         run: npx vitest run
-
-      - name: Vérifier les types du site
-        run: npx tsc --noEmit
 
       - name: Vérifier les types de l'app
         working-directory: mobile
