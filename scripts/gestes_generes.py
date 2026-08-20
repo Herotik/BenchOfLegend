@@ -463,21 +463,29 @@ GESTES = {
             # Les mains ne bougent pas de tout l'exercice — elles sont posées.
             # C'est exactement ce qu'un appui exprime, et ce qu'on n'arrivait
             # pas à obtenir en cherchant les angles à la main.
+            # Les x sont **négatifs à gauche** : à plat ventre, le demi-tour
+            # met la gauche du personnage en -X. Écrits avec les signes du corps
+            # debout, les appuis faisaient traverser chaque membre de l'autre
+            # côté et les bras se croisaient.
             _pose(PLANCHE_DROITE, {
-                _os("LeftArm"): Appui((0.18, 0.47, 0.02), (0, 1, 0)),
-                _os("RightArm"): Appui((-0.18, 0.47, 0.02), (0, 1, 0)),
+                _os("LeftArm"): Appui((-0.18, 0.47, 0.02), (0, 1, 0)),
+                _os("RightArm"): Appui((0.18, 0.47, 0.02), (0, 1, 0)),
                 # Jambe tendue en arrière, cheville juste au-dessus du sol.
                 # La hanche est à 50 cm et la jambe en fait 90 : le pied ne peut
                 # pas aller plus loin que √(0,90² − 0,42²) ≈ 0,80 m en arrière.
                 # Viser au-delà laissait la jambe pendre en diagonale, et le
                 # personnage paraissait accroupi.
-                _os("RightUpLeg"): Appui((-0.12, -0.80, 0.08), (0, -1, 0.3)),
+                _os("RightUpLeg"): Appui((0.12, -0.80, 0.08), (0, -1, 0.3)),
                 # Genou ramené sous la poitrine : la cheville se rapproche.
-                _os("LeftUpLeg"): Appui((0.14, -0.20, 0.15), (0, 1, 0)),
+                _os("LeftUpLeg"): Appui((-0.14, -0.20, 0.15), (0, 1, 0)),
             }),
+            # Les x sont **négatifs à gauche** : à plat ventre, le demi-tour
+            # met la gauche du personnage en -X. Écrits avec les signes du corps
+            # debout, les appuis faisaient traverser chaque membre de l'autre
+            # côté et les bras se croisaient.
             _pose(PLANCHE_DROITE, {
-                _os("LeftArm"): Appui((0.18, 0.47, 0.02), (0, 1, 0)),
-                _os("RightArm"): Appui((-0.18, 0.47, 0.02), (0, 1, 0)),
+                _os("LeftArm"): Appui((-0.18, 0.47, 0.02), (0, 1, 0)),
+                _os("RightArm"): Appui((0.18, 0.47, 0.02), (0, 1, 0)),
                 _os("LeftUpLeg"): Appui((0.12, -0.80, 0.08), (0, -1, 0.3)),
                 _os("RightUpLeg"): Appui((-0.14, -0.20, 0.15), (0, 1, 0)),
             }),

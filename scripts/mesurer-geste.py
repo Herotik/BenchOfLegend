@@ -24,6 +24,7 @@ l'axe Z de l'armature, qui n'est pas celui du monde.
 3. Rendre seulement quand les chiffres sont bons.
 """
 import bpy, sys, os, importlib.util
+from mathutils import Vector
 
 RACINE = "/home/user/FrameOfLegend"
 spec = importlib.util.spec_from_file_location(
@@ -54,6 +55,12 @@ POINTS = {
     "cheville G": ("mixamorig:LeftFoot", "tête"),
     "cheville D": ("mixamorig:RightFoot", "tête"),
     "coude G": ("mixamorig:LeftForeArm", "tête"),
+    # Les deux côtés, sans quoi on mesure le bras libre en croyant mesurer
+    # celui qui porte — ce qui a donné une « main à 1,10 m du sol » alarmante
+    # sur un gainage latéral où c'est l'autre bras qui est en appui.
+    "épaule D": ("mixamorig:RightArm", "tête"),
+    "main D": ("mixamorig:RightHand", "tête"),
+    "genou D": ("mixamorig:RightLeg", "tête"),
 }
 
 for numero in (numeros[0], numeros[len(numeros) // 2]):
@@ -88,4 +95,17 @@ for numero in (numeros[0], numeros[len(numeros) // 2]):
     sur_la_ligne = p["épaule G"].z + t * (p["cheville D"].z - p["épaule G"].z)
     creux = p["bassin"].z - sur_la_ligne
     print(f"  bassin / ligne épaules-chevilles : {creux * 100:+.0f} cm (0 = droit)")
-    print(f"  main au sol : z={p['main G'].z:+.2f} (doit être ~0)")
+    print(f"  main G z={p['main G'].z:+.2f}   main D z={p['main D'].z:+.2f}")
+    # Après une bascule à plat ventre, la gauche du personnage passe en -X.
+    # Un appui écrit avec les signes du corps debout fait alors traverser le
+    # membre de l'autre côté : c'est ce qui croisait les bras.
+    # Le côté se mesure le long de la **gauche du personnage**, pas de l'axe X
+    # du monde : couché, il n'y a plus de rapport entre les deux. La gauche se
+    # déduit de l'assise — c'est le produit vectoriel du haut par le regard.
+    haut = Vector(gg.GESTES[geste].get("assise", ((0, 0, 1), (0, -1, 0)))[0])
+    vue = Vector(gg.GESTES[geste].get("assise", ((0, 0, 1), (0, -1, 0)))[1])
+    gauche = haut.normalized().cross(vue.normalized())
+    for membre, g_, d_ in (("mains", "main G", "main D"), ("genoux", "genou G", "genou D")):
+        ecart = (p[g_] - p[d_]).dot(gauche)
+        print(f"  {membre} : le gauche est à {ecart * 100:+.0f} cm sur la gauche du "
+              f"corps {'← CROISÉS' if ecart < -0.02 else ''}")
