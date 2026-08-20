@@ -390,7 +390,11 @@ GESTES = {
         ],
     },
     "gainage-lateral": {
-        "vue": "profil",
+        # De trois-quarts, et non de profil : la caméra de profil regarde pile
+        # dans l'axe du regard d'un corps au sol, si bien qu'on ne voit plus
+        # de quel côté il est tourné. Un gainage latéral y devient
+        # indiscernable d'un corps couché sur le dos.
+        "vue": "trois-quarts",
         "duree": 2600,
         "assise": SUR_LE_COTE,
         "symetrique": False,
@@ -419,7 +423,11 @@ GESTES = {
         "bassin": [(0, 0, -0.09), (0, 0, 0.03)],
     },
     "mountain-climber": {
-        "vue": "profil",
+        # De trois-quarts, et non de profil : la caméra de profil regarde pile
+        # dans l'axe du regard d'un corps au sol, si bien qu'on ne voit plus
+        # de quel côté il est tourné. Un gainage latéral y devient
+        # indiscernable d'un corps couché sur le dos.
+        "vue": "trois-quarts",
         "duree": 800,
         "assise": SUR_LE_VENTRE,
         "symetrique": False,
