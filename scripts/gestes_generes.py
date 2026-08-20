@@ -773,10 +773,13 @@ def basculer_bassin(armature, haut, regard, repos, contexte):
     C'est ce qui ouvre les développés couchés, les gainages latéraux, les
     suspensions — tout ce qui ne se fait pas debout.
 
-    Renvoie la rotation appliquée, **exprimée dans le monde**. Les directions de
-    repos des autres os passent par elle, de sorte que `REPOS` continue de
-    signifier « comme le modèle se tient » une fois le corps couché : un torse
-    resterait sinon vertical sur un corps à l'horizontale.
+    Renvoie la rotation appliquée, dans le monde **et** dans l'armature. Les
+    deux servent : la première fait tourner les directions de repos, de sorte
+    que `REPOS` continue de signifier « comme le modèle se tient » une fois le
+    corps couché ; la seconde fait tourner les **orientations** de repos, sans
+    quoi `viser` prendrait le roulis d'un corps debout pour poser un corps
+    couché — et le tronc basculait alors de cent quatre-vingts degrés, le
+    personnage regardant le ciel au lieu du sol.
     """
     import math
 
@@ -820,7 +823,7 @@ def basculer_bassin(armature, haut, regard, repos, contexte):
     oriente.translation = bassin.matrix.translation
     bassin.matrix = oriente
     contexte.view_layer.update()
-    return rotation
+    return rotation, locale
 
 
 def appliquer(armature, nom, images, contexte):
@@ -870,7 +873,7 @@ def appliquer(armature, nom, images, contexte):
     # d'elle. L'inverse effacerait chaque pose au moment de coucher le corps.
     assise = geste.get("assise")
     if assise:
-        rotation = basculer_bassin(
+        rotation, locale = basculer_bassin(
             armature, assise[0], assise[1], repos_bassin, contexte
         )
         # `REPOS` veut dire « comme le modèle se tient » ; une fois le corps
@@ -878,6 +881,10 @@ def appliquer(armature, nom, images, contexte):
         # un os laissé au repos garderait sa direction debout et le torse
         # resterait vertical sur un corps à l'horizontale.
         repos = {o: (rotation @ d) for o, d in repos.items()}
+        # Les orientations aussi, et c'est le point : `viser` s'en sert comme
+        # repère de départ pour décider du roulis. Laissées debout, elles
+        # faisaient poser un torse couché avec le roulis d'un torse vertical.
+        orientations = {o: (locale @ m) for o, m in orientations.items()}
 
     # Le bassin est reposé **depuis sa position de repos** à chaque image, et
     # jamais décalé par rapport à l'image précédente : un décalage relatif

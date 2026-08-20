@@ -67,7 +67,15 @@ for numero in (numeros[0], numeros[len(numeros) // 2]):
         p[nom] = v
         print(f"  {nom:11s} x={v.x:+.2f}  y={v.y:+.2f}  z={v.z:+.2f}")
 
+    # Où regarde-t-il vraiment ? L'axe local Z de la tête suit le regard sur ce
+    # squelette (mesuré au repos). C'est le contrôle qui départage une planche
+    # d'un corps couché sur le dos, que l'image seule laisse ambigus.
+    tete_os = arm.pose.bones["mixamorig:Head"]
+    regard = (arm.matrix_world.to_3x3() @ tete_os.matrix.to_3x3().col[2].to_3d())
+    regard.normalize()
     print("  --- contrôles de forme ---")
+    print(f"  regard : {tuple(round(c, 2) for c in regard)}  "
+          f"({'vers le sol' if regard.z < -0.3 else 'vers le ciel' if regard.z > 0.3 else 'horizontal'})")
     ecart = abs(p["main G"].y - p["épaule G"].y)
     print(f"  main sous l'épaule : écart {ecart * 100:.0f} cm (doit être < 10)")
     print(
