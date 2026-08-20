@@ -247,6 +247,40 @@ def milieu(p, paire):
     return (p[paire["G"]] + p[paire["D"]]) / 2
 
 
+def bras_tendus(pose, assise):
+    """Remet les bras porteurs à la verticale, mains à plat sur le sol.
+
+    ## Pourquoi corriger un relevé
+
+    L'estimateur est bien plus sûr **dans le plan de l'image** que dans la
+    profondeur : les deux premières coordonnées se lisent sur les pixels, la
+    troisième s'infère. Filmé de trois quarts, l'écartement des mains tombe en
+    partie dans cette profondeur — et sort faux. Sur la planche de référence,
+    une main partait quatorze centimètres en dehors de son épaule et l'autre
+    quatre en dedans, là où la vidéo montre deux bras verticaux.
+
+    Or c'est justement le point sur lequel toutes les descriptions de
+    l'exercice sont d'accord : « mains directement sous les épaules ». Quand un
+    critère écrit est plus sûr que la mesure, c'est le critère qui gagne.
+
+    Un bras tendu qui porte descend donc **à la verticale** — la main tombe
+    alors sous l'épaule des deux côtés, sans avoir à viser un point — et la
+    main pointe vers l'avant du sol, à plat.
+
+    Ne vaut que pour un appui **bras tendus** : au bas d'une pompe, le coude
+    est plié et cette correction serait un mensonge.
+    """
+    bas = np.array([0.0, 0.0, -1.0])
+    # L'avant du sol : la direction de la tête, mise à plat. C'est là que
+    # pointent les doigts d'une main posée.
+    devant = normalise(np.array([assise[0][0], assise[0][1], 0.0]))
+    for cote in COTES.values():
+        pose[f"{cote}Arm"] = bas
+        pose[f"{cote}ForeArm"] = bas
+        pose[f"{cote}Hand"] = devant
+    return pose
+
+
 def pose_du_geste(p, repere, assise):
     """Directions de tous les os, prêtes à être écrites dans un geste."""
     sortie = {}
@@ -268,6 +302,12 @@ def main():
     a.add_argument("--images", required=True, help="numéros d'images, séparés par des virgules")
     a.add_argument("--assise", default="debout", choices=sorted(ASSISES))
     a.add_argument("--duree", type=int, default=2400)
+    a.add_argument(
+        "--bras-tendus",
+        action="store_true",
+        help="le corps porte sur des bras tendus : les redresse à la verticale "
+        "et pose les mains à plat, plutôt que de recopier un relevé bruité",
+    )
     args = a.parse_args()
 
     numeros = [int(n) for n in args.images.split(",")]
@@ -277,6 +317,8 @@ def main():
     haut, regard, pente = assise_inclinee(ASSISES[args.assise], reperes)
     assise = (haut, regard)
     poses = [pose_du_geste(p, r, assise) for p, r in zip(releves, reperes)]
+    if args.bras_tendus:
+        poses = [bras_tendus(pose, assise) for pose in poses]
 
     def triplet(v):
         return "({:+.2f}, {:+.2f}, {:+.2f})".format(*v)

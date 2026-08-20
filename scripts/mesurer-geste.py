@@ -83,8 +83,22 @@ for numero in (numeros[0], numeros[len(numeros) // 2]):
     print("  --- contrôles de forme ---")
     print(f"  regard : {tuple(round(c, 2) for c in regard)}  "
           f"({'vers le sol' if regard.z < -0.3 else 'vers le ciel' if regard.z > 0.3 else 'horizontal'})")
-    ecart = abs(p["main G"].y - p["épaule G"].y)
-    print(f"  main sous l'épaule : écart {ecart * 100:.0f} cm (doit être < 10)")
+    # « Mains directement sous les épaules », des **deux** côtés et sur les
+    # **deux** axes du sol. Ne mesurer que le décalage le long du corps laissait
+    # passer une main partie quatorze centimètres en dehors de son épaule :
+    # l'écart latéral est celui qu'on voit, et c'était le seul qu'on ne
+    # regardait pas.
+    haut = Vector(gg.GESTES[geste].get("assise", ((0, 0, 1), (0, -1, 0)))[0])
+    vue = Vector(gg.GESTES[geste].get("assise", ((0, 0, 1), (0, -1, 0)))[1])
+    gauche = haut.normalized().cross(vue.normalized())
+    # L'avant du sol : la direction de la tête, mise à plat.
+    devant = Vector((haut.x, haut.y, 0))
+    devant = devant.normalized() if devant.length > 1e-6 else Vector((0, 1, 0))
+    for cote, main, epaule in (("G", "main G", "épaule G"), ("D", "main D", "épaule D")):
+        ecart = p[main] - p[epaule]
+        print(f"  main {cote} sous l'épaule : {ecart.dot(devant) * 100:+.0f} cm "
+              f"devant, {ecart.dot(gauche) * 100:+.0f} cm de côté "
+              f"(les deux doivent tenir dans ±5)")
     print(
         f"  ligne tête-talon : tête z={p['tête'].z:.2f}, bassin z={p['bassin'].z:.2f}, "
         f"cheville z={p['cheville D'].z:.2f}"
@@ -98,13 +112,9 @@ for numero in (numeros[0], numeros[len(numeros) // 2]):
     print(f"  main G z={p['main G'].z:+.2f}   main D z={p['main D'].z:+.2f}")
     # Après une bascule à plat ventre, la gauche du personnage passe en -X.
     # Un appui écrit avec les signes du corps debout fait alors traverser le
-    # membre de l'autre côté : c'est ce qui croisait les bras.
-    # Le côté se mesure le long de la **gauche du personnage**, pas de l'axe X
-    # du monde : couché, il n'y a plus de rapport entre les deux. La gauche se
-    # déduit de l'assise — c'est le produit vectoriel du haut par le regard.
-    haut = Vector(gg.GESTES[geste].get("assise", ((0, 0, 1), (0, -1, 0)))[0])
-    vue = Vector(gg.GESTES[geste].get("assise", ((0, 0, 1), (0, -1, 0)))[1])
-    gauche = haut.normalized().cross(vue.normalized())
+    # membre de l'autre côté : c'est ce qui croisait les bras. Le côté se
+    # mesure donc le long de la **gauche du personnage**, pas de l'axe X du
+    # monde : couché, il n'y a plus de rapport entre les deux.
     for membre, g_, d_ in (("mains", "main G", "main D"), ("genoux", "genou G", "genou D")):
         ecart = (p[g_] - p[d_]).dot(gauche)
         print(f"  {membre} : le gauche est à {ecart * 100:+.0f} cm sur la gauche du "
