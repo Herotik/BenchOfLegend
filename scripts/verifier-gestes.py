@@ -35,6 +35,8 @@ import gestes_generes as g  # noqa: E402
 # n'ont pas à être exactes : elles servent à placer une articulation par rapport
 # aux deux autres, et seul le signe du résultat compte.
 CUISSE, TIBIA = 0.45, 0.45
+#: Du bassin aux épaules, sur ce squelette.
+TRONC = 0.50
 BRAS, AVANT_BRAS = 0.28, 0.26
 
 #: En deçà, l'articulation est trop alignée pour qu'on affirme quoi que ce soit —
@@ -86,6 +88,14 @@ def appuis_a_portee(pose, geste):
     # Longueurs mesurées sur le squelette Mixamo, en mètres.
     portees = {"Arm": BRAS + AVANT_BRAS, "UpLeg": CUISSE + TIBIA}
     hauteur = geste.get("hauteur")
+
+    # Un bras part de l'épaule, pas de la hanche : mesurer sa portée depuis le
+    # bassin la sous-estimait d'une demi-longueur de tronc, et le contrôle
+    # refusait des appuis parfaitement atteignables. L'épaule se déduit de
+    # l'assise — elle est à un demi-mètre du bassin, vers la tête.
+    haut = _normalise(geste.get("assise", ((0, 0, 1), None))[0])
+    epaule = tuple(h * TRONC for h in haut)
+    epaule = (epaule[0], epaule[1], epaule[2] + (hauteur or 0))
     fautes = []
     for nom, valeur in pose.items():
         if not isinstance(valeur, g.Appui):
@@ -97,12 +107,17 @@ def appuis_a_portee(pose, geste):
         if hauteur is None:
             fautes.append(f"{court} : appui déclaré sans hauteur de bassin")
             continue
-        # Distance approchée entre la hanche et la cible ; l'épaule est plus
-        # haut, mais l'ordre de grandeur suffit à repérer une cible aberrante.
-        d = sum((c - r) ** 2 for c, r in zip(valeur.cible, (0, 0, hauteur))) ** 0.5
-        if d > portees[membre] + 0.35:
+        # Distance de la racine du membre à la cible.
+        racine = epaule if membre == "Arm" else (0, 0, hauteur)
+        d = sum((c - r) ** 2 for c, r in zip(valeur.cible, racine)) ** 0.5
+        # Tolérance serrée : c'est une marge de 35 cm qui avait laissé passer
+        # un pied visé à 1,02 m pour une jambe de 90 — le membre pendait alors
+        # en diagonale au lieu de toucher, et le personnage paraissait accroupi.
+        # L'épaule étant plus haute que la hanche, 12 cm suffisent à absorber
+        # l'approximation.
+        if d > portees[membre] + 0.12:
             fautes.append(
-                f"{court} : appui à {d:.2f} m du bassin, hors de portée "
+                f"{court} : appui à {d:.2f} m de sa racine, hors de portée "
                 f"(membre de {portees[membre]:.2f} m)"
             )
     return fautes

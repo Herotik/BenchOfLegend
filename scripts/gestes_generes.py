@@ -401,18 +401,18 @@ GESTES = {
             # deux poses : c'est **ça**, un gainage latéral, et la version
             # précédente donnait un personnage simplement couché sur le flanc.
             _pose({
-                _os("RightArm"): Appui((0, 0.50, 0), (0, 1, 0)),
+                _os("RightArm"): Appui((0, 0.44, 0.04), (0, 1, 0)),
                 _os("LeftArm"): (0, 0.10, 1),
                 _os("LeftForeArm"): (0, -0.30, 0.95),
-                _os("LeftUpLeg"): Appui((0, -0.86, 0.10), (0, -1, 0)),
-                _os("RightUpLeg"): Appui((0, -0.86, 0.04), (0, -1, 0)),
+                _os("LeftUpLeg"): Appui((0, -0.78, 0.10), (0, -1, 0.3)),
+                _os("RightUpLeg"): Appui((0, -0.78, 0.05), (0, -1, 0.3)),
             }),
             _pose({
-                _os("RightArm"): Appui((0, 0.50, 0), (0, 1, 0)),
+                _os("RightArm"): Appui((0, 0.44, 0.04), (0, 1, 0)),
                 _os("LeftArm"): (0, 0.10, 1),
                 _os("LeftForeArm"): (0, -0.30, 0.95),
-                _os("LeftUpLeg"): Appui((0, -0.86, 0.10), (0, -1, 0)),
-                _os("RightUpLeg"): Appui((0, -0.86, 0.04), (0, -1, 0)),
+                _os("LeftUpLeg"): Appui((0, -0.78, 0.10), (0, -1, 0.3)),
+                _os("RightUpLeg"): Appui((0, -0.78, 0.05), (0, -1, 0.3)),
             }),
         ],
         # La hanche monte et redescend : le seul mouvement du geste.
@@ -431,18 +431,22 @@ GESTES = {
             # C'est exactement ce qu'un appui exprime, et ce qu'on n'arrivait
             # pas à obtenir en cherchant les angles à la main.
             _pose({
-                _os("LeftArm"): Appui((0.18, 0.42, 0), (0, 1, 0)),
-                _os("RightArm"): Appui((-0.18, 0.42, 0), (0, 1, 0)),
-                # Jambe tendue en arrière, pointe au sol.
-                _os("RightUpLeg"): Appui((-0.12, -1.02, 0.08), (0, -1, 0)),
-                # Genou ramené sous la poitrine, pied décollé.
-                _os("LeftUpLeg"): Appui((0.14, -0.10, 0.22), (0, 1, 0)),
+                _os("LeftArm"): Appui((0.18, 0.46, 0.02), (0, 1, 0)),
+                _os("RightArm"): Appui((-0.18, 0.46, 0.02), (0, 1, 0)),
+                # Jambe tendue en arrière, cheville juste au-dessus du sol.
+                # La hanche est à 50 cm et la jambe en fait 90 : le pied ne peut
+                # pas aller plus loin que √(0,90² − 0,42²) ≈ 0,80 m en arrière.
+                # Viser au-delà laissait la jambe pendre en diagonale, et le
+                # personnage paraissait accroupi.
+                _os("RightUpLeg"): Appui((-0.12, -0.80, 0.08), (0, -1, 0.3)),
+                # Genou ramené sous la poitrine : la cheville se rapproche.
+                _os("LeftUpLeg"): Appui((0.14, -0.30, 0.12), (0, 1, 0)),
             }),
             _pose({
-                _os("LeftArm"): Appui((0.18, 0.42, 0), (0, 1, 0)),
-                _os("RightArm"): Appui((-0.18, 0.42, 0), (0, 1, 0)),
-                _os("LeftUpLeg"): Appui((0.12, -1.02, 0.08), (0, -1, 0)),
-                _os("RightUpLeg"): Appui((-0.14, -0.10, 0.22), (0, 1, 0)),
+                _os("LeftArm"): Appui((0.18, 0.46, 0.02), (0, 1, 0)),
+                _os("RightArm"): Appui((-0.18, 0.46, 0.02), (0, 1, 0)),
+                _os("LeftUpLeg"): Appui((0.12, -0.80, 0.08), (0, -1, 0.3)),
+                _os("RightUpLeg"): Appui((-0.14, -0.30, 0.12), (0, 1, 0)),
             }),
         ],
     },
@@ -528,7 +532,7 @@ def _parcours(cles, images, repos):
         e = _adoucir(u - rang)
         depart, arrivee = boucle[rang], boucle[rang + 1]
         poses.append(
-            {nom: depart[nom].lerp(arrivee[nom], e).normalized() for nom in depart}
+            {nom: entre(depart[nom], arrivee[nom], e) for nom in depart}
         )
     return poses
 
