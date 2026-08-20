@@ -132,7 +132,7 @@ def landmarks(source, numeros):
         base_options=python.BaseOptions(model_asset_path=MODELE),
         running_mode=vision.RunningMode.VIDEO,
     )
-    v = cv2.VideoCapture(video)
+    v = cv2.VideoCapture(source)
     fps = v.get(cv2.CAP_PROP_FPS)
     voulus, trouves = set(numeros), {}
 
@@ -573,6 +573,14 @@ def main():
         "l'avant, sans toucher au bras qui, lui, porte l'élévation du buste.",
     )
     a.add_argument(
+        "--sans-pente",
+        action="store_true",
+        help="garde l'assise canonique au lieu de la pencher de l'angle mesuré. "
+        "La pente relevée est une **moyenne** des poses clés : entre un corps à "
+        "plat et un corps plié en V, elle donne une inclinaison que ni l'une ni "
+        "l'autre n'a. Un corps couché tient son assise du sol, qui est plat.",
+    )
+    a.add_argument(
         "--bras-libres",
         nargs="?", const="toutes", default=None, metavar="CLÉS",
         help="les bras ne font pas partie de l'exercice : les rend au modèle "
@@ -604,7 +612,14 @@ def main():
     releves = landmarks(args.source, numeros)
     reperes = [repere_du_corps(p) for p in releves]
 
-    haut, regard, pente = assise_inclinee(ASSISES[args.assise], reperes)
+    if args.sans_pente:
+        base = ASSISES[args.assise]
+        haut = normalise(np.array(base[0], dtype=float))
+        regard = np.array(base[1], dtype=float)
+        haut, regard, pente = tuple(haut), tuple(normalise(
+            regard - haut * np.dot(regard, haut))), 0.0
+    else:
+        haut, regard, pente = assise_inclinee(ASSISES[args.assise], reperes)
     assise = (haut, regard)
     poses = [pose_du_geste(p, r, assise) for p, r in zip(releves, reperes)]
     au_sol = cles_visees(args.avant_bras_au_sol, len(poses))
@@ -664,7 +679,10 @@ def main():
     print(f'    "{args.geste}": {{')
     print(f'        "vue": "{args.vue}",')
     print(f'        "duree": {args.duree},')
-    print(f'        # Assise « {args.assise} » penchée de {pente:+.0f}°, mesurés sur la vidéo.')
+    if args.sans_pente:
+        print(f'        # Assise « {args.assise} » canonique : voir --sans-pente.')
+    else:
+        print(f'        # Assise « {args.assise} » penchée de {pente:+.0f}°, mesurés sur la vidéo.')
     print(f'        "assise": ({triplet(haut)}, {triplet(regard)}),')
     # Un relevé brut n'est jamais symétrique : le contrôle de symétrie n'aurait
     # rien à en dire d'utile. Symétrisé, en revanche, il devient une garantie

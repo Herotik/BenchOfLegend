@@ -1142,6 +1142,8 @@ GESTES = {
         ],
     },
 
+
+
     "rowing": {
         "vue": "trois-quarts",
         "duree": 2000,

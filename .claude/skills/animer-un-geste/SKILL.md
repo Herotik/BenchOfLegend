@@ -72,7 +72,25 @@ de **positions relatives**, pas de sensations :
 pas l'impression que donne le rendu. Un relevé vidéo ne dispense **pas** de
 cette étape : il donne la forme, pas le jugement sur elle.
 
-### 1 bis. Ce qu'un relevé vidéo ne donne pas
+### 1 bis. Ce qu'un relevé vidéo ne peut pas décrire du tout
+
+**Un geste dont le tronc change d'inclinaison en cours de route.** C'est une
+limite du moteur, pas de l'estimateur, et elle se voit à ceci : les directions
+sont exprimées dans le repère du corps, donc `Spine` vaut **toujours** l'axe
+« haut » de l'assise, et l'assise est une donnée du geste entier. La colonne ne
+peut pas se redresser d'une pose clé à la suivante.
+
+Les gestes au sol qui gardent le tronc droit — planches, pompes — s'en tirent :
+`aplomb` retrouve la pente par le contact au sol. Un relevé en V, un crunch
+inversé, un burpee, non : leur mouvement **est** le décollement du tronc, et
+rien ne peut le reconstituer. Le relevé sort un corps à la verticale, et aucun
+réglage n'y change quoi que ce soit.
+
+Il faudra une assise **par pose clé** pour ceux-là. Tant que ce n'est pas fait,
+ne pas perdre de temps dessus : le contrôle les déclare cohérents et l'audit
+les pose proprement au sol. Seul le rendu montre la faute.
+
+### 1 ter. Ce qu'un relevé vidéo ne donne pas
 
 Trois choses manquent systématiquement, et chacune a livré une faute :
 
