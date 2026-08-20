@@ -37,8 +37,24 @@ On reconstruit donc les axes du corps à partir des articulations elles-mêmes �
 le haut va des hanches aux épaules, la gauche d'une épaule à l'autre — et l'on
 réexprime chaque membre là-dedans. Le résultat ne dépend plus de l'angle de
 prise de vue.
+
+## L'inclinaison, qu'on perdait
+
+Ce repère interne donne la **forme** du corps, et rien d'autre : replier le
+sujet dans ses propres axes efface son inclinaison par rapport au sol. Le
+premier relevé de planche l'a payé cher — corps parfaitement droit, mains
+posées, et les pieds à cinquante-deux centimètres en l'air. Une planche haute
+n'est pas horizontale : les épaules sont à hauteur de bras, les orteils au sol,
+soit une dizaine de degrés de pente.
+
+Cette pente est pourtant dans la vidéo. La verticale de l'image, c'est la
+gravité — de tous les axes de l'estimateur, le plus sûr, parce qu'il ne dépend
+d'aucune estimation de profondeur. On mesure donc de combien le haut du corps
+et le regard s'écartent de cette verticale, et l'on **fait tourner l'assise**
+d'autant. Le corps garde sa forme, et retrouve sa pente.
 """
 import argparse
+import math
 import os
 import sys
 
@@ -48,9 +64,18 @@ MODELE = os.environ.get("MODELE_POSE", "/tmp/pg/pose_landmarker.task")
 
 # Indices des articulations dans le squelette de l'estimateur.
 NEZ = 0
+#: Les oreilles, et non le nez, donnent l'axe de la tête. Le nez est en avant
+#: **et** en dessous du crâne : s'en servir pour orienter la nuque enfonçait la
+#: tête sous les épaules, un menton dans la poitrine que le sujet filmé n'avait
+#: pas. Le milieu des oreilles est, lui, sur l'axe du cou.
+OREILLE = {"G": 7, "D": 8}
 EPAULE = {"G": 11, "D": 12}
 COUDE = {"G": 13, "D": 14}
 POIGNET = {"G": 15, "D": 16}
+#: La base de l'index : elle donne la direction des doigts, donc l'orientation
+#: de la main posée. Sans elle, la main d'appui garde son orientation debout et
+#: pend doigts vers le sol au lieu de s'y poser à plat.
+INDEX = {"G": 19, "D": 20}
 HANCHE = {"G": 23, "D": 24}
 GENOU = {"G": 25, "D": 26}
 CHEVILLE = {"G": 27, "D": 28}
@@ -63,6 +88,12 @@ ASSISES = {
     "ventre": ((0, 1, 0), (0, 0, -1)),
     "cote": ((0, 1, 0), (-1, 0, 0)),
 }
+
+#: Le haut du monde dans le repère de l'estimateur : son axe y descend avec
+#: l'image. C'est la seule direction absolue dont on dispose, et elle vaut tant
+#: que la caméra est tenue droite — ce qui est le cas d'une démonstration
+#: filmée sur trépied.
+GRAVITE = np.array([0.0, -1.0, 0.0])
 
 
 def normalise(v):
@@ -138,6 +169,46 @@ def repere_du_corps(p):
     return gauche, haut, avant
 
 
+def assise_inclinee(base, reperes):
+    """Fait pencher l'assise de l'angle qu'on mesure sur la vidéo.
+
+    L'assise dit comment le corps est **posé** : `haut` va du bassin à la tête,
+    `regard` sort de la poitrine. On connaît déjà l'inclinaison réelle de ces
+    deux directions par rapport à la verticale — c'est ce que la gravité donne.
+    Il reste à tourner l'assise de départ dans son propre plan sagittal pour
+    qu'elle les retrouve.
+
+    Tourner **dans ce plan** et non librement, c'est ce qui garde la mise en
+    scène : un corps couché sur le ventre reste vu de profil, il penche
+    seulement. Un angle libre le ferait aussi tourner vers la caméra, ce que la
+    profondeur estimée ne mesure pas assez bien pour qu'on s'y fie.
+    """
+    haut0 = normalise(np.array(base[0], dtype=float))
+    regard0 = np.array(base[1], dtype=float)
+    regard0 = normalise(regard0 - haut0 * np.dot(regard0, haut0))
+
+    # Moyenne sur les images demandées : l'assise vaut pour le geste entier, et
+    # une seule image la ferait dépendre du hasard d'une estimation.
+    a = float(np.mean([np.dot(r[1], GRAVITE) for r in reperes]))
+    b = float(np.mean([np.dot(r[2], GRAVITE) for r in reperes]))
+
+    # Élévations de l'assise de départ, dans le monde de Blender.
+    a0, b0 = float(haut0[2]), float(regard0[2])
+    n = a0 * a0 + b0 * b0
+    if n < 1e-6:
+        # Le plan sagittal de cette assise est horizontal : aucune rotation
+        # dedans ne changerait la hauteur. Rien à corriger.
+        return tuple(haut0), tuple(regard0), 0.0
+
+    cos = (a * a0 + b * b0) / n
+    sin = (a * b0 - b * a0) / n
+    angle = math.atan2(sin, cos)
+
+    haut = math.cos(angle) * haut0 + math.sin(angle) * regard0
+    regard = -math.sin(angle) * haut0 + math.cos(angle) * regard0
+    return tuple(normalise(haut)), tuple(normalise(regard)), math.degrees(angle)
+
+
 def vers_le_monde(direction, repere, assise):
     """Réexprime une direction du repère du corps vers celui de Blender."""
     gauche, haut, avant = repere
@@ -159,10 +230,11 @@ SEGMENTS = [
     ("Spine", lambda p, c: (milieu(p, HANCHE), milieu(p, EPAULE))),
     ("Spine1", lambda p, c: (milieu(p, HANCHE), milieu(p, EPAULE))),
     ("Spine2", lambda p, c: (milieu(p, HANCHE), milieu(p, EPAULE))),
-    ("Neck", lambda p, c: (milieu(p, EPAULE), p[NEZ])),
-    ("Head", lambda p, c: (milieu(p, EPAULE), p[NEZ])),
+    ("Neck", lambda p, c: (milieu(p, EPAULE), milieu(p, OREILLE))),
+    ("Head", lambda p, c: (milieu(p, EPAULE), milieu(p, OREILLE))),
     ("{c}Arm", lambda p, c: (p[EPAULE[c]], p[COUDE[c]])),
     ("{c}ForeArm", lambda p, c: (p[COUDE[c]], p[POIGNET[c]])),
+    ("{c}Hand", lambda p, c: (p[POIGNET[c]], p[INDEX[c]])),
     ("{c}UpLeg", lambda p, c: (p[HANCHE[c]], p[GENOU[c]])),
     ("{c}Leg", lambda p, c: (p[GENOU[c]], p[CHEVILLE[c]])),
     ("{c}Foot", lambda p, c: (p[CHEVILLE[c]], p[POINTE[c]])),
@@ -175,9 +247,8 @@ def milieu(p, paire):
     return (p[paire["G"]] + p[paire["D"]]) / 2
 
 
-def pose_du_geste(p, assise):
+def pose_du_geste(p, repere, assise):
     """Directions de tous les os, prêtes à être écrites dans un geste."""
-    repere = repere_du_corps(p)
     sortie = {}
     for gabarit, extrait in SEGMENTS:
         cotes = ["G", "D"] if "{c}" in gabarit else [None]
@@ -200,20 +271,22 @@ def main():
     args = a.parse_args()
 
     numeros = [int(n) for n in args.images.split(",")]
-    assise = ASSISES[args.assise]
-    poses = [pose_du_geste(p, assise) for p in landmarks(args.video, numeros)]
+    releves = landmarks(args.video, numeros)
+    reperes = [repere_du_corps(p) for p in releves]
 
-    nom_assise = {
-        "debout": None, "dos": "SUR_LE_DOS",
-        "ventre": "SUR_LE_VENTRE", "cote": "SUR_LE_COTE",
-    }[args.assise]
+    haut, regard, pente = assise_inclinee(ASSISES[args.assise], reperes)
+    assise = (haut, regard)
+    poses = [pose_du_geste(p, r, assise) for p, r in zip(releves, reperes)]
+
+    def triplet(v):
+        return "({:+.2f}, {:+.2f}, {:+.2f})".format(*v)
 
     print(f'    # Relevé sur une vidéo de démonstration, images {args.images}.')
     print(f'    "{args.geste}": {{')
     print(f'        "vue": "profil",')
     print(f'        "duree": {args.duree},')
-    if nom_assise:
-        print(f'        "assise": {nom_assise},')
+    print(f'        # Assise « {args.assise} » penchée de {pente:+.0f}°, mesurés sur la vidéo.')
+    print(f'        "assise": ({triplet(haut)}, {triplet(regard)}),')
     print(f'        "symetrique": False,')
     print(f'        "cles": [')
     for pose in poses:

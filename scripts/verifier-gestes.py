@@ -73,7 +73,7 @@ def _direction(valeur):
     que le membre y arrive proprement. Ce qui reste à vérifier sur un appui,
     c'est qu'il soit atteignable — voir `appuis_a_portee`.
     """
-    if valeur is g.REPOS or isinstance(valeur, g.Appui):
+    if valeur is g.REPOS or valeur is g.SUIVRE or isinstance(valeur, g.Appui):
         return None
     return _normalise(valeur)
 

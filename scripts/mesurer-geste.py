@@ -109,3 +109,16 @@ for numero in (numeros[0], numeros[len(numeros) // 2]):
         ecart = (p[g_] - p[d_]).dot(gauche)
         print(f"  {membre} : le gauche est à {ecart * 100:+.0f} cm sur la gauche du "
               f"corps {'← CROISÉS' if ecart < -0.02 else ''}")
+
+    # Les appuis, os par os. Un geste au sol se juge d'abord là-dessus : si un
+    # appui déclaré flotte, la posture est fausse quoi que disent les autres
+    # mesures. C'est la faute qu'une planche relevée en vidéo a livrée deux fois
+    # de suite — corps parfaitement droit, chevilles en l'air.
+    ancrage = gg.GESTES[geste].get("ancrage", True)
+    if isinstance(ancrage, (list, tuple)):
+        print("  --- appuis ---")
+        for nom in ancrage:
+            pb = arm.pose.bones[f"mixamorig:{nom}"]
+            bas = min((arm.matrix_world @ bout).z for bout in (pb.head, pb.tail))
+            print(f"  {nom:14s} touche à z={bas * 100:+5.1f} cm "
+                  f"{'← EN L’AIR' if bas > 0.05 else ''}")

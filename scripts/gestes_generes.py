@@ -82,6 +82,21 @@ de captation font pareil, l'app reste cohérente.
 #: Marque un os qu'on ne touche pas : il garde l'orientation du modèle importé.
 REPOS = None
 
+#: Marque un os qui **suit son parent** au lieu de viser une direction du monde.
+#:
+#: La nuance avec `REPOS` est subtile et coûte cher quand on la manque. `REPOS`
+#: veut dire « la direction que cet os a dans le modèle debout », c'est-à-dire
+#: une direction **absolue** : un avant-bras laissé à `REPOS` pend le long du
+#: corps, où que soit passé le bras. C'est ce qu'on veut d'un membre au repos.
+#:
+#: Le poignet, lui, n'a pas de direction propre : il prolonge l'avant-bras.
+#: L'avoir mis à `REPOS` aurait fait pointer la main vers le sol pendant qu'on
+#: lève un haltère. D'où ce second marqueur, qui est le défaut des mains.
+SUIVRE = "suivre"
+
+#: Les os dont le défaut est de suivre leur parent.
+MAINS = ("mixamorig:LeftHand", "mixamorig:RightHand")
+
 
 class Appui:
     """Un membre qui **touche** quelque chose, décrit par un point et non un axe.
@@ -128,9 +143,14 @@ ORDRE = [
     "mixamorig:LeftShoulder",
     "mixamorig:LeftArm",
     "mixamorig:LeftForeArm",
+    # La main **après** l'avant-bras : sans elle, une main d'appui garde
+    # l'orientation qu'elle a le long du corps debout et pend, doigts vers
+    # le bas, au lieu de se poser à plat sur le sol.
+    "mixamorig:LeftHand",
     "mixamorig:RightShoulder",
     "mixamorig:RightArm",
     "mixamorig:RightForeArm",
+    "mixamorig:RightHand",
     "mixamorig:LeftUpLeg",
     "mixamorig:LeftLeg",
     "mixamorig:LeftFoot",
@@ -148,7 +168,7 @@ def _os(nom):
 
 # Debout, tel que le modèle se tient. Chaque geste part de là et ne redéfinit
 # que ce qu'il bouge.
-DEBOUT = {nom: REPOS for nom in ORDRE}
+DEBOUT = {nom: (SUIVRE if nom in MAINS else REPOS) for nom in ORDRE}
 
 # Buste penché, comme on se tient pour un oiseau, un rowing ou un kickback.
 #
@@ -521,45 +541,53 @@ GESTES = {
     "planche-relevee": {
         "vue": "profil",
         "duree": 3000,
-        "assise": SUR_LE_VENTRE,
+        # Assise « ventre », penchée des 7° mesurés sur la vidéo.
+        "assise": ((+0.00, +0.99, +0.13), (+0.00, +0.13, -0.99)),
         "symetrique": False,
-        # Les appuis d'une planche haute : ce sont eux qui touchent le sol, et
-        # non le point le plus bas du maillage.
+        # Les appuis d'une planche haute : ce sont eux qui touchent le sol,
+        # et non le point le plus bas du maillage.
         "ancrage": ("LeftHand", "RightHand", "LeftFoot", "RightFoot"),
+        # La pente relevée sur la vidéo ne suffit pas — la caméra plongeait.
+        # C'est le sol qui tranche : mains et orteils au même niveau.
+        "aplomb": True,
         "cles": [
             _pose({
-                _os("Spine"): (+0.00, +1.00, -0.00),
-                _os("Spine1"): (+0.00, +1.00, -0.00),
-                _os("Spine2"): (+0.00, +1.00, -0.00),
-                _os("Neck"): (-0.10, +0.77, -0.64),
-                _os("Head"): (-0.10, +0.77, -0.64),
-                _os("LeftArm"): (-0.18, -0.20, -0.96),
-                _os("RightArm"): (+0.33, -0.29, -0.90),
-                _os("LeftForeArm"): (+0.31, +0.04, -0.95),
-                _os("RightForeArm"): (+0.18, -0.09, -0.98),
-                _os("LeftUpLeg"): (-0.05, -0.99, -0.10),
-                _os("RightUpLeg"): (-0.03, -0.98, -0.19),
-                _os("LeftLeg"): (-0.10, -0.99, +0.03),
-                _os("RightLeg"): (+0.05, -1.00, +0.01),
-                _os("LeftFoot"): (+0.12, -0.21, -0.97),
-                _os("RightFoot"): (+0.54, +0.14, -0.83),
+                _os("Spine"): (+0.00, +0.99, +0.13),
+                _os("Spine1"): (+0.00, +0.99, +0.13),
+                _os("Spine2"): (+0.00, +0.99, +0.13),
+                _os("Neck"): (-0.18, +0.98, +0.11),
+                _os("Head"): (-0.18, +0.98, +0.11),
+                _os("LeftArm"): (-0.18, -0.07, -0.98),
+                _os("RightArm"): (+0.33, -0.17, -0.93),
+                _os("LeftForeArm"): (+0.31, +0.16, -0.94),
+                _os("RightForeArm"): (+0.18, +0.04, -0.98),
+                _os("LeftHand"): (+0.54, +0.79, -0.28),
+                _os("RightHand"): (+0.21, +0.97, -0.15),
+                _os("LeftUpLeg"): (-0.05, -0.97, -0.23),
+                _os("RightUpLeg"): (-0.03, -0.95, -0.31),
+                _os("LeftLeg"): (-0.10, -0.99, -0.09),
+                _os("RightLeg"): (+0.05, -0.99, -0.12),
+                _os("LeftFoot"): (+0.12, -0.08, -0.99),
+                _os("RightFoot"): (+0.54, +0.24, -0.80),
             }),
             _pose({
-                _os("Spine"): (+0.00, +1.00, -0.00),
-                _os("Spine1"): (+0.00, +1.00, -0.00),
-                _os("Spine2"): (+0.00, +1.00, -0.00),
-                _os("Neck"): (-0.10, +0.75, -0.65),
-                _os("Head"): (-0.10, +0.75, -0.65),
-                _os("LeftArm"): (-0.17, -0.21, -0.96),
-                _os("RightArm"): (+0.33, -0.29, -0.90),
-                _os("LeftForeArm"): (+0.31, +0.04, -0.95),
-                _os("RightForeArm"): (+0.18, -0.09, -0.98),
-                _os("LeftUpLeg"): (-0.05, -0.99, -0.10),
-                _os("RightUpLeg"): (-0.03, -0.98, -0.18),
-                _os("LeftLeg"): (-0.11, -0.99, +0.04),
-                _os("RightLeg"): (+0.03, -1.00, +0.02),
-                _os("LeftFoot"): (+0.12, -0.22, -0.97),
-                _os("RightFoot"): (+0.54, +0.13, -0.84),
+                _os("Spine"): (+0.00, +0.99, +0.13),
+                _os("Spine1"): (+0.00, +0.99, +0.13),
+                _os("Spine2"): (+0.00, +0.99, +0.13),
+                _os("Neck"): (-0.18, +0.98, +0.09),
+                _os("Head"): (-0.18, +0.98, +0.09),
+                _os("LeftArm"): (-0.17, -0.08, -0.98),
+                _os("RightArm"): (+0.33, -0.18, -0.93),
+                _os("LeftForeArm"): (+0.31, +0.16, -0.94),
+                _os("RightForeArm"): (+0.18, +0.04, -0.98),
+                _os("LeftHand"): (+0.54, +0.80, -0.26),
+                _os("RightHand"): (+0.21, +0.97, -0.13),
+                _os("LeftUpLeg"): (-0.05, -0.97, -0.23),
+                _os("RightUpLeg"): (-0.03, -0.95, -0.31),
+                _os("LeftLeg"): (-0.11, -0.99, -0.09),
+                _os("RightLeg"): (+0.03, -0.99, -0.11),
+                _os("LeftFoot"): (+0.12, -0.10, -0.99),
+                _os("RightFoot"): (+0.54, +0.23, -0.81),
             }),
         ],
     },
@@ -607,10 +635,10 @@ def _parcours(cles, images, repos):
         for nom, valeur in pose.items():
             if nom not in repos:
                 continue
-            if isinstance(valeur, Appui):
-                # Un appui n'est pas une direction : il se garde tel quel et se
-                # résoudra une fois la chaîne parente posée, quand on saura où
-                # se trouve l'épaule ou la hanche.
+            if isinstance(valeur, Appui) or valeur is SUIVRE:
+                # Ni l'un ni l'autre n'est une direction. Un appui se résoudra
+                # une fois la chaîne parente posée, quand on saura où se trouve
+                # l'épaule ou la hanche ; un os qui suit ne se vise jamais.
                 sortie[nom] = valeur
             else:
                 sortie[nom] = Vector(
@@ -619,6 +647,14 @@ def _parcours(cles, images, repos):
         return sortie
 
     def entre(a, b, e):
+        if a is SUIVRE and b is SUIVRE:
+            return SUIVRE
+        if a is SUIVRE or b is SUIVRE:
+            raise SystemExit(
+                "Un os suit son parent dans une pose et vise une direction "
+                "dans l'autre ; il faut choisir l'un ou l'autre pour tout le "
+                "geste, sans quoi il n'y a rien à interpoler entre les deux."
+            )
         if isinstance(a, Appui) and isinstance(b, Appui):
             # Un point s'interpole **linéairement** : le normaliser le
             # ramènerait sur la sphère unité et la main décrirait un arc au
@@ -770,6 +806,93 @@ def atteindre(racine, cible, pole, longueurs):
 
     coude = racine + axe * le_long + cote * ecart
     return (coude - racine).normalized(), (cible - coude).normalized()
+
+
+def mettre_d_aplomb(contexte, armature, os_porteurs):
+    """Fait pencher le corps entier jusqu'à ce que ses appuis soient de niveau.
+
+    ## Ce que ça répare
+
+    Un geste relevé sur une vidéo donne la **forme** du corps — l'angle de
+    chaque membre par rapport aux autres — et pas sa pente par rapport au sol.
+    L'estimateur travaille dans le repère de l'image, et une caméra qui plonge
+    un peu, ce qui est le cas de toute vidéo tournée sur un sujet au sol, fait
+    croire à un corps plus horizontal qu'il n'est.
+
+    La première planche relevée ainsi sortait parfaitement droite, mains
+    posées… et chevilles à cinquante-deux centimètres en l'air. Le corps était
+    juste, sa pente ne l'était pas.
+
+    Or la pente, on la connaît sans rien mesurer sur la vidéo : **les mains et
+    les orteils d'une planche sont sur le même sol.** C'est une contrainte
+    physique, elle ne dépend d'aucune estimation, et elle s'adapte d'elle-même
+    aux proportions du personnage — qui ne sont pas celles du sujet filmé.
+
+    ## Comment
+
+    On prend le point de contact de chaque os porteur, on cherche la direction
+    horizontale selon laquelle ils s'étalent — des mains vers les pieds, pour
+    une planche —, on ajuste la droite de leurs hauteurs le long de cette
+    direction, et l'on fait tourner le corps de la pente trouvée.
+
+    Ça ne remplace pas `poser_sur`, ça le précède : mettre d'aplomb rend les
+    appuis parallèles au sol, poser les y amène.
+    """
+    import math
+
+    from mathutils import Matrix, Vector
+
+    contexte.view_layer.update()
+
+    points = []
+    for nom in os_porteurs:
+        pb = armature.pose.bones[f"mixamorig:{nom}"]
+        bouts = [armature.matrix_world @ bout for bout in (pb.head, pb.tail)]
+        # Le point qui touche est le plus bas des deux : le bout des doigts
+        # pour une main posée, la pointe pour un pied.
+        points.append(min(bouts, key=lambda p: p.z))
+
+    if len(points) < 2:
+        return
+
+    centre = sum(points, Vector((0, 0, 0))) / len(points)
+    plats = [Vector((p.x - centre.x, p.y - centre.y)) for p in points]
+
+    # Direction d'étalement des appuis. Deux appuis groupés au même endroit —
+    # les deux mains seules — n'en désignent aucune, et il n'y a alors rien à
+    # redresser.
+    etale = max(plats, key=lambda v: v.length)
+    if etale.length < 0.05:
+        return
+    u = etale.normalized()
+
+    # Droite des moindres carrés z = pente × distance, l'origine étant au
+    # centre des appuis.
+    le_long = [v.dot(u) for v in plats]
+    hauteurs = [p.z - centre.z for p in points]
+    variance = sum(s * s for s in le_long)
+    if variance < 1e-6:
+        return
+    pente = sum(s * z for s, z in zip(le_long, hauteurs)) / variance
+
+    angle = math.atan(pente)
+    # Une correction de plus d'un quart de tour ne redresse rien : elle dit que
+    # les appuis nommés ne sont pas ceux qui portent. Mieux vaut ne rien faire
+    # et laisser la faute visible.
+    if abs(angle) > math.pi / 4:
+        return
+
+    axe = Vector((-u.y, u.x, 0)).normalized()
+    rotation = Matrix.Rotation(angle, 3, axe)
+
+    monde = armature.matrix_world.to_3x3()
+    locale = monde.inverted() @ rotation @ monde
+
+    bassin = armature.pose.bones[BASSIN]
+    tourne = (locale @ bassin.matrix.to_3x3()).to_4x4()
+    tourne.translation = bassin.matrix.translation
+    bassin.matrix = tourne
+    contexte.view_layer.update()
 
 
 def poser_sur(contexte, armature, os_porteurs):
@@ -1040,6 +1163,16 @@ def appliquer(armature, nom, images, contexte):
             os_pose = armature.pose.bones[os_nom]
             voulu = resolus.pop(os_nom, None) or pose[os_nom]
 
+            if voulu is SUIVRE:
+                # Rotation locale nulle : l'os prolonge exactement son parent,
+                # quoi que celui-ci ait fait. On la pose quand même en clé,
+                # sans quoi un geste qui oriente la main sur une pose et la
+                # laisse suivre sur l'autre garderait la première.
+                os_pose.rotation_mode = "QUATERNION"
+                os_pose.rotation_quaternion = (1, 0, 0, 0)
+                os_pose.keyframe_insert("rotation_quaternion", frame=numero)
+                continue
+
             if isinstance(voulu, Appui):
                 # Résolu **ici** et pas plus tôt : la position de l'épaule
                 # dépend de toute la chaîne posée avant elle.
@@ -1067,6 +1200,19 @@ def appliquer(armature, nom, images, contexte):
         ancrage = geste.get("ancrage", True)
         if hauteur is None and ancrage:
             if isinstance(ancrage, (list, tuple)):
+                # `aplomb` ne se met que sur les gestes relevés en vidéo : eux
+                # seuls tiennent leur pente d'une estimation, et non d'une
+                # assise écrite à la main qu'on ne veut surtout pas voir
+                # corrigée dans le dos de celui qui l'a écrite.
+                if geste.get("aplomb"):
+                    mettre_d_aplomb(contexte, armature, ancrage)
+                    # Sans cette clé-là, la mise d'aplomb existait dans la pose
+                    # vivante et disparaissait de l'animation : la rotation du
+                    # bassin n'était mémorisée qu'en début de tour, avant
+                    # qu'on la corrige. Le corps repartait donc à sa pente
+                    # d'origine dès que le rendu relisait les clés.
+                    bassin.rotation_mode = "QUATERNION"
+                    bassin.keyframe_insert("rotation_quaternion", frame=numero)
                 poser_sur(contexte, armature, ancrage)
             else:
                 poser_au_sol(contexte, armature)

@@ -23,14 +23,25 @@ roulis pris sur un corps vertical pour poser un corps couché, une gauche et une
 droite échangées par un demi-tour. L'œil disait « c'est bizarre » ; la mesure
 disait « le bassin est à 1,17 m au lieu de 0,50 ».
 
-## Ce que je ne peux pas faire
+## Deux points de départ
 
-**Lire une vidéo.** Aucun accès aux images : ni YouTube, ni extraction de poses
-à partir d'un film. Une playlist d'exercices ne sert donc qu'à nommer les
-gestes, et encore faut-il que le domaine passe le proxy — YouTube ne passe pas.
+**Une vidéo, quand on en a une.** C'est de loin le meilleur : elle contient
+déjà la réponse, et `scripts/geste-depuis-video.py` en tire les directions de
+tous les os. YouTube ne passe pas le proxy, mais un fichier fourni par
+l'utilisateur, si.
 
-Ce qui passe : les pages de description d'exercices, largement suffisantes.
-Elles disent « mains directement sous les épaules », « ligne droite de la tête
+    pip install opencv-python-headless mediapipe
+    curl -o /tmp/pg/pose_landmarker.task https://storage.googleapis.com/\
+mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/\
+pose_landmarker_full.task
+    python3 scripts/geste-depuis-video.py <video> <geste> \
+        --images 504,528 --assise ventre
+
+Repérer les bonnes images d'abord — une vidéo de démonstration passe la moitié
+de son temps sur des plans de coupe et des postures de transition.
+
+**Une description écrite, sinon.** Les pages de forme suffisent largement :
+elles disent « mains directement sous les épaules », « ligne droite de la tête
 aux talons », « bassin de niveau » — c'est-à-dire exactement des contraintes
 géométriques.
 
@@ -51,7 +62,23 @@ de **positions relatives**, pas de sensations :
 - « front foot off the floor » → l'autre cheville ne l'est pas
 
 Écrire ces critères **avant** de toucher au code. Ce sont eux qui décideront,
-pas l'impression que donne le rendu.
+pas l'impression que donne le rendu. Un relevé vidéo ne dispense **pas** de
+cette étape : il donne la forme, pas le jugement sur elle.
+
+### 1 bis. Ce qu'un relevé vidéo ne donne pas
+
+Trois choses manquent systématiquement, et chacune a livré une faute :
+
+- **La pente par rapport au sol.** L'estimateur replie le corps dans ses
+  propres axes ; l'inclinaison se perd. La verticale de l'image la rend en
+  partie, une caméra qui plonge la fausse. C'est le sol qui tranche : déclarer
+  `"ancrage"` sur les os qui portent et `"aplomb": True`, et le corps se
+  redresse jusqu'à ce que ses appuis soient de niveau.
+- **Les proportions.** Elles ne sont pas celles du personnage. Encore une
+  raison de contraindre par le sol plutôt que de recopier des angles.
+- **Ce qui n'est pas dans le squelette de l'estimateur.** Il n'a ni poignet
+  orienté ni omoplate. La main se relève avec l'index (`INDEX`), la tête avec
+  les **oreilles** — s'en remettre au nez enfonce le menton dans la poitrine.
 
 ### 2. Écrire la pose
 
@@ -98,9 +125,11 @@ livrée.
 Comparer aux critères de l'étape 1. Corriger, remesurer. **Ne pas rendre tant
 que les chiffres ne passent pas** — c'est là que se gagne le temps.
 
-Le contrôle du **regard** mérite une mention : il départage une planche d'un
+Deux contrôles méritent une mention. Le **regard** départage une planche d'un
 corps couché sur le dos, ce que l'image seule laisse ambigu et ce qui a coûté
-plusieurs tours.
+plusieurs tours. Les **appuis**, eux, se lisent en premier sur un geste au sol :
+si un os déclaré porteur flotte, la posture est fausse quoi que disent les
+autres mesures.
 
 ### 5. Rendre, et seulement alors
 
