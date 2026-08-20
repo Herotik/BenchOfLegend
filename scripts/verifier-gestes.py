@@ -123,6 +123,40 @@ def appuis_a_portee(pose, geste):
     return fautes
 
 
+def pole_a_lendroit(pose, geste):
+    """Le pôle d'un appui doit plier l'articulation dans le bon sens.
+
+    Un genou ne plie que d'une façon : la jambe se replie vers l'**arrière** du
+    corps, donc la rotule mène vers l'avant. Un coude fait l'inverse, il pointe
+    vers l'arrière. Le pôle d'un appui est ce qui décide de ce sens, et rien ne
+    le vérifiait : `genou_a_lendroit` raisonne sur des directions et sautait
+    donc en silence tous les membres définis par un appui — c'est-à-dire
+    exactement ceux des gestes au sol.
+
+    « L'avant » se prend dans le repère du corps : à plat ventre, c'est le sol.
+    """
+    avant = _normalise(geste.get("assise", (None, (0, -1, 0)))[1])
+    fautes = []
+    for nom, valeur in pose.items():
+        if not isinstance(valeur, g.Appui):
+            continue
+        court = nom.removeprefix("mixamorig:")
+        pole = _normalise(valeur.pole)
+        vers_avant = sum(a * b for a, b in zip(pole, avant))
+        if court.endswith("UpLeg") and vers_avant < 0.1:
+            fautes.append(
+                f"{court} : pôle {tuple(round(c, 2) for c in pole)} — le genou "
+                f"plierait à l'envers, il doit mener vers l'avant du corps "
+                f"{tuple(round(c, 2) for c in avant)}"
+            )
+        if court.endswith("Arm") and not court.endswith("ForeArm") and vers_avant > -0.1:
+            fautes.append(
+                f"{court} : pôle {tuple(round(c, 2) for c in pole)} — le coude "
+                f"pointerait vers l'avant, il doit partir vers l'arrière"
+            )
+    return fautes
+
+
 def genou_a_lendroit(pose, geste):
     """Le genou doit être en avant du segment hanche→cheville.
 
@@ -246,6 +280,7 @@ CONTROLES = (
     symetrie,
     assise_utilisable,
     appuis_a_portee,
+    pole_a_lendroit,
 )
 
 
