@@ -211,6 +211,30 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 2000,
   },
+  // Ces deux-là étaient écrits et contrôlés depuis longtemps ; il ne leur
+  // manquait qu'un rendu. Cinq gestes dans ce cas dormaient dans
+  // `gestes_generes.py` — c'est la couverture la moins chère du catalogue.
+  "developpe-couche": {
+    source: require("../../assets/gestes/developpe-couche.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 2200,
+  },
+  mollets: {
+    source: require("../../assets/gestes/mollets.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 1400,
+  },
+  // De trois-quarts, et c'est la seule du registre : de profil, un corps couché
+  // sur le côté est regardé dans l'axe de son regard et l'on ne voit plus de
+  // quel côté il est tourné.
+  "gainage-lateral": {
+    source: require("../../assets/gestes/gainage-lateral.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 2600,
+  },
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
 

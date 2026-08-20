@@ -37,6 +37,13 @@ import argparse
 import collections
 import os
 import re
+import signal
+
+# Sans ça, `couverture.py | head` finit sur une trace d'erreur : Python
+# transforme le SIGPIPE en exception au lieu de s'arrêter. Or c'est exactement
+# l'usage de cet outil — regarder les premières lignes du décompte.
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
