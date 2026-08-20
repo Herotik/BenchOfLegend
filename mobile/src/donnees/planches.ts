@@ -138,19 +138,12 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 4400,
   },
-  // Fente avant, relevée sur une vidéo de démonstration. Elle sert les fentes
-  // au poids du corps **et** les fentes haltères : le personnage ne porte
-  // aucune charge, et les deux exercices ont le même mouvement.
-  //
-  // Rien à changer dans `gestes.ts` pour qu'elle prenne effet : les deux
-  // exercices pointaient déjà sur le slug « fente », qui n'avait pas encore de
-  // planche et tombait donc sur le bonhomme vectoriel.
-  fente: {
-    source: require("../../assets/gestes/fente.png"),
-    images: 20,
-    colonnes: 4,
-    duree: 3000,
-  },
+  // La fente avant **n'est pas encore ici**, et c'est délibéré. Le geste
+  // existe dans `gestes_generes.py`, le pas ne glisse plus, mais au point bas
+  // la jambe arrière s'étend presque à l'horizontale, genou à quinze
+  // centimètres et pied flottant : le pied arrière est occulté dans la vidéo
+  // et l'estimateur ne le voit pas. Un bonhomme vectoriel juste vaut mieux
+  // qu'un rendu 3D faux — c'est tout l'intérêt d'avoir gardé les deux.
   // Burpee
   burpee: {
     source: require("../../assets/gestes/burpee.png"),

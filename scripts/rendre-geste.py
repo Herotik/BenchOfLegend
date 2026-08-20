@@ -113,6 +113,12 @@ def arguments():
         # sinon aucun repère — une main posée et une main flottant à trois
         # centimètres sont indiscernables sur fond blanc.
         "sol": "--sol" in apres,
+        # Le tapis, lui, part dans l'app. C'est une dalle **mince** vue par la
+        # tranche : la caméra reste horizontale, le fond reste détouré, et le
+        # personnage garde le cadrage qu'il a partout ailleurs. Il ne sert pas
+        # à contrôler mais à **lire** — sans repère fixe, un corps qui avance
+        # de soixante centimètres semble faire du surplace.
+        "tapis": "--tapis" in apres,
     }
 
 
@@ -330,6 +336,35 @@ def eclairer(mini, maxi, sol=False, vue="profil"):
     bpy.context.scene.world = monde
 
 
+def poser_le_tapis(mini, maxi):
+    """Une dalle mince au sol, qui part dans l'app.
+
+    Épaisse d'un centimètre et demie : à l'échelle des vignettes, trois pixels.
+    Assez pour se voir, assez peu pour ne pas devenir un décor. Elle est plus
+    longue que le geste, de sorte qu'un personnage qui se déplace ne sorte
+    jamais de son tapis.
+
+    Un gris moyen, opaque : il se détache sur le thème clair comme sur le
+    sombre, ce qu'un blanc ou un noir ne feraient pas.
+    """
+    epaisseur = 0.015
+    taille = maxi - mini
+    centre = (mini + maxi) / 2
+    bpy.ops.mesh.primitive_cube_add(
+        size=1, location=(centre.x, centre.y, -epaisseur / 2)
+    )
+    tapis = bpy.context.object
+    tapis.scale = (max(taille.x, 0.8) + 1.2, max(taille.y, 0.8) + 1.2, epaisseur)
+
+    matiere = bpy.data.materials.new("Tapis")
+    matiere.use_nodes = True
+    principe = matiere.node_tree.nodes["Principled BSDF"]
+    principe.inputs["Base Color"].default_value = (0.42, 0.43, 0.47, 1)
+    principe.inputs["Roughness"].default_value = 0.95
+    tapis.data.materials.append(matiere)
+    return tapis
+
+
 def poser_le_sol(mini, maxi):
     """Un plancher à hauteur zéro, pour vérifier ce qui touche vraiment.
 
@@ -449,6 +484,8 @@ def main():
     mini, maxi = encombrement(numeros)
     # **Avant** la caméra et l'éclairage, et après l'encombrement : le sol ne
     # doit pas entrer dans le cadrage, qui se règle sur le personnage seul.
+    if o["tapis"]:
+        poser_le_tapis(mini, maxi)
     if o["sol"]:
         poser_le_sol(mini, maxi)
     placer_camera(

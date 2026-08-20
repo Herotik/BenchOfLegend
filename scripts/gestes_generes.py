@@ -445,6 +445,10 @@ GESTES = {
         # l'en empêche, et non un appui déclaré.
         "ancrage": ("LeftFoot", "RightFoot"),
         "aplomb": True,
+        # Le pied **arrière** reste planté et le corps passe au-dessus : c'est
+        # ce qui fait un pas. Sans lui, les deux pieds s'écartaient autour d'un
+        # bassin immobile — un grand écart, pas une fente.
+        "plante": "RightFoot",
         "cles": [
             _pose({
                 _os("Spine"): (+0.00, +0.01, +1.00),
@@ -519,8 +523,15 @@ GESTES = {
                 _os("RightUpLeg"): (+0.00, +0.25, -0.97),
                 _os("LeftLeg"): (+0.00, +0.25, -0.97),
                 _os("RightLeg"): (+0.00, +0.96, +0.29),
-                _os("LeftFoot"): (+0.00, -0.38, -0.93),
-                _os("RightFoot"): (+0.00, +0.90, -0.43),
+                # Les deux pieds sont corrigés à la main, et c'est assumé :
+                # au point bas d'une fente, le pied arrière est **occulté** par
+                # le corps et l'estimateur le renvoie orteils vers l'arrière,
+                # donc pointant dans le vide. Ce que la posture impose se dit
+                # en une phrase : le pied avant est **à plat**, orteils dans le
+                # sens de la marche ; le pied arrière est **sur la pointe**,
+                # orteils sous la cheville.
+                _os("LeftFoot"): (+0.00, -1.00, +0.00),
+                _os("RightFoot"): (+0.00, +0.00, -1.00),
             }),
             _pose({
                 _os("Spine"): (+0.00, +0.01, +1.00),
@@ -538,8 +549,15 @@ GESTES = {
                 _os("RightUpLeg"): (+0.00, +0.25, -0.97),
                 _os("LeftLeg"): (+0.00, +0.25, -0.97),
                 _os("RightLeg"): (+0.00, +0.96, +0.29),
-                _os("LeftFoot"): (+0.00, -0.38, -0.93),
-                _os("RightFoot"): (+0.00, +0.90, -0.43),
+                # Les deux pieds sont corrigés à la main, et c'est assumé :
+                # au point bas d'une fente, le pied arrière est **occulté** par
+                # le corps et l'estimateur le renvoie orteils vers l'arrière,
+                # donc pointant dans le vide. Ce que la posture impose se dit
+                # en une phrase : le pied avant est **à plat**, orteils dans le
+                # sens de la marche ; le pied arrière est **sur la pointe**,
+                # orteils sous la cheville.
+                _os("LeftFoot"): (+0.00, -1.00, +0.00),
+                _os("RightFoot"): (+0.00, +0.00, -1.00),
             }),
         ],
     },
@@ -1745,12 +1763,43 @@ def _plus_bas_du_maillage(contexte):
     return bas
 
 
-def _translater(contexte, armature, monte):
-    """Déplace le corps entier de `monte` mètres sur la verticale du monde."""
+def planter(contexte, armature, os_porteur, reference):
+    """Empêche un appui de glisser : il garde sa place au sol d'un bout à l'autre.
+
+    ## Ce que ça répare
+
+    Le bassin est reposé au même endroit à chaque image — il le faut, sinon un
+    décalage relatif s'accumulerait et le corps dériverait d'un tour à l'autre.
+    Mais alors **rien ne bouge horizontalement** : sur une fente, les deux
+    pieds s'écartaient symétriquement autour d'un bassin immobile. Ce n'est pas
+    un pas en avant, c'est un grand écart, et l'œil le voit tout de suite même
+    s'il ne sait pas le nommer.
+
+    Or un pas se définit par ce qui **ne** bouge pas : le pied arrière reste
+    planté et le corps passe au-dessus. On mesure donc où l'appui nommé a
+    touché à la première image, et l'on déplace le corps entier de ce qu'il
+    faut pour qu'il y reste.
+
+    `reference` est ce point, ou `None` à la première image — il est alors
+    renvoyé pour les suivantes.
+    """
+    contexte.view_layer.update()
+    point = contacts(contexte, armature, (os_porteur,))[os_porteur]
+    if reference is None:
+        return (point.x, point.y)
+
+    ecart = (reference[0] - point.x, reference[1] - point.y)
+    if abs(ecart[0]) > 1e-4 or abs(ecart[1]) > 1e-4:
+        _translater(contexte, armature, 0.0, ecart[0], ecart[1])
+    return reference
+
+
+def _translater(contexte, armature, monte, vers_x=0.0, vers_y=0.0):
+    """Déplace le corps entier dans le monde, sans toucher à son orientation."""
     bassin = armature.pose.bones[BASSIN]
     matrice = bassin.matrix.copy()
     matrice.translation += armature.matrix_world.inverted().to_3x3() @ _vecteur(
-        (0, 0, monte)
+        (vers_x, vers_y, monte)
     )
     bassin.matrix = matrice
     contexte.view_layer.update()
@@ -1987,6 +2036,10 @@ def appliquer(armature, nom, images, contexte):
         monte = Vector((0, 0, hauteur - (monde @ ancre).z))
         ancre = ancre + monde.inverted().to_3x3() @ monte
 
+    # Où l'appui planté a touché à la première image. Il n'y retournera pas
+    # tout seul : c'est le corps qu'on déplacera pour qu'il y reste.
+    repere_plante = None
+
     for numero, (pose, decalage) in enumerate(
         zip(_parcours(geste["cles"], images, repos), decalages), start=1
     ):
@@ -2096,6 +2149,14 @@ def appliquer(armature, nom, images, contexte):
                 poser_sur(contexte, armature, ancrage)
             else:
                 poser_au_sol(contexte, armature)
+
+            # **Après** avoir posé le corps à sa hauteur : planter fixe la
+            # place au sol, poser fixe la hauteur, et les deux ne se marchent
+            # pas dessus — l'un agit à plat, l'autre sur la verticale.
+            if geste.get("plante"):
+                repere_plante = planter(
+                    contexte, armature, geste["plante"], repere_plante
+                )
             bassin.keyframe_insert("location", frame=numero)
 
     return list(range(1, images + 1))
