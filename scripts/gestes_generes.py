@@ -202,11 +202,21 @@ DOIGTS = ("Index", "Middle", "Ring", "Pinky")
 #: est un poing quelle que soit l'orientation de la main, alors que tout le
 #: reste se dit en directions du monde parce que la question y est toujours
 #: « où pointe ce membre ».
-FERMETURE = (52.0, 78.0, 62.0)
+FERMETURE = (68.0, 88.0, 72.0)
 
-#: Le pouce se replie moins, et il **croise** la prise au lieu de s'enrouler
-#: avec les autres. Trop fermé, il traverse l'index.
-FERMETURE_POUCE = (24.0, 38.0, 34.0)
+#: Le pouce ne s'enroule pas comme les autres doigts : il **traverse** la prise.
+#:
+#: D'où le signe négatif sur sa première phalange, qui le rabat en travers de la
+#: paume, suivi de deux positives qui en recourbent le bout par-dessus les
+#: doigts déjà fermés. Un pouce replié dans le même sens qu'eux part vers
+#: l'extérieur — c'est le geste de l'auto-stoppeur, et c'est ce que la première
+#: version donnait : quatre doigts en poing et un pouce tendu dans le vide, ce
+#: qui de loin ressemblait à une serre plutôt qu'à une prise.
+#:
+#: Mesuré, comme le reste : le bout du pouce passe de 11,0 cm de la base de
+#: l'index, main ouverte, à 4,2 cm — soit posé dessus. Replié dans le sens des
+#: autres doigts, il s'en éloignait jusqu'à 13 cm.
+FERMETURE_POUCE = (-55.0, 45.0, 40.0)
 
 
 def _os(nom):
@@ -876,8 +886,25 @@ GESTES = {
                 _os("RightArm"): (-0.16, +0.12, -0.98),
                 _os("LeftForeArm"): (+0.62, -0.72, -0.31),
                 _os("RightForeArm"): (-0.62, -0.72, -0.31),
-                _os("LeftHand"): SUIVRE,
-                _os("RightHand"): SUIVRE,
+                # La main prolonge l'avant-bras — un poing sur une poignée fait
+                # une ligne droite du coude aux doigts — mais son **roulis**
+                # compte autant que sa direction.
+                #
+                # Paumes tournées l'une vers l'autre et **légèrement vers le
+                # haut** : c'est ce qui met le pouce au-dessus du poing et
+                # l'axe de la poignée vers le ciel, comme sur toutes les photos
+                # du geste. Le corps de la corde sort alors du haut du poing et
+                # descend derrière — la seule position d'où le mouvement se
+                # comprend.
+                #
+                # Mesuré plutôt que choisi : avec cette paume-là, le bout du
+                # pouce est trois centimètres **au-dessus** du poignet et l'axe
+                # autour duquel les doigts s'enroulent est vertical à 95 %.
+                # Paume vers le bas — ce qu'on avait —, le pouce passait six
+                # centimètres dessous et la poignée se couchait à
+                # l'horizontale : un poing serré sur rien.
+                _os("LeftHand"): APlat((+0.62, -0.72, -0.31), paume=(-1, 0, +0.30)),
+                _os("RightHand"): APlat((-0.62, -0.72, -0.31), paume=(+1, 0, +0.30)),
                 _os("LeftUpLeg"): (-0.14, +0.00, -0.99),
                 _os("RightUpLeg"): (+0.14, +0.00, -0.99),
                 _os("LeftLeg"): (-0.03, +0.46, -0.89),
@@ -895,8 +922,8 @@ GESTES = {
                 _os("RightArm"): (-0.17, +0.15, -0.97),
                 _os("LeftForeArm"): (+0.66, -0.70, -0.27),
                 _os("RightForeArm"): (-0.66, -0.70, -0.27),
-                _os("LeftHand"): SUIVRE,
-                _os("RightHand"): SUIVRE,
+                _os("LeftHand"): APlat((+0.66, -0.70, -0.27), paume=(-1, 0, +0.30)),
+                _os("RightHand"): APlat((-0.66, -0.70, -0.27), paume=(+1, 0, +0.30)),
                 _os("LeftUpLeg"): (-0.14, +0.08, -0.99),
                 _os("RightUpLeg"): (+0.14, +0.08, -0.99),
                 _os("LeftLeg"): (-0.04, +0.42, -0.91),

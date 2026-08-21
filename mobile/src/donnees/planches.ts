@@ -62,12 +62,13 @@ export interface Planche {
    * qui décide n'est pas la durée mais le **chemin parcouru par image** : un
    * maintien de planche de 3,6 s en vingt images est fluide parce que rien n'y
    * bouge, alors qu'un burpee de 2 s en vingt images saccade parce que le
-   * corps y traverse tout le cadre. Les six gestes de grande amplitude —
-   * burpee, squat, squat barre, squat sauté, fente, planche jambes alternées —
-   * en ont donc trente-deux, ce qui divise le saut par deux.
+   * corps y traverse tout le cadre. Les gestes de grande amplitude — squat,
+   * squat barre, squat sauté, fente, planche jambes alternées, corde à sauter
+   * — en ont donc trente-deux, et le burpee soixante-quatre.
    *
-   * `scripts/revue-planches.py` mesure ce saut moyen et le donne pour chaque
-   * planche : au-delà de 4, il faut plus d'images.
+   * `scripts/verifier-planches.py` mesure ce saut par image et refuse au-delà
+   * de 4,2 : c'est la valeur qui sépare les planches livrées jugées fluides de
+   * celles qu'il a fallu re-rendre.
    */
   images: number;
   /** Images par ligne. `scripts/planche-geste.py` en pose quatre. */
@@ -110,13 +111,13 @@ export const PLANCHES: Record<string, Planche> = {
   // Squat au poids du corps
   squat: {
     source: require("../../assets/gestes/squat.png"),
-    images: 20,
+    images: 32,
     colonnes: 4,
   },
   // Squat barre, mains aux épaules
   "squat-barre": {
     source: require("../../assets/gestes/squat-barre.png"),
-    images: 20,
+    images: 32,
     colonnes: 4,
   },
   // Curl biceps
@@ -187,10 +188,17 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 3087,
   },
-  // Burpee
+  // Soixante-quatre images, le maximum du registre, et des vignettes de 192 px
+  // plutôt que 256 pour que la planche tienne en 768 × 3072 — au-delà, on
+  // s'approche de la taille de texture que certains téléphones refusent.
+  //
+  // Le burpee est le geste qui parcourt le plus de chemin : debout, à plat
+  // ventre, et retour, en deux secondes. Il saccadait encore à quarante-huit
+  // images. Ce n'est pas la durée qui le veut mais l'amplitude — le ralentir
+  // n'aurait fait que strober les mêmes sauts moins souvent.
   burpee: {
     source: require("../../assets/gestes/burpee.png"),
-    images: 20,
+    images: 64,
     colonnes: 4,
     duree: 2000,
   },
@@ -308,7 +316,7 @@ export const PLANCHES: Record<string, Planche> = {
   // cachent l'un l'autre.
   "corde-a-sauter": {
     source: require("../../assets/gestes/corde-a-sauter.png"),
-    images: 20,
+    images: 32,
     colonnes: 4,
     duree: 417,
   },
