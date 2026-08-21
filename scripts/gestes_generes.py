@@ -1258,10 +1258,25 @@ GESTES = {
                 _os("Neck"): (+0.52, +0.42, +0.74),
                 _os("Head"): (+0.44, -0.30, +0.84),
                 # Les mains jointes se posent près du sol, contre la hanche, et
-                # le pôle pousse le coude vers le bas — c'est lui qui décide où
-                # sort la pointe du bras.
-                _os("LeftArm"): Appui((+0.42, -0.06, 0.09), (+0.45, 0, -0.89)),
-                _os("RightArm"): Appui((+0.42, -0.06, 0.09), (+0.45, 0, -0.89)),
+                # **en avant** du buste : seize centimètres devant le bassin, et
+                # non six.
+                #
+                # C'est ce qui fait passer les deux bras devant le torse au lieu
+                # de les laisser filer à côté. Mesuré sur la version précédente,
+                # le coude tombait à y = +0,22, c'est-à-dire à hauteur d'épaule
+                # — le bras sortait donc sur le flanc puis revenait, ce qui se
+                # lit comme un bras passé derrière. Avec la main avancée, il est
+                # à +0,12 pour une épaule à +0,26 : quatorze centimètres devant
+                # elle.
+                #
+                # Le pôle, lui, reste dirigé vers le **bas**. Le pointer vers
+                # l'avant amenait bien le coude devant, mais le contrôle des
+                # postures le refuse — et il a raison, un coude ne se plie pas
+                # de ce côté-là. Il n'en avait pas besoin : le bras est presque
+                # tendu à cette distance, et un bras tendu suit la droite
+                # épaule-main, laquelle passe devant.
+                _os("LeftArm"): Appui((+0.42, -0.16, 0.09), (+0.10, +0.30, -0.95)),
+                _os("RightArm"): Appui((+0.42, -0.16, 0.09), (+0.10, +0.30, -0.95)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
             }),
@@ -1285,8 +1300,8 @@ GESTES = {
                                      paume=(-0.72, -0.70, +0.00)),
                 _os("Neck"): (-0.52, +0.42, +0.74),
                 _os("Head"): (-0.44, -0.30, +0.84),
-                _os("LeftArm"): Appui((-0.42, -0.06, 0.09), (-0.45, 0, -0.89)),
-                _os("RightArm"): Appui((-0.42, -0.06, 0.09), (-0.45, 0, -0.89)),
+                _os("LeftArm"): Appui((-0.42, -0.16, 0.09), (-0.10, +0.30, -0.95)),
+                _os("RightArm"): Appui((-0.42, -0.16, 0.09), (-0.10, +0.30, -0.95)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
             }),
