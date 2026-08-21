@@ -105,6 +105,39 @@ def controler(slug, images, colonnes, duree):
                 "mais l'ancien personnage habillé"
             )
 
+    # Le cadrage est calculé sur l'encombrement du geste : si le corps sort du
+    # cadre, il est rogné. Un saut trop haut coupait les doigts de neuf pixels
+    # au sommet, sur trois images — le genre de chose qui ne se voit qu'en
+    # arrêtant l'animation pile là.
+    #
+    # Toucher le bord ne suffit pourtant pas à conclure. Un geste qui remplit
+    # le cadre **exactement** l'effleure sans rien y perdre, et c'est le cas du
+    # burpee : deux mètres soixante de haut pour un champ de deux mètres
+    # soixante. Ce qui sépare l'effleurement de la coupe se lit dans l'alpha du
+    # bord. Une silhouette tangente n'y pose que son liseré antialiasé — sur le
+    # burpee, sept contacts de bord, pas **un seul** pixel au-dessus de 200. Un
+    # corps tranché y montre sa chair pleine : le pied coupé du saut squaté en
+    # alignait vingt-trois à 255, et les doigts coupés au sommet, cinq.
+    #
+    # On compte donc les pixels franchement opaques, et non les pixels visibles.
+    alpha = rgba[:, :, 3]
+    for k in range(images):
+        c, l = k % colonnes, k // colonnes
+        v = alpha[l * hauteur:(l + 1) * hauteur, c * largeur:(c + 1) * largeur]
+        bords = {
+            "haut": int((v[0, :] > 200).sum()),
+            "bas": int((v[-1, :] > 200).sum()),
+            "gauche": int((v[:, 0] > 200).sum()),
+            "droite": int((v[:, -1] > 200).sum()),
+        }
+        touches = {nom: n for nom, n in bords.items() if n}
+        if touches:
+            fautes.append(
+                f"image {k + 1} rognée : "
+                + ", ".join(f"{n} px pleins sur le bord {nom}" for nom, n in touches.items())
+            )
+            break
+
     gris = np.array(brut.convert("LA")).astype(float)
     h, w = gris.shape[0] // lignes, gris.shape[1] // colonnes
     vignettes = []

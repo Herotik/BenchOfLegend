@@ -337,6 +337,31 @@ def placer_camera(mini, maxi, vue, echelle, plongee=0.0, perspective=False):
 
     champ = echelle if echelle else max(largeur, taille.z) * 1.15
 
+    # Un geste peut être plus haut que le champ : le saut squaté partait du sol
+    # et montait les doigts à deux mètres soixante-seize, pour un cadre de deux
+    # mètres soixante. Centrer sur l'encombrement partage alors le débordement
+    # en deux et coupe **par le bas** autant que par le haut — c'est-à-dire les
+    # pieds.
+    #
+    # Or les deux bouts ne se valent pas. Des doigts rognés au sommet d'un saut
+    # se voient sur deux images ; des pieds rognés se voient sur toutes celles
+    # où le corps est au sol, et le personnage paraît enfoncé dans le plancher.
+    # On pose donc le bas du cadre sur le point le plus bas du geste et l'on
+    # perd tout en haut.
+    #
+    # La condition est stricte, et c'est voulu : tant que le geste **tient**
+    # dans le champ, le centrage lui laisse déjà de la marge des deux côtés et
+    # y toucher ne ferait que déplacer le vide. Le burpee, qui fait exactement
+    # deux mètres soixante, tient encore — il effleure les deux bords sans rien
+    # y perdre, et descendre la caméra lui couperait les doigts pour rien.
+    if taille.z > champ:
+        centre = Vector((centre.x, centre.y, mini.z + champ / 2))
+        print(
+            f"Le geste fait {taille.z:.2f} m de haut pour un champ de "
+            f"{champ:.2f} m : cadre posé au sol, il manque "
+            f"{(taille.z - champ) * 100:.0f} cm en haut."
+        )
+
     if perspective:
         # Une caméra orthographique ne fait pas **converger** les fuyantes : un
         # damier au sol y garde des cases identiques d'un bout à l'autre et se

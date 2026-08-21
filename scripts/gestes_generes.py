@@ -1117,7 +1117,7 @@ GESTES = {
         # trop vite pour se lire. Un squat sauté enchaîné tourne autour de deux
         # secondes par répétition, dont l'essentiel au sol — on descend, on
         # arme, on pousse, et le vol lui-même est bref.
-        "duree": 1800,
+        "duree": 2200,
         # Le corps quitte vraiment le sol : le contact est calculé normalement
         # sur le maillage à chaque pose, puis le corps est soulevé de la
         # hauteur déclarée. Cinq centimètres à l'extension — le talon vient de
@@ -1125,15 +1125,26 @@ GESTES = {
         #
         # Vingt-deux ne suffisaient pas : à l'échelle du cadre, un saut de
         # vingt centimètres se confond avec un simple redressement sur la
-        # pointe des pieds. La place a été prise sur les bras, qui restent
-        # à la hauteur de l'extension au lieu de monter à la verticale —
-        # voir la dernière clé.
-        "envol": [0.0, 0.05, 0.58],
+        # pointe des pieds. La place a été prise sur les bras, qui ne montent
+        # plus au-dessus du crâne — voir les deux dernières clés.
+        #
+        # Soixante-deux centimètres, et le compte tombe juste : pointes
+        # tendues, le corps mesure un mètre quatre-vingt-trois du bout des
+        # orteils au sommet du crâne, ce qui fait deux mètres quarante-cinq
+        # au plus haut pour un champ de deux mètres soixante.
+        "envol": [0.0, 0.05, 0.62],
         # Un temps au point bas — c'est là qu'on amortit et qu'on réarme — et
         # un souffle au sommet, où un corps qui monte s'arrête avant de
         # redescendre. Sans lui le sommet est un simple rebroussement, et le
         # saut paraît sec.
-        "pauses": [0.18, 0.00, 0.05],
+        #
+        # Le souffle du sommet passe de cinq à huit centièmes du tour : « le
+        # saut est trop court » ne parle pas de la hauteur mais du temps passé
+        # en l'air, et c'est ce temps-là qu'on allonge. La durée du tour suit,
+        # de 1,8 à 2,2 s — un squat sauté enchaîné tourne autour de deux
+        # secondes, dont sept dixièmes de vol pour un saut de soixante
+        # centimètres.
+        "pauses": [0.20, 0.00, 0.08],
         "cles": [
             # Le point bas, relevé sur la captation du squat.
             _pose({
@@ -1160,16 +1171,23 @@ GESTES = {
             }),
             # L'extension : corps aligné de la cheville à la tête, talons
             # décollés, bras lancés vers l'avant et le haut.
+            #
+            # Vers l'avant surtout : le lancer s'arrête à hauteur d'épaule, et
+            # c'est ce qui laisse la place au saut. Un squat sauté n'est pas un
+            # jumping jack — les bras accompagnent la poussée, ils ne cherchent
+            # pas le plafond. Tant qu'ils restent sous le crâne, c'est la tête
+            # qui plafonne la silhouette et le corps peut monter de soixante
+            # centimètres sans qu'on rogne les doigts.
             _pose({
                 _os("Spine"): (+0.00, -0.05, +1.00),
                 _os("Spine1"): (+0.00, -0.05, +1.00),
                 _os("Spine2"): (+0.00, -0.05, +1.00),
                 _os("Neck"): (+0.00, -0.05, +1.00),
                 _os("Head"): (+0.00, -0.03, +1.00),
-                _os("LeftArm"): (+0.20, -0.70, +0.68),
-                _os("RightArm"): (-0.20, -0.70, +0.68),
-                _os("LeftForeArm"): (+0.15, -0.55, +0.82),
-                _os("RightForeArm"): (-0.15, -0.55, +0.82),
+                _os("LeftArm"): (+0.18, -0.88, +0.44),
+                _os("RightArm"): (-0.18, -0.88, +0.44),
+                _os("LeftForeArm"): (+0.14, -0.94, +0.31),
+                _os("RightForeArm"): (-0.14, -0.94, +0.31),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
                 _os("LeftUpLeg"): (+0.02, -0.03, -1.00),
@@ -1183,21 +1201,21 @@ GESTES = {
             #
             # Ils ne montent pas plus haut qu'à l'extension, et c'est ce qui
             # permet au saut d'être haut. Le cadrage est commun à toutes les
-            # planches — 2,6 m — et le personnage l'occupait déjà presque
-            # entièrement : bras tendus au-dessus de la tête, il ne restait que
-            # onze pixels de marge sur deux cent cinquante-six, donc plus de
-            # place pour monter. Le lancer des bras se fait au décollage ; en
-            # l'air ils accompagnent, ils ne poussent plus.
+            # planches — 2,6 m — et il faut bien que quelque chose y tienne :
+            # soit les bras montent et le corps reste au sol, soit les bras
+            # s'arrêtent à l'épaule et le corps décolle. On a choisi le corps,
+            # qui est le sujet de l'exercice. Le lancer des bras se fait au
+            # décollage ; en l'air ils accompagnent, ils ne poussent plus.
             _pose({
                 _os("Spine"): (+0.00, -0.02, +1.00),
                 _os("Spine1"): (+0.00, -0.02, +1.00),
                 _os("Spine2"): (+0.00, -0.02, +1.00),
                 _os("Neck"): (+0.00, -0.02, +1.00),
                 _os("Head"): (+0.00, -0.02, +1.00),
-                _os("LeftArm"): (+0.20, -0.70, +0.68),
-                _os("RightArm"): (-0.20, -0.70, +0.68),
-                _os("LeftForeArm"): (+0.15, -0.55, +0.82),
-                _os("RightForeArm"): (-0.15, -0.55, +0.82),
+                _os("LeftArm"): (+0.18, -0.88, +0.44),
+                _os("RightArm"): (-0.18, -0.88, +0.44),
+                _os("LeftForeArm"): (+0.14, -0.94, +0.31),
+                _os("RightForeArm"): (-0.14, -0.94, +0.31),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
                 _os("LeftUpLeg"): (+0.02, -0.02, -1.00),

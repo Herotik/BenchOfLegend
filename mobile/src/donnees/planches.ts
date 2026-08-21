@@ -297,7 +297,7 @@ export const PLANCHES: Record<string, Planche> = {
     source: require("../../assets/gestes/squat-saute.png"),
     images: 32,
     colonnes: 4,
-    duree: 1800,
+    duree: 2200,
   },
   // Deux gestes de cardio tirés d'une même vidéo, qui en contenait trois.
   //
