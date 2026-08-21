@@ -1279,6 +1279,26 @@ GESTES = {
                 _os("RightArm"): Appui((+0.42, -0.16, 0.09), (+0.10, +0.30, -0.95)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
+                # Les jambes **contrebalancent** : quand les bras descendent à
+                # gauche, les genoux partent à droite.
+                #
+                # Ce n'est pas une licence, c'est ce que fait le corps et le
+                # relevé le mesure sans ambiguïté : sur 243 images, la position
+                # latérale des genoux est corrélée à **-0,86** avec la torsion
+                # des épaules, et à -0,93 avec celle des mains sur la portion la
+                # mieux détectée. Elles vont dans le sens opposé, toujours.
+                #
+                # L'amplitude relevée va d'une largeur et demie d'épaules à
+                # deux ; on en prend une, la profondeur de l'estimateur étant
+                # la coordonnée qu'il devine plutôt qu'il ne la voit. Trente
+                # centimètres de décalage latéral sur la cuisse, soit un genou
+                # qui se déplace de quinze centimètres de chaque côté.
+                _os("LeftUpLeg"): (-0.234, -0.440, +0.867),
+                _os("RightUpLeg"): (-0.339, -0.425, +0.839),
+                _os("LeftLeg"): (-0.252, -0.818, -0.518),
+                _os("RightLeg"): (-0.325, -0.808, -0.512),
+                _os("LeftFoot"): (-0.289, -0.897, -0.357),
+                _os("RightFoot"): (-0.289, -0.897, -0.357),
             }),
             # De face, mains jointes devant le sternum.
             _pose(ASSIS_EN_ARRIERE, {
@@ -1304,6 +1324,26 @@ GESTES = {
                 _os("RightArm"): Appui((-0.42, -0.16, 0.09), (-0.10, +0.30, -0.95)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
+                # Les jambes **contrebalancent** : quand les bras descendent à
+                # droite, les genoux partent à gauche.
+                #
+                # Ce n'est pas une licence, c'est ce que fait le corps et le
+                # relevé le mesure sans ambiguïté : sur 243 images, la position
+                # latérale des genoux est corrélée à **-0,86** avec la torsion
+                # des épaules, et à -0,93 avec celle des mains sur la portion la
+                # mieux détectée. Elles vont dans le sens opposé, toujours.
+                #
+                # L'amplitude relevée va d'une largeur et demie d'épaules à
+                # deux ; on en prend une, la profondeur de l'estimateur étant
+                # la coordonnée qu'il devine plutôt qu'il ne la voit. Trente
+                # centimètres de décalage latéral sur la cuisse, soit un genou
+                # qui se déplace de quinze centimètres de chaque côté.
+                _os("LeftUpLeg"): (+0.234, -0.440, +0.867),
+                _os("RightUpLeg"): (+0.339, -0.425, +0.839),
+                _os("LeftLeg"): (+0.252, -0.818, -0.518),
+                _os("RightLeg"): (+0.325, -0.808, -0.512),
+                _os("LeftFoot"): (+0.289, -0.897, -0.357),
+                _os("RightFoot"): (+0.289, -0.897, -0.357),
             }),
         ],
     },
