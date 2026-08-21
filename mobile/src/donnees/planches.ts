@@ -180,6 +180,12 @@ export const PLANCHES: Record<string, Planche> = {
   // lui. Sans ce clou, les deux pieds s'écartaient autour d'un bassin
   // immobile : un grand écart, pas un pas.
   //
+  // Quarante-huit images, en vignettes de 192 px. Le passage de cinq clés
+  // doublées à trois clés avec temps d'arrêt déclarés a **révélé** un saut
+  // par image de 4,4 : les quatorze images figées d'avant tiraient la
+  // moyenne vers le bas et cachaient un geste qui, une fois en mouvement,
+  // traversait le cadre trop vite.
+  //
   // Un défaut connu subsiste : au point bas, le pied arrière ne touche pas
   // tout à fait le sol. Il est occulté par le corps dans la vidéo, et
   // l'estimateur le renvoie orteils vers l'arrière, pointant dans le vide. La
@@ -187,7 +193,7 @@ export const PLANCHES: Record<string, Planche> = {
   // cheville sans figer la hauteur du bassin.
   fente: {
     source: require("../../assets/gestes/fente.png"),
-    images: 32,
+    images: 48,
     colonnes: 4,
     duree: 3087,
   },

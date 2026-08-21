@@ -512,7 +512,7 @@ def poser_le_banc(hauteur, mini, maxi):
     for cote in (-1, +1):
         bpy.ops.mesh.primitive_cube_add(
             size=1,
-            location=(centre.x, centre.y + cote * banc.scale.y * 0.35,
+            location=(centre_x, milieu_y + cote * banc.scale.y * 0.35,
                       (hauteur - epaisseur) / 2),
         )
         pied = bpy.context.object
