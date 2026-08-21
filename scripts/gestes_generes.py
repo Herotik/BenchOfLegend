@@ -436,10 +436,15 @@ ASSIS_EN_ARRIERE = {
     # fausse, pas celle-ci.
     _os("LeftUpLeg"): (+0.06, -0.451, +0.890),
     _os("RightUpLeg"): (-0.06, -0.451, +0.890),
-    _os("LeftLeg"): (+0.04, -0.690, -0.724),
-    _os("RightLeg"): (-0.04, -0.690, -0.724),
-    _os("LeftFoot"): (+0.00, -0.80, -0.60),
-    _os("RightFoot"): (+0.00, -0.80, -0.60),
+    # Le tibia redescend de trente-deux degrés et non de quarante-six : le
+    # relevé place la cheville un quart de longueur de tronc **au-dessus** du
+    # bassin, et à quarante-six degrés la semelle ne décollait que de dix
+    # centimètres — assez pour que l'audit soit content, pas assez pour qu'on
+    # voie que les pieds ne touchent pas. Ils sont maintenant à vingt.
+    _os("LeftLeg"): (+0.04, -0.845, -0.535),
+    _os("RightLeg"): (-0.04, -0.845, -0.535),
+    _os("LeftFoot"): (+0.00, -0.93, -0.37),
+    _os("RightFoot"): (+0.00, -0.93, -0.37),
 }
 
 
@@ -1247,9 +1252,9 @@ GESTES = {
                 # atteigne le tapis.
                 _os("Spine"): (+0.645, +0.665, +0.375),
                 _os("Spine1"): APlat((+0.645, +0.665, +0.375),
-                                     paume=(+0.90, -0.36, +0.24)),
+                                     paume=(+0.72, -0.70, +0.00)),
                 _os("Spine2"): APlat((+0.685, +0.635, +0.355),
-                                     paume=(+0.90, -0.36, +0.24)),
+                                     paume=(+0.72, -0.70, +0.00)),
                 _os("Neck"): (+0.52, +0.42, +0.74),
                 _os("Head"): (+0.44, -0.30, +0.84),
                 # Les mains jointes se posent près du sol, contre la hanche, et
@@ -1275,9 +1280,9 @@ GESTES = {
             _pose(ASSIS_EN_ARRIERE, {
                 _os("Spine"): (-0.645, +0.665, +0.375),
                 _os("Spine1"): APlat((-0.645, +0.665, +0.375),
-                                     paume=(-0.90, -0.36, +0.24)),
+                                     paume=(-0.72, -0.70, +0.00)),
                 _os("Spine2"): APlat((-0.685, +0.635, +0.355),
-                                     paume=(-0.90, -0.36, +0.24)),
+                                     paume=(-0.72, -0.70, +0.00)),
                 _os("Neck"): (-0.52, +0.42, +0.74),
                 _os("Head"): (-0.44, -0.30, +0.84),
                 _os("LeftArm"): Appui((-0.42, -0.06, 0.09), (-0.45, 0, -0.89)),
