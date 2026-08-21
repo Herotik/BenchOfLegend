@@ -63,10 +63,29 @@ c'est là qu'il faut regarder avant de lancer un rendu, qui prend des minutes.
 ## Combien d'images
 
 Ce qui décide n'est pas la durée mais le **chemin parcouru par image**.
-`verifier-planches.py` le mesure et refuse au-delà de 4,2. Vingt suffisent pour
-un maintien, trente-deux pour un squat ou une fente, soixante-quatre pour le
-burpee — le seul geste du catalogue qui traverse tout le cadre en deux
-secondes.
+`verifier-planches.py` le mesure et refuse au-delà de 4,2 en moyenne. Vingt
+suffisent pour un maintien, trente-deux pour un squat, quarante-huit pour un
+saut squaté, soixante-quatre pour une fente ou un burpee.
+
+La moyenne cache, et il faut regarder la seconde colonne — le **pire** pas du
+tour. Une fente livrée affichait 3,2 de moyenne, donc bonne, en restant sept
+images figées au point bas puis en bondissant de 7,3. Le script montre ce
+nombre sans refuser dessus : un arrêt voulu et un hachage ont le même profil, et
+seul l'œil sait si l'arrêt appartient à l'exercice.
+
+## Trois choses que le moteur sait faire et qu'on oublie
+
+- **`rebond`** — le va-et-vient vertical d'une foulée, deux fois par tour. Sans
+  lui, un geste à hauteur de bassin déclarée court en apesanteur. Le relevé
+  donne la phase, qui n'est pas celle qu'on croit : le bassin est au plus
+  **bas** quand le genou est au plus haut.
+- **Les déplacements comptent dans le rythme.** `_horaire` ajoute au chemin d'un
+  segment ce que le corps y translate. Sans cela, un saut de soixante
+  centimètres ne fait tourner aucune articulation et ne reçoit qu'une image sur
+  trente-deux.
+- **Une planche se déduit, elle ne se choisit pas.** Le bras y est vertical —
+  93° du sol, mesuré —, donc la hauteur du bassin découle de la longueur du
+  bras. Voir `HAUTEUR_PLANCHE`.
 
 ## Ce qui reste ouvert
 
@@ -80,5 +99,8 @@ secondes.
   images ne peut pas le dire. Quatre exercices.
 - **Le pied arrière de la fente**, au point bas, ne touche pas tout à fait le
   sol. Il est occulté dans la vidéo et l'estimateur le renvoie dans le vide.
+- **Une assise par pose clé manque aussi aux grimpeurs.** La planche est écrite
+  avec un tronc à douze degrés, fixe pour tout le geste ; un pratiquant qui
+  ramène le genou creuse un peu plus les hanches, et cela ne se dit pas.
 - **Deux planches ne servent aucun exercice** : `crunch-velo` et
   `planche-jambes-alternees`. La page de revue les signale.

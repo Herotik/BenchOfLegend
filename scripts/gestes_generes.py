@@ -272,21 +272,42 @@ BUSTE_PENCHE = {
 # centimètres sous le bassin. Le corps n'est alors plus la ligne droite de la
 # tête aux talons que toutes les descriptions du geste réclament, et les bras
 # se plient au lieu d'être tendus.
+#: Hauteur de bassin d'une planche bras tendus, en mètres.
+#:
+#: Elle n'est pas choisie mais **déduite**, et c'est la seule façon de la tenir
+#: juste. Le bras est vertical dans une planche — mesuré à 93° du sol sur la
+#: vidéo de grimpeur croisé, sur cent deux images, à quatre degrés près. Le
+#: poignet est donc à l'aplomb de l'épaule, et l'épaule à une longueur de bras
+#: au-dessus de lui : 0,562 m sur ce squelette. Le poignet posé se vise à six
+#: centimètres — la paume est plus bas que lui —, l'épaule est donc à 0,622 m
+#: et le bassin, douze degrés plus bas le long du tronc, à 0,532.
+#:
+#: Cinquante centimètres étaient déclarés, et le compte ne tombait pas : pour
+#: descendre le poignet au sol depuis une épaule trop basse, le bras devait
+#: s'incliner de trente-huit degrés, le tronc plonger vers la tête, et le
+#: personnage se retrouvait accroupi sur ses mains — un ours, pas une planche.
+HAUTEUR_PLANCHE = 0.532
+
 PLANCHE_DROITE = {
-    # Le tronc **monte** du bassin vers les épaules, il n'est pas horizontal.
-    # C'est la géométrie du geste : la main est au sol, l'épaule à une longueur
-    # de bras au-dessus, et le bassin plus bas parce que le corps redescend
-    # jusqu'aux orteils. Un tronc horizontal mettait les hanches vingt
-    # centimètres au-dessus de la ligne épaules-chevilles — la faute qu'on
-    # reproche à un débutant qui « fait la montagne ».
-    _os("Spine"): (0, 0.90, 0.44),
-    _os("Spine1"): (0, 0.90, 0.44),
-    _os("Spine2"): (0, 0.90, 0.44),
-    # La nuque se redresse franchement : sur toutes les photos du geste, le
-    # regard porte **devant** les mains et la tête prolonge la ligne du dos.
-    # Rentrée dans les épaules, elle donnait un personnage sans cou.
-    _os("Neck"): (0, 0.88, 0.47),
-    _os("Head"): (0, 0.93, 0.37),
+    # Le tronc monte du bassin vers les épaules, mais de **douze degrés**, pas
+    # de vingt-six. C'est une mesure et non une estimation : sur la vidéo, le
+    # segment bassin→épaule fait 168° avec la ligne du sol — celle qui joint le
+    # poignet posé à l'orteil posé —, donc douze degrés au-dessus d'elle.
+    #
+    # Vingt-six degrés, c'était le double, et l'erreur se propageait à tout le
+    # reste. Un tronc redressé de vingt-six degrés avec un bras perpendiculaire
+    # — les 87° mesurés à l'épaule — donne des bras penchés en avant, ce qui
+    # n'est plus une planche : dans une planche les mains sont **sous** les
+    # épaules.
+    _os("Spine"): (0, 0.978, 0.208),
+    _os("Spine1"): (0, 0.978, 0.208),
+    _os("Spine2"): (0, 0.978, 0.208),
+    # La nuque prolonge la ligne du dos et la tête regarde devant les mains,
+    # légèrement plongeante. Elle pointait vingt-deux degrés vers le ciel, ce
+    # qui allait avec un dos à vingt-six ; avec un dos à douze, elle regardait
+    # le plafond.
+    _os("Neck"): (0, 0.97, 0.24),
+    _os("Head"): (0, 0.99, 0.10),
 }
 
 
@@ -360,13 +381,27 @@ JAMBE_REPLIEE = {
 # nettement **devant** — c'est elle qu'on voit — et la gauche reste derrière :
 # le corps enjambe le banc, ce qui est la position de l'exercice et ce qui
 # donne au banc sa profondeur.
+#: Les jambes d'un développé couché : genoux pliés de part et d'autre du banc,
+#: **pieds à plat au sol**.
+#:
+#: Elles s'écrivaient en directions, et les pieds pendaient alors dans le vide,
+#: à quarante centimètres du plancher, orteils pointés — une position qu'aucun
+#: corps ne tient et que personne ne prend sur un banc. Ce n'est pourtant pas
+#: une direction qu'on connaît ici mais un **point** : le pied est posé. C'est
+#: exactement ce qu'un appui exprime, et il tombe juste du premier coup là où
+#: trois angles cherchés à la main ne tombaient pas.
+#:
+#: La cheville se vise à 8,7 cm, la hauteur qu'elle a debout, et le pied garde
+#: l'orientation qu'il a debout lui aussi : semelle à plat, orteils au sol.
+#:
+#: Les deux pieds passent **à côté** du banc et non dessous, le droit du côté
+#: de la caméra. De profil, une jambe qui disparaît derrière le meuble ne
+#: démontre rien.
 SUR_LE_BANC = {
-    _os("LeftUpLeg"): (+0.30, -0.92, -0.24),
-    _os("RightUpLeg"): (-0.34, -0.90, -0.24),
-    _os("LeftLeg"): (+0.16, +0.53, -0.83),
-    _os("RightLeg"): (-0.18, +0.52, -0.83),
-    _os("LeftFoot"): (+0.10, -0.99, -0.10),
-    _os("RightFoot"): (-0.12, -0.98, -0.10),
+    _os("LeftUpLeg"): Appui((+0.24, -0.34, 0.087), (0, -0.55, +0.84)),
+    _os("RightUpLeg"): Appui((-0.26, -0.34, 0.087), (0, -0.55, +0.84)),
+    _os("LeftFoot"): (0, -0.78, -0.63),
+    _os("RightFoot"): (0, -0.78, -0.63),
 }
 
 
@@ -470,8 +505,8 @@ def grimpeur_croise(genou):
     gauche du personnage. Les coudes sont posés à x = ∓0,18.
     """
     couche = {
-        _os("LeftArm"): Appui((-0.18, 0.47, 0.06), (0, 0.30, 0.95)),
-        _os("RightArm"): Appui((0.18, 0.47, 0.06), (0, 0.30, 0.95)),
+        _os("LeftArm"): Appui((-0.18, 0.42, 0.06), (0, 0.30, 0.95)),
+        _os("RightArm"): Appui((0.18, 0.42, 0.06), (0, 0.30, 0.95)),
         _os("LeftHand"): APlat((0, 1, 0)),
         _os("RightHand"): APlat((0, 1, 0)),
         _os("LeftFoot"): (0, 0, -1),
@@ -481,14 +516,26 @@ def grimpeur_croise(genou):
         if lettre == genou:
             # La cuisse traverse : elle part vers l'avant et vers **l'autre
             # côté**. Le signe est inversé, c'est tout le geste.
-            couche[_os(f"{cote}UpLeg")] = (-signe * 0.39, +0.69, -0.61)
-            # Le tibia suit, replié vers les pieds et le sol : il ne cherche
-            # rien, il accompagne.
-            couche[_os(f"{cote}Leg")] = (-signe * 0.02, -0.89, -0.46)
+            couche[_os(f"{cote}UpLeg")] = (-signe * 0.42, +0.80, -0.43)
+            # Le tibia part vers l'arrière en **remontant**, et le pied est en
+            # l'air. C'est ce que montre la vidéo : la jambe qui travaille ne
+            # touche rien pendant qu'elle est ramenée, le talon passe plus haut
+            # que le genou.
+            #
+            # Le faire redescendre était une faute franche et mesurable : tibia
+            # plongeant de vingt-sept degrés, le pied traversait le plancher de
+            # dix-huit centimètres. `auditer-gestes.py` l'a refusé.
+            couche[_os(f"{cote}Leg")] = (-signe * 0.05, -0.58, +0.81)
+            # Le pied de la jambe levée ne pousse sur rien : il pend dans le
+            # prolongement du tibia au lieu de garder les orteils recourbés de
+            # l'appui.
+            couche[_os(f"{cote}Foot")] = (0, -0.55, -0.84)
         else:
-            # Jambe tendue en arrière, presque dans l'axe du corps.
-            couche[_os(f"{cote}UpLeg")] = (signe * 0.04, -0.94, -0.34)
-            couche[_os(f"{cote}Leg")] = (signe * 0.02, -0.96, -0.28)
+            # Jambe tendue en arrière, vingt degrés sous l'horizontale. C'est
+            # la mesure de la vidéo — le segment bassin→cheville y fait 22°
+            # avec la ligne du sol — et non plus l'estimation à vingt.
+            couche[_os(f"{cote}UpLeg")] = (signe * 0.04, -0.938, -0.344)
+            couche[_os(f"{cote}Leg")] = (signe * 0.02, -0.947, -0.320)
     return couche
 
 
@@ -520,8 +567,8 @@ def grimpeur(genou, croise=False):
         # Les mains ne bougent pas de tout l'exercice — elles sont posées.
         # C'est exactement ce qu'un appui exprime, et ce qu'on n'arrivait pas
         # à obtenir en cherchant les angles à la main.
-        _os("LeftArm"): Appui((-0.18, 0.47, 0.06), (0, 0.30, 0.95)),
-        _os("RightArm"): Appui((0.18, 0.47, 0.06), (0, 0.30, 0.95)),
+        _os("LeftArm"): Appui((-0.18, 0.42, 0.06), (0, 0.30, 0.95)),
+        _os("RightArm"): Appui((0.18, 0.42, 0.06), (0, 0.30, 0.95)),
         # Les mains **posées**, paume au sol, doigts vers la tête. Un appui ne
         # place que le poignet : laissée libre, la main gardait le roulis d'un
         # corps debout et ses doigts traversaient le plancher de sept
@@ -549,16 +596,23 @@ def grimpeur(genou, croise=False):
             # exercices du catalogue, et de trois-quarts ça se voit.
             x = (-signe * 0.16) if croise else (signe * 0.14)
             couche[_os(f"{cote}UpLeg")] = Appui(
-                (x, -0.20, 0.24), (0, 0.35, -0.94)
+                (x, -0.22, 0.20), (0, 0.35, -0.94)
             )
         else:
             # Jambe tendue en arrière, cheville juste au-dessus du sol. La
-            # hanche est à 50 cm et la jambe en fait 90 : le pied ne peut pas
-            # aller plus loin que √(0,90² − 0,42²) ≈ 0,80 m en arrière. Viser
-            # au-delà laissait la jambe pendre en diagonale, et le personnage
-            # paraissait accroupi.
+            # hanche est à 53 cm et la jambe en fait 96 : la cheville, posée à
+            # vingt centimètres, se place donc à √(0,96² − 0,33²) ≈ 0,90 m en
+            # arrière. On vise deux centimètres en deçà, ce qui laisse au genou
+            # le soupçon de flexion qu'une planche a vraiment — tendre à fond
+            # une chaîne à deux os la fait claquer d'une image à l'autre dès
+            # que la cible bouge d'un millimètre.
+            #
+            # Quatre-vingts centimètres étaient visés pour une hanche déclarée
+            # à cinquante, ce qui repliait le genou à cent vingt-sept degrés :
+            # la jambe « tendue » de la planche était en fait à demi pliée, et
+            # le personnage accroupi.
             couche[_os(f"{cote}UpLeg")] = Appui(
-                (signe * 0.12, -0.80, 0.21), (0, -0.20, -0.98)
+                (signe * 0.12, -0.88, 0.20), (0, -0.20, -0.98)
             )
     return couche
 
@@ -806,7 +860,16 @@ GESTES = {
         # sept restantes : le personnage restait planté, se jetait en
         # avant, puis se figeait à nouveau. Déclarer les arrêts laisse la
         # répartition au prorata du chemin faire son travail.
-        "pauses": [0.10, 0.00, 0.12],
+        #
+        # Les arrêts sont ensuite descendus de 0,10/0,12 à 0,06/0,08, et c'est
+        # encore une histoire de saccade. Vingt-deux pour cent du tour immobile
+        # laissait trente-sept images sur quarante-huit pour tout le pas :
+        # mesuré sur la planche livrée, sept images strictement identiques au
+        # point bas, puis des bonds de 7,3 par image là où un squat — que
+        # personne ne trouve saccadé — plafonne à 5,0. Le contraste entre
+        # l'arrêt mort et la rafale est exactement ce qui se lit comme un
+        # hachage.
+        "pauses": [0.06, 0.00, 0.08],
         "cles": [
             _pose(BRAS_LE_LONG, {
                 _os("Spine"): (+0.00, +0.01, +1.00),
@@ -893,6 +956,15 @@ GESTES = {
         # genoux comporte vraiment.
         "ancrage": False,
         "hauteur": 1.045,
+        # Le rebond de la foulée. Sans lui, le bassin tenu à hauteur fixe
+        # donnait un coureur en apesanteur : les jambes pédalaient et le corps
+        # glissait sans jamais monter ni retomber.
+        #
+        # Douze centimètres, quand le relevé en donne vingt et un de creux à
+        # crête. On prend un peu plus de la moitié : la démonstratrice de la
+        # vidéo monte les genoux très haut, et reproduire son amplitude ferait
+        # bondir le mannequin comme s'il sautait à cloche-pied.
+        "rebond": 0.12,
         "cles": [
             _pose(MAINS_DEVANT, {
                 _os("Spine"): (+0.00, -0.00, +1.00),
@@ -948,6 +1020,11 @@ GESTES = {
         # centimètres, un plongeon au milieu d'une foulée.
         "ancrage": False,
         "hauteur": 1.054,
+        # Le rebond de la foulée, comme pour les montées de genoux et pour la
+        # même raison — les deux gestes viennent d'ailleurs de la même vidéo.
+        # Un peu moins : on ramène le talon sous la fesse sans lancer le genou
+        # devant, et la poussée au sol est plus courte.
+        "rebond": 0.09,
         # Poings fermés : on court les mains fermées, pas les doigts
         # écartés. Le mannequin les a ouverts au repos.
         "poings": 0.75,
@@ -1049,10 +1126,20 @@ GESTES = {
                 # l'horizontale : un poing serré sur rien.
                 _os("LeftHand"): APlat((+0.62, -0.72, -0.31), paume=(-1, 0, +0.30)),
                 _os("RightHand"): APlat((-0.62, -0.72, -0.31), paume=(+1, 0, +0.30)),
-                _os("LeftUpLeg"): (-0.14, +0.00, -0.99),
-                _os("RightUpLeg"): (+0.14, +0.00, -0.99),
-                _os("LeftLeg"): (-0.03, +0.46, -0.89),
-                _os("RightLeg"): (+0.03, +0.46, -0.89),
+                # Les cuisses descendent **droit**, à peine rentrées.
+                #
+                # Debout, le +X est la gauche du personnage : une cuisse gauche
+                # écrite à -0,14 partait donc vers sa droite, la droite vers sa
+                # gauche, et les deux jambes se croisaient. Les chevilles
+                # finissaient à un centimètre et demi de l'axe, soit trois
+                # centimètres l'une de l'autre pour des pieds larges de dix : de
+                # face, une seule jambe. On saute à pieds joints, pas à pieds
+                # superposés — sept centimètres de part et d'autre, et les
+                # semelles se touchent presque sans se recouvrir.
+                _os("LeftUpLeg"): (-0.04, +0.00, -0.999),
+                _os("RightUpLeg"): (+0.04, +0.00, -0.999),
+                _os("LeftLeg"): (-0.01, +0.46, -0.888),
+                _os("RightLeg"): (+0.01, +0.46, -0.888),
                 _os("LeftFoot"): (+0.05, -0.70, -0.71),
                 _os("RightFoot"): (-0.05, -0.70, -0.71),
             }),
@@ -1068,10 +1155,10 @@ GESTES = {
                 _os("RightForeArm"): (-0.66, -0.70, -0.27),
                 _os("LeftHand"): APlat((+0.66, -0.70, -0.27), paume=(-1, 0, +0.30)),
                 _os("RightHand"): APlat((-0.66, -0.70, -0.27), paume=(+1, 0, +0.30)),
-                _os("LeftUpLeg"): (-0.14, +0.08, -0.99),
-                _os("RightUpLeg"): (+0.14, +0.08, -0.99),
-                _os("LeftLeg"): (-0.04, +0.42, -0.91),
-                _os("RightLeg"): (+0.04, +0.42, -0.91),
+                _os("LeftUpLeg"): (-0.04, +0.08, -0.996),
+                _os("RightUpLeg"): (+0.04, +0.08, -0.996),
+                _os("LeftLeg"): (-0.01, +0.42, -0.907),
+                _os("RightLeg"): (+0.01, +0.42, -0.907),
                 _os("LeftFoot"): (+0.04, -0.68, -0.73),
                 _os("RightFoot"): (-0.04, -0.68, -0.73),
             }),
@@ -1138,13 +1225,19 @@ GESTES = {
         # redescendre. Sans lui le sommet est un simple rebroussement, et le
         # saut paraît sec.
         #
-        # Le souffle du sommet passe de cinq à huit centièmes du tour : « le
-        # saut est trop court » ne parle pas de la hauteur mais du temps passé
-        # en l'air, et c'est ce temps-là qu'on allonge. La durée du tour suit,
-        # de 1,8 à 2,2 s — un squat sauté enchaîné tourne autour de deux
-        # secondes, dont sept dixièmes de vol pour un saut de soixante
-        # centimètres.
-        "pauses": [0.20, 0.00, 0.08],
+        # Le temps du point bas est **divisé par deux**, et c'est la vraie
+        # correction. Un cinquième du tour immobile au fond du squat, sur un
+        # tour de 2,2 s, fait quatre cent quarante millisecondes assis avant de
+        # pousser : ce n'est plus un armé, c'est un arrêt, et c'est ce qui se
+        # voyait entre la descente et le saut. Un dixième suffit à dire qu'on
+        # charge les jambes.
+        #
+        # Le souffle du sommet baisse aussi. Il avait été ajouté parce que le
+        # vol paraissait trop court — mais le vol était court pour une tout
+        # autre raison, réparée depuis dans `_horaire` : il ne recevait qu'une
+        # image sur trente-deux. Maintenant qu'il en reçoit onze, il n'a plus
+        # besoin qu'on le fige au sommet pour durer.
+        "pauses": [0.10, 0.00, 0.06],
         "cles": [
             # Le point bas, relevé sur la captation du squat.
             _pose({
@@ -1429,18 +1522,16 @@ GESTES = {
         "duree": 1400,
         "assise": SUR_LE_VENTRE,
         "symetrique": False,
-        # Bassin à cinquante centimètres. Ce n'est pas la hauteur des épaules :
-        # celles-ci sont plus haut, portées par le tronc incliné, à une longueur
-        # de bras au-dessus des mains posées.
-        #
-        # C'est **la** valeur dont dépend tout le reste, et elle était fausse :
-        # trente-deux centimètres étaient déclarés ici pendant que les appuis
-        # des jambes, quelques lignes plus bas, étaient calculés pour une hanche
-        # à cinquante — la portée d'une jambe de 90 cm y est écrite noir sur
-        # blanc. Dix-huit centimètres d'écart, et les genoux s'enfonçaient
-        # d'autant sous le plancher. Personne ne l'avait vu : rien ne regardait
-        # le sol avant `auditer-gestes.py`.
-        "hauteur": 0.50,
+        # La hauteur de bassin d'une planche est **déduite** du bras vertical
+        # et non choisie : voir `HAUTEUR_PLANCHE`. C'est la valeur dont dépend
+        # tout le reste — le tronc, les appuis, la portée de la jambe arrière —
+        # et elle s'est trompée deux fois de suite. Trente-deux centimètres
+        # d'abord, pendant que les appuis en supposaient cinquante : les genoux
+        # s'enfonçaient de dix-huit centimètres sous le plancher, ce que rien ne
+        # regardait avant `auditer-gestes.py`. Cinquante ensuite, alors que le
+        # bras vertical en demande cinquante-trois : le personnage était
+        # accroupi sur ses mains.
+        "hauteur": HAUTEUR_PLANCHE,
         # Trois poses et deux temps d'arrêt, et c'est le rythme même du geste :
         # genou droit ramené, **marque**, retour en planche, genou gauche,
         # marque. Vingt-deux pour cent du tour immobile de chaque côté.
@@ -1451,10 +1542,23 @@ GESTES = {
         # sans jamais repasser par la position d'appui. Or c'est justement ce
         # qu'un pratiquant doit voir.
         #
-        # Le rythme est ici **écrit**, et non relevé : aucune vidéo de mountain
-        # climber n'a été fournie. `scripts/rythme-video.py` le lirait sur une
-        # vidéo, comme il l'a fait pour les montées de genoux, les
-        # talons-fesses et la corde à sauter.
+        # Le rythme est **écrit**, et il faut le dire : deux vidéos de mountain
+        # climber ont fini par arriver, et ni l'une ni l'autre ne le donne.
+        #
+        # La première est un montage — la caméra zoome, l'étendue du sujet varie
+        # de plus du tiers d'un plan à l'autre — et `rythme-video.py` y lit trois
+        # cadences incompatibles selon la fenêtre qu'on lui donne : 1502 ms sur
+        # les images 200-360, 834 ms sur 560-700, 584 ms sur 620-760, avec une
+        # autocorrélation qui ne dépasse jamais 0,1. La seconde est une boucle
+        # de synthèse de six secondes, dont l'autocorrélation ne fait que
+        # décroître : elle n'a pas de cadence propre à relever.
+        #
+        # Vingt-deux pour cent d'arrêt de chaque côté sont donc un **choix de
+        # lisibilité** et non une mesure — le geste est une alternance, et une
+        # alternance sans marque se lit comme un ciseau continu. Les fenêtres
+        # exploitables donnent d'ailleurs des arrêts bien plus courts, de zéro à
+        # sept pour cent du tour. Si une vidéo à cadrage fixe arrive un jour,
+        # c'est cette valeur-là qu'il faudra reprendre.
         "pauses": [0.22, 0.00, 0.22],
         "cles": [
             _pose(PLANCHE_DROITE, grimpeur("D")),
@@ -1476,7 +1580,7 @@ GESTES = {
         "duree": 1400,
         "assise": SUR_LE_VENTRE,
         "symetrique": False,
-        "hauteur": 0.50,
+        "hauteur": HAUTEUR_PLANCHE,
         "pauses": [0.22, 0.00, 0.22],
         "cles": [
             _pose(PLANCHE_DROITE, grimpeur_croise("D")),
@@ -1806,6 +1910,35 @@ def _boucle_resolue(cles, repos):
     return boucle + list(reversed(boucle))[1:]
 
 
+#: Combien de mètres parcourus par le corps « valent » un radian d'articulation,
+#: quand il faut comparer les deux pour partager les images d'un tour. Le ramener
+#: exactement demanderait la longueur du membre ; dix centimètres pour un radian
+#: est l'ordre de grandeur d'un bras, et il ne s'agit que de répartir des durées
+#: entre elles.
+METRE_EN_RADIAN = 0.10
+
+
+def _deplacements(geste):
+    """Ce que le corps **translate** à chaque pose clé, en mètres.
+
+    Somme de `bassin` et d'`envol`, qui déplacent tous deux le corps entier
+    sans qu'aucune articulation ne tourne. C'est précisément ce que `_ecart`
+    ne peut pas voir : il compare des directions d'os, et un corps qui monte
+    de soixante centimètres tout raide n'en fait bouger aucune.
+    """
+    par_cle = [[0.0, 0.0, 0.0] for _ in geste["cles"]]
+    declare = geste.get("bassin")
+    if declare is not None and isinstance(declare[0], (tuple, list)):
+        for k, triplet in enumerate(declare):
+            for i in range(3):
+                par_cle[k][i] += triplet[i]
+    envol = geste.get("envol")
+    if envol is not None:
+        for k, hauteur in enumerate(envol):
+            par_cle[k][2] += hauteur
+    return [tuple(v) for v in par_cle]
+
+
 def _ecart(a, b):
     """Combien de chemin sépare deux poses, en radians cumulés.
 
@@ -1823,13 +1956,9 @@ def _ecart(a, b):
         if y is None or x is SUIVRE or y is SUIVRE:
             continue
         if isinstance(x, Appui) and isinstance(y, Appui):
-            # Un appui se dit en mètres ; le ramener en radians de façon
-            # exacte demanderait la longueur du membre. Dix centimètres pour
-            # un radian est l'ordre de grandeur d'un bras, et il ne s'agit ici
-            # que de répartir des durées entre elles.
             total += sum(
                 (u - v) ** 2 for u, v in zip(x.cible, y.cible)
-            ) ** 0.5 / 0.10
+            ) ** 0.5 / METRE_EN_RADIAN
             continue
         u = Vector(x.direction if isinstance(x, APlat) else x)
         v = Vector(y.direction if isinstance(y, APlat) else y)
@@ -1943,13 +2072,27 @@ def _calendrier(taille, images, arrets, trajets):
     return plan
 
 
-def _horaire(cles, images, arrets_declares, poses_resolues):
+def _horaire(cles, images, arrets_declares, poses_resolues, deplacements=None):
     """Le calendrier d'un geste, arrêts compris — ou le partage d'autrefois.
 
     Sans `pauses` déclarées, on rend **exactement** le découpage d'origine :
     autant d'images par segment. Vingt et un gestes ont été contrôlés à l'œil
     sous ce partage-là, et les retimer tous au passage reviendrait à les
     remettre en cause sans que personne l'ait demandé.
+
+    ## Le corps qui se déplace compte autant que les os qui tournent
+
+    `_ecart` ne mesure que des angles, et c'est une lacune qui saute aux yeux
+    dès qu'un geste décolle. Sur le saut squaté, l'écart accroupi→extension
+    valait 16,27 et l'écart extension→sommet 0,84 : entre les deux, le corps
+    monte de cinquante-sept centimètres tout raide, et pas une articulation ne
+    bouge. Le partage donnait donc **une seule image** au vol pour quatorze à
+    la montée. Le saut se lisait comme un saut de montage : on s'accroupit
+    longuement, on disparaît, on réapparaît en haut.
+
+    `deplacements` donne, pose par pose, ce que le corps translate — la somme
+    de `bassin` et d'`envol`. Sa longueur s'ajoute au chemin du segment, au
+    même tarif que les appuis.
     """
     taille = 2 * len(cles) - 1
     segments = max(1, taille - 1)
@@ -1987,6 +2130,13 @@ def _horaire(cles, images, arrets_declares, poses_resolues):
     chemins = [
         _ecart(poses_resolues[k], poses_resolues[k + 1]) for k in range(segments)
     ]
+    if deplacements is not None:
+        allees = list(deplacements) + list(reversed(deplacements))[1:]
+        for k in range(segments):
+            course = sum(
+                (u - v) ** 2 for u, v in zip(allees[k], allees[k + 1])
+            ) ** 0.5
+            chemins[k] += course / METRE_EN_RADIAN
     somme = sum(chemins)
     if somme <= 1e-6:
         chemins = [1.0] * segments
@@ -2162,6 +2312,58 @@ def _decalages(declare, cles, images, horaire=None):
     for rang, e in horaire:
         a, b = boucle[rang], boucle[rang + 1]
         suite.append(tuple(x + (y - x) * e for x, y in zip(a, b)))
+    return suite
+
+
+def _rebondir(decalages, horaire, hauteur):
+    """Ajoute au bassin le va-et-vient vertical d'une foulée.
+
+    ## Pourquoi le moteur en avait besoin
+
+    Une montée de genoux et un talons-fesses tenaient leur bassin à une hauteur
+    **fixe**, déclarée. C'était la correction d'une faute réelle — ancré, le
+    moteur posait à chaque image le plus bas des deux pieds, et le corps
+    plongeait de quatorze centimètres à mi-alternance, là où aucun pied ne
+    porte. Mais la correction en a créé une autre, et elle se voit tout de
+    suite : un corps dont le bassin ne monte ni ne descend pendant que les
+    jambes pédalent est un corps en apesanteur. On avait remplacé un plongeon
+    par une lévitation.
+
+    ## Le relevé tranche, et contre l'intuition
+
+    Sur les quatre cent trente-quatre images exploitables de la vidéo de
+    montées de genoux, le bassin oscille avec une période de 375 ms — la moitié
+    du tour de 751 ms, donc **deux rebonds par tour**, un par appui. Et la
+    phase est l'inverse de ce qu'on suppose : le bassin est au plus **bas**
+    quand un genou est au plus haut (-10,6 % de la longueur de jambe) et au
+    plus **haut** quand les deux genoux se croisent (+3,4 %). Genou haut, c'est
+    le milieu de l'appui, quand la jambe porteuse amortit ; genoux croisés,
+    c'est la phase de vol.
+
+    C'est pourquoi le rebond **monte** depuis la pose clé au lieu de descendre
+    vers elle. La hauteur déclarée du geste est celle où l'ancrage posait
+    lui-même le pied porteur : y descendre enfoncerait ce pied dans le sol. Le
+    creux de la foulée est donc la pose clé elle-même, et le corps s'élève
+    entre deux poses, où il ne touche plus rien.
+
+    L'amplitude relevée va de creux à crête à 22 % de la longueur de jambe,
+    soit vingt et un centimètres sur ce squelette. Les gestes en déclarent
+    moins : la vidéo est vigoureuse, et une démonstration qui bondit d'autant
+    se lit comme un saut plutôt que comme une foulée.
+
+    Pendant un temps d'arrêt, `horaire` renvoie une avancée figée à 0 ou 1 :
+    le cosinus y vaut 1, le rebond est nul, et le corps tient sa pose à la
+    hauteur où il la tenait. C'est ce qu'il faut — un bassin qui continuerait
+    de monter pendant que les jambes s'arrêtent, c'est précisément la lévitation
+    qu'on corrige.
+    """
+    import math
+
+    suite = []
+    for (_, avance), decalage in zip(horaire, decalages):
+        monte = hauteur * (1.0 - math.cos(2.0 * math.pi * avance)) / 2.0
+        x, y, z = (0.0, 0.0, 0.0) if decalage is None else decalage
+        suite.append((x, y, z + monte))
     return suite
 
 
@@ -2597,9 +2799,35 @@ def planter(contexte, armature, os_porteur, reference):
 
     `reference` est ce point, ou `None` à la première image — il est alors
     renvoyé pour les suivantes.
+
+    ## Pourquoi l'os et non la chair
+
+    `contacts` renvoie le point le plus **bas** de la chair, et c'est
+    exactement ce qu'il faut pour poser un corps : ce qui touche le sol, c'est
+    la chair, et l'os du pied passe au milieu. Mais ancrer un point dans le plan
+    horizontal est une autre question, et le point le plus bas y est un piège :
+    il **migre** le long de la semelle. Tant que le pied est à plat, c'est un
+    point du talon ; dès qu'il se déroule, c'est un point de l'avant-pied. Entre
+    deux images le repère saute donc d'une longueur de pied, et `planter`,
+    consciencieusement, déplace tout le corps d'autant pour le ramener où il
+    croit qu'il était.
+
+    Mesuré sur la fente : entre la onzième et la douzième image, la silhouette
+    entière se décalait de seize centimètres d'un coup — un saut de 10,4 par
+    image là où le reste du geste tenait sous 6. C'était ce que le geste avait
+    de « saccadé », et ce n'était pas un manque d'images : c'était une
+    téléportation. En ajouter ne faisait que la rendre plus visible en
+    aplanissant tout le reste.
+
+    On ancre donc la **queue de l'os**, c'est-à-dire la base des orteils : un
+    point matériel du pied, qui ne se déplace pas parce que le pied tourne.
+    C'est aussi le bon point physiquement — une fente arrière pivote sur
+    l'avant-pied, pas sur le talon.
     """
     contexte.view_layer.update()
-    point = contacts(contexte, armature, (os_porteur,))[os_porteur]
+    point = armature.matrix_world @ armature.pose.bones[
+        f"mixamorig:{os_porteur}"
+    ].tail
     if reference is None:
         return (point.x, point.y)
 
@@ -2841,12 +3069,17 @@ def appliquer(armature, nom, images, contexte):
         # `_horaire` ne lit la boucle que pour mesurer les distances, et il ne
         # la lit pas du tout sans temps d'arrêt déclarés.
         _boucle_resolue(geste["cles"], repos) if arrets else None,
+        _deplacements(geste) if arrets else None,
     )
 
     declare = geste.get("bassin")
     if declare is None and geste.get("hauteur") is not None:
         declare = (0, 0, 0)
     decalages = _decalages(declare, len(geste["cles"]), images, horaire)
+
+    # Le rebond de la foulée, s'il y en a un : voir `_rebondir`.
+    if geste.get("rebond"):
+        decalages = _rebondir(decalages, horaire, geste["rebond"])
 
     # Combien le corps **décolle**, en mètres, une fois posé au sol. À ne pas
     # confondre avec `bassin`, qui déplace le bassin dans la pose et se fait

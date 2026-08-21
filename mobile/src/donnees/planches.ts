@@ -193,7 +193,7 @@ export const PLANCHES: Record<string, Planche> = {
   // cheville sans figer la hauteur du bassin.
   fente: {
     source: require("../../assets/gestes/fente.png"),
-    images: 48,
+    images: 64,
     colonnes: 4,
     duree: 3087,
   },
@@ -295,7 +295,7 @@ export const PLANCHES: Record<string, Planche> = {
   // qui part du squat et n'ajoute que l'extension.
   "squat-saute": {
     source: require("../../assets/gestes/squat-saute.png"),
-    images: 32,
+    images: 48,
     colonnes: 4,
     duree: 2200,
   },

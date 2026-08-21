@@ -20,6 +20,27 @@ toutes trois se lisent dans les fichiers eux-mêmes :
   de la fluidité mais le chemin parcouru par image : un maintien de planche de
   3,6 s en vingt images est fluide, un burpee de 2 s ne l'est pas.
 
+## Deux nombres pour la fluidité, et un seul qui refuse
+
+La colonne « saut » en donne deux : la **moyenne** par image, sur laquelle le
+script refuse, et le **pire** pas du tour, qu'il se contente d'afficher.
+
+Ce partage est le résultat d'une mesure, pas d'une prudence. La moyenne cache :
+la fente livrée affichait 3,2 — bien sous le seuil — alors qu'elle restait sept
+images strictement immobiles au point bas puis bondissait de 7,3 par image. Le
+pire pas, lui, le disait. La tentation était donc d'en faire un second refus.
+
+Elle ne tient pas. Sur les planches déjà validées à l'œil, le burpee culmine à
+7,1 et le gainage bas à 5,9 sans que personne ne les trouve hachés ; la fente
+refusée culminait à 7,3. Aucun seuil ne les sépare. Le rapport du pire pas à la
+médiane ne les sépare pas davantage : 2,5 pour la fente refusée, mais 3,2 pour
+le mountain climber, dont les temps d'arrêt sont **voulus** et lus comme tels.
+
+C'est qu'un arrêt déclaré et un hachage donnent exactement le même profil. Ce
+qui les distingue est de savoir si l'arrêt appartient à l'exercice, et aucun
+pixel ne le dit. Le nombre est donc montré et non opposé : il sert à regarder au
+bon endroit, pas à trancher à la place de l'œil.
+
 ## Ce qu'il ne peut pas dire
 
 Si le geste est **juste**. Ça, seul un œil qui connaît l'exercice le dit, et
@@ -68,7 +89,7 @@ def controler(slug, images, colonnes, duree):
 
     chemin = os.path.join(ASSETS, f"{slug}.png")
     if not os.path.isfile(chemin):
-        return [f"aucune image : {chemin}"], None
+        return [f"aucune image : {chemin}"], (None, None)
 
     fautes = []
     brut = Image.open(chemin)
@@ -78,7 +99,7 @@ def controler(slug, images, colonnes, duree):
             f"{brut.width}×{brut.height} px ne se divise pas en "
             f"{colonnes}×{lignes} vignettes"
         )
-        return fautes, None
+        return fautes, (None, None)
 
     # Les vignettes sont **carrées** — `planche-geste.py` les met au carré — et
     # c'est ce qui trahit un nombre d'images mal déclaré. Une planche rendue en
@@ -92,7 +113,7 @@ def controler(slug, images, colonnes, duree):
             f"vignettes de {largeur}×{hauteur} px, donc pas carrées : la "
             f"planche ne contient pas {images} images sur {colonnes} colonnes"
         )
-        return fautes, None
+        return fautes, (None, None)
 
     rgba = np.array(brut.convert("RGBA"))
     opaques = rgba[rgba[:, :, 3] > 200][:, :3].astype(int)
@@ -170,7 +191,7 @@ def controler(slug, images, colonnes, duree):
         fautes.append(
             f"la boucle saute : {sauts[-1]:.1f} contre {moyen:.1f} en moyenne"
         )
-    return fautes, moyen
+    return fautes, (moyen, max(sauts))
 
 
 def main():
@@ -178,8 +199,8 @@ def main():
     total = 0
     print(f"\n=== {len(planches)} planches ===")
     for slug, (images, colonnes, duree) in sorted(planches.items()):
-        fautes, moyen = controler(slug, images, colonnes, duree)
-        pas = "  —  " if moyen is None else f"{moyen:5.2f}"
+        fautes, (moyen, pire) = controler(slug, images, colonnes, duree)
+        pas = "  —      —  " if moyen is None else f"{moyen:5.2f}  {pire:5.2f}"
         etat = "ok" if not fautes else "; ".join(fautes)
         print(f"  {slug:28s} {images:2d} img  saut {pas}   {etat}")
         total += len(fautes)

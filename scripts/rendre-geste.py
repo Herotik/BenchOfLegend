@@ -521,9 +521,16 @@ def poser_le_banc(hauteur, mini, maxi):
         size=1, location=(centre_x, milieu_y, hauteur - epaisseur / 2)
     )
     banc = bpy.context.object
-    # Moins large que les bras écartés : c'est cette proportion-là qu'on
-    # reconnaît comme un banc plutôt que comme une table.
-    banc.scale = (max(taille.x, 0.6) * 0.45, longueur, epaisseur)
+    # Trente-quatre centimètres de large, et cette valeur est **fixe**.
+    #
+    # Elle se calculait sur l'encombrement du geste — 45 % de l'étendue en x —,
+    # ce qui la faisait dépendre de l'écartement des bras : au point bas du
+    # développé, coudes ouverts, le banc atteignait soixante-trois centimètres.
+    # Un banc de cette largeur n'en est plus un, et surtout les pieds du
+    # personnage tombaient **dedans** au lieu de le border. La largeur d'un banc
+    # de musculation ne dépend pas de ce qu'on y fait : elle fait la largeur du
+    # dos, un peu plus de trente centimètres.
+    banc.scale = (0.34, longueur, epaisseur)
 
     # Un **bleu sombre**, et non le gris de la première version. Le gris moyen
     # avait la même valeur que la chair du mannequin : ses deux pieds verticaux
