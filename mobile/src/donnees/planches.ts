@@ -257,6 +257,19 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 900,
   },
+  // Troisième geste de la même vidéo, et le seul qu'on croyait impossible : la
+  // démonstratrice y **mime** le mouvement sans corde. Le personnage n'en tient
+  // pas davantage — l'agrès qu'on tenait pour rédhibitoire n'en était pas un.
+  //
+  // De face : c'est là que la position des avant-bras se lit, et elle est le
+  // seul signe qui distingue ce geste d'un simple rebond. De profil ils se
+  // cachent l'un l'autre.
+  "corde-a-sauter": {
+    source: require("../../assets/gestes/corde-a-sauter.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 700,
+  },
   // De trois-quarts, et c'est la seule du registre : de profil, un corps couché
   // sur le côté est regardé dans l'axe de son regard et l'on ne voit plus de
   // quel côté il est tourné.

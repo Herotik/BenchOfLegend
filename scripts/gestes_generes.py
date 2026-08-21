@@ -703,7 +703,13 @@ GESTES = {
         "duree": 700,
         # Assise « debout » canonique : voir --sans-pente.
         "assise": ((+0.00, +0.00, +1.00), (+0.00, -1.00, +0.00)),
-        "ancrage": ("LeftFoot", "RightFoot"),
+        # `ancrage: False` et un décalage de bassin, comme pour un saut :
+        # c'est le seul moyen de montrer le rebond. Reposer les pieds au
+        # sol à chaque image l'écrasait entièrement — quatre images de
+        # suite identiques, et un personnage qui se contentait de tenir
+        # les bras écartés.
+        "ancrage": False,
+        "bassin": [(0, 0, -0.03), (0, 0, 0.09)],
         "cles": [
             _pose({
                 _os("Spine"): (+0.00, -0.00, +1.00),
