@@ -407,28 +407,23 @@ JAMBE_REPLIEE = {
 #: 14 cm, genou à 30, cheville à 12 — talon décollé de quelques centimètres,
 #: ce que montre la vidéo.
 ASSIS_EN_ARRIERE = {
-    # Soixante-douze degrés, et cette valeur a fait trois allers-retours.
-    #
-    # Le relevé donnait 63-68°, on l'a cru trop redressé et ramené à 50° au
-    # jugé, puis à 60°. Le rendu restait un corps allongé. Ce qui a tranché,
-    # c'est de poser une image de la vidéo à côté d'une image du rendu, à la
-    # même échelle : sur la vidéo, le segment hanche-épaule fait 76° avec le
-    # tapis. La démonstratrice est **assise**, penchée d'un petit quart de tour
-    # en arrière, pas couchée. Le relevé avait raison et l'œil avait tort.
-    _os("Spine"): (+0.00, +0.31, +0.95),
-    _os("Spine1"): (+0.00, +0.31, +0.95),
-    _os("Spine2"): (+0.00, +0.31, +0.95),
-    # La tête regarde **devant**, vers les genoux, et non le plafond.
-    _os("Neck"): (+0.00, +0.10, +0.99),
-    _os("Head"): (+0.00, -0.25, +0.97),
-    # Cuisse à trente-cinq degrés au-dessus de l'horizontale, tibia qui
-    # redescend de cinquante : genou fléchi à quatre-vingt-seize degrés,
-    # cheville à vingt-cinq centimètres du sol. C'est ce que montre la vidéo —
-    # les talons sont décollés, les genoux assez hauts.
-    _os("LeftUpLeg"): (+0.06, -0.82, +0.57),
-    _os("RightUpLeg"): (-0.06, -0.82, +0.57),
-    _os("LeftLeg"): (+0.04, -0.65, -0.76),
-    _os("RightLeg"): (-0.04, -0.65, -0.76),
+    # Tronc à soixante-cinq degrés du tapis : elle est **assise**, penchée en
+    # arrière d'un petit quart de tour. Le tronc ne bouge plus ensuite — seule
+    # la rotation travaille.
+    _os("Spine"): (+0.00, +0.423, +0.906),
+    _os("Spine1"): (+0.00, +0.423, +0.906),
+    _os("Spine2"): (+0.00, +0.423, +0.906),
+    # La tête regarde ses mains, donc vers l'avant et le bas.
+    _os("Neck"): (+0.00, +0.15, +0.99),
+    _os("Head"): (+0.00, -0.55, +0.84),
+    # Les **talons sont décollés** et le restent : c'est ce qui distingue le
+    # russian twist du crunch assis, et c'est visible sur toute la vidéo. La
+    # cheville tient à vingt centimètres du tapis, genou fléchi à cent douze
+    # degrés.
+    _os("LeftUpLeg"): (+0.06, -0.766, +0.643),
+    _os("RightUpLeg"): (-0.06, -0.766, +0.643),
+    _os("LeftLeg"): (+0.04, -0.88, -0.47),
+    _os("RightLeg"): (-0.04, -0.88, -0.47),
     _os("LeftFoot"): (+0.00, -0.94, -0.34),
     _os("RightFoot"): (+0.00, -0.94, -0.34),
 }
@@ -1190,101 +1185,86 @@ GESTES = {
         ],
     },
 
-    # Russian twist. Assis en arrière, genoux fléchis, talons décollés, les
-    # mains jointes passent d'une hanche à l'autre.
+    # Russian twist, relevé sur trois vidéos de démonstration.
     #
-    # ## Une posture reprise sur les images, et pourquoi
+    # ## Ce qui fait l'exercice, et que trois versions ont manqué
     #
-    # Un premier jet l'avait tirée des angles moyens du relevé : tronc à 65°
-    # de l'horizontale, cuisse à 64°. Le rendu donnait une boule — genoux
-    # remontés à la poitrine, corps replié sur lui-même —, et il a fallu
-    # regarder les images de la vidéo pour comprendre.
+    # La **rotation**, et rien d'autre. Le tronc garde son inclinaison du début
+    # à la fin, les jambes ne bougent pas, les mains restent jointes devant le
+    # sternum : ce qui travaille, ce sont les obliques qui font pivoter les
+    # épaules d'un côté puis de l'autre.
     #
-    # L'angle de la cuisse était faux d'une quarantaine de degrés. Il se
-    # calculait en `arctan2(dy, |dx|)` sur le segment hanche→genou, et cette
-    # formule enfle dès que `dx` est petit : sur une vue de profil où le genou
-    # est presque à l'aplomb de la hanche, un bruit de deux pixels en x fait
-    # passer l'angle de trente à soixante degrés. Une moyenne d'angles n'est pas
-    # une mesure quand le dénominateur s'approche de zéro.
+    # Et l'amplitude est **grande**. Sur la vidéo, à caméra fixe, on voit
+    # alternativement le dos de la démonstratrice et sa poitrine : elle tourne
+    # donc d'environ soixante-dix degrés de chaque côté, pas de quarante. Les
+    # trois premières versions balançaient les bras devant un buste immobile,
+    # ce qui n'est pas le même exercice.
     #
-    # Ce que montrent les images : le tronc bascule d'une cinquantaine de
-    # degrés, la cuisse ne monte que d'une vingtaine, le genou est fléchi
-    # largement et le talon flotte à quelques centimètres du tapis.
+    # ## Les mesures
+    #
+    # Tronc à 65° du tapis, cuisse à 35° au-dessus de l'horizontale, tibia qui
+    # redescend de 33° — genou fléchi à 112°, cheville à vingt centimètres du
+    # sol. Les talons ne touchent jamais.
     "russian-twist": {
         "vue": "trois-quarts",
         # Mille sept cent cinquante millisecondes pour un aller-retour complet.
         # Relevé sur le va-et-vient du poignet : 1877 ms à vide, 1609 ms lesté.
         "duree": 1750,
-        "assise": SUR_LE_DOS,
-        # Assis sur les fesses : le bassin ne touche le sol que par elles, et
-        # sa hauteur ne se déduit d'aucun appui. On la déclare, comme pour un
-        # développé couché.
+        # Le bassin est basculé en arrière, on est posé sur le sacrum, et l'on
+        # n'a que ce contact-là : la hauteur se déclare.
+        "assise": ((+0.00, +0.423, +0.906), (+0.00, -0.906, +0.423)),
         "ancrage": False,
-        "hauteur": 0.192,
-        # Les mains se **joignent** devant le sternum, ou tiennent un poids.
-        # Doigts écartés, on voyait deux mains ouvertes agitées devant soi.
-        "poings": 1.0,
+        "hauteur": 0.19,
         "symetrique": False,
+        # Les mains se **joignent**, ou tiennent un poids.
+        "poings": 1.0,
         # Un temps de chaque côté, rien au centre — on y passe, on ne s'y
         # arrête pas.
         "pauses": [0.10, 0.00, 0.10],
         "cles": [
-            # Mains à **gauche** du personnage. Debout comme couché sur le dos,
-            # sa gauche est en +X.
+            # Tourné à **gauche**, soixante-dix degrés. Debout comme assis, la
+            # gauche du personnage est en +X.
             _pose(ASSIS_EN_ARRIERE, {
-                _os("Spine1"): APlat((+0.00, +0.31, +0.95),
-                                     paume=(+0.64, -0.73, +0.24)),
-                _os("Spine2"): APlat((+0.10, +0.29, +0.95),
-                                     paume=(+0.64, -0.73, +0.24)),
-                _os("Neck"): (+0.15, +0.62, +0.77),
-                _os("Head"): (+0.30, +0.65, +0.70),
-                # Les mains sont **jointes** : c'est un point qu'on connaît, pas
-                # deux directions. Un appui par bras sur la même cible les tient
-                # ensemble d'un bout à l'autre du balancement, ce que deux
-                # directions ne garantissent jamais.
-                #
-                # Elles se tiennent **devant le sternum**, et c'est le point
-                # que deux versions successives avaient manqué. On les avait
-                # d'abord envoyées à hauteur de hanche, puis un peu moins bas :
-                # dans les deux cas elles balayaient le ventre pendant que le
-                # buste restait planté, ce qui est un autre exercice.
-                #
-                # La vidéo montre l'inverse : les mains ne quittent jamais le
-                # devant de la poitrine, à une trentaine de centimètres du
-                # sternum, et ce sont les épaules qui les emmènent. La cible se
-                # calcule donc à partir de la **normale de la poitrine**, qui
-                # tourne avec elle : trente centimètres devant un buste incliné,
-                # pivotés de quarante degrés d'un côté puis de l'autre.
-                _os("LeftArm"): Appui((+0.19, -0.15, 0.47), (+1, 0, -0.3)),
-                _os("RightArm"): Appui((+0.19, -0.15, 0.47), (+1, 0, -0.3)),
+                # La poitrine pivote autour de l'axe de la colonne. `APlat` ne
+                # sert d'ordinaire qu'à poser une paume au sol, mais son
+                # mécanisme est le **roulis** d'un os quelconque : appliqué au
+                # buste, il le fait tourner sur lui-même, ce qu'aucune direction
+                # ne sait dire.
+                _os("Spine1"): APlat((+0.00, +0.423, +0.906),
+                                     paume=(+0.94, -0.31, +0.145)),
+                _os("Spine2"): APlat((+0.00, +0.423, +0.906),
+                                     paume=(+0.94, -0.31, +0.145)),
+                _os("Neck"): (+0.20, +0.14, +0.97),
+                _os("Head"): (+0.40, -0.50, +0.77),
+                # Les mains se tiennent à trente centimètres devant le sternum
+                # et suivent la poitrine : la cible se calcule sur la normale du
+                # buste, qui tourne avec lui.
+                _os("LeftArm"): Appui((+0.28, 0.00, 0.43), (+1, 0, -0.3)),
+                _os("RightArm"): Appui((+0.28, 0.00, 0.43), (+1, 0, -0.3)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
             }),
-            # Au centre, mains devant le sternum et buste dans l'axe.
+            # De face, mains devant le sternum.
             _pose(ASSIS_EN_ARRIERE, {
-                # `APlat` aussi, et il le faut : le moteur refuse qu'un os soit
-                # posé à plat sur une pose et libre sur une autre. C'est une
-                # bonne exigence — un roulis déclaré une fois sur deux ne veut
-                # rien dire.
-                _os("Spine1"): APlat((+0.00, +0.31, +0.95),
-                                     paume=(+0.00, -0.95, +0.31)),
-                _os("Spine2"): APlat((+0.00, +0.31, +0.95),
-                                     paume=(+0.00, -0.95, +0.31)),
-                _os("LeftArm"): Appui((+0.00, -0.22, 0.49), (+1, 0, -0.3)),
-                _os("RightArm"): Appui((+0.00, -0.22, 0.49), (-1, 0, -0.3)),
+                _os("Spine1"): APlat((+0.00, +0.423, +0.906),
+                                     paume=(+0.00, -0.906, +0.423)),
+                _os("Spine2"): APlat((+0.00, +0.423, +0.906),
+                                     paume=(+0.00, -0.906, +0.423)),
+                _os("LeftArm"): Appui((+0.00, -0.18, 0.51), (+1, 0, -0.3)),
+                _os("RightArm"): Appui((+0.00, -0.18, 0.51), (-1, 0, -0.3)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
             }),
-            # Mains à **droite**, miroir de la première clé.
+            # Tourné à **droite**, miroir exact.
             _pose(ASSIS_EN_ARRIERE, {
-                _os("Spine1"): APlat((+0.00, +0.31, +0.95),
-                                     paume=(-0.64, -0.73, +0.24)),
-                _os("Spine2"): APlat((-0.10, +0.29, +0.95),
-                                     paume=(-0.64, -0.73, +0.24)),
-                _os("Neck"): (-0.15, +0.62, +0.77),
-                _os("Head"): (-0.30, +0.65, +0.70),
-                _os("LeftArm"): Appui((-0.19, -0.15, 0.47), (-1, 0, -0.3)),
-                _os("RightArm"): Appui((-0.19, -0.15, 0.47), (-1, 0, -0.3)),
+                _os("Spine1"): APlat((+0.00, +0.423, +0.906),
+                                     paume=(-0.94, -0.31, +0.145)),
+                _os("Spine2"): APlat((+0.00, +0.423, +0.906),
+                                     paume=(-0.94, -0.31, +0.145)),
+                _os("Neck"): (-0.20, +0.14, +0.97),
+                _os("Head"): (-0.40, -0.50, +0.77),
+                _os("LeftArm"): Appui((-0.28, 0.00, 0.43), (-1, 0, -0.3)),
+                _os("RightArm"): Appui((-0.28, 0.00, 0.43), (-1, 0, -0.3)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
             }),
