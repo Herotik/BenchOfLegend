@@ -26,8 +26,13 @@ compte pour décider par quoi continuer :
   geste. Il y faudra une assise par pose clé.
 - **suspension** — le corps pend à une barre. Rien ne le tient dans le moteur,
   qui pose toujours le personnage sur le sol.
-- **agrès** — un tapis roulant, une corde. L'objet fait le mouvement autant que
-  le corps, et il n'est pas modélisé.
+- **agrès** — un tapis roulant. Le sol défile sous les pieds, et une
+  démonstration en boucle de vingt images ne peut pas le dire.
+
+Une corde à sauter, elle, n'en est pas un : le mouvement se **mime** sans
+corde, et c'est ainsi qu'il se démontre. La leçon vaut d'être retenue avant de
+classer un geste comme impossible — regarder ce que le corps fait, pas ce
+qu'il tient.
 
 Les **haltères et les élastiques ne sont pas des obstacles** : le personnage
 ferme le poing et ne tient rien de toute façon. Les fentes haltères partagent
@@ -64,8 +69,12 @@ OBSTACLES = {
     "suspension": (
         "traction", "suspension", "releve-jambes-suspendu",
     ),
+    # `corde-a-sauter` n'y figure plus : une vidéo de démonstration l'a montrée
+    # **mimée sans corde**, et le personnage n'en tient pas davantage. L'agrès
+    # qu'on croyait rédhibitoire ne l'était pas — il suffisait de regarder le
+    # mouvement plutôt que l'objet.
     "agrès": (
-        "corde-a-sauter", "course-tapis", "marche-tapis",
+        "course-tapis", "marche-tapis",
     ),
 }
 

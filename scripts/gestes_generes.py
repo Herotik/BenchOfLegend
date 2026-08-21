@@ -561,6 +561,191 @@ GESTES = {
             }),
         ],
     },
+    # Montées de genoux, relevées sur le plan **de face** d'une vidéo qui en
+    # contient trois exercices. Une seule image sert de base — le sommet de la
+    # montée du genou gauche, image 340 — et la seconde clé en est le miroir
+    # exact : c'est ce que le geste est, la même chose d'un côté puis de
+    # l'autre. Relever deux sommets réels aurait figé une dissymétrie que le
+    # mouvement n'a pas.
+    #
+    # Le genou monte à 105 cm pour une hanche à 103 : à hauteur, ce que toutes
+    # les descriptions demandent. Filmée de face, la profondeur porte
+    # l'avant-arrière et se trompe — d'où `--dans-le-plan`, et des bras
+    # descendus le long du corps plutôt que tordus comme le relevé les voyait.
+    "montee-genoux": {
+        # De trois-quarts, et non de profil : le geste est une **alternance**
+        # gauche-droite, et de profil les deux jambes se superposent — six
+        # images de suite s'y ressemblaient au point que le personnage
+        # semblait immobile.
+        "vue": "trois-quarts",
+        "duree": 900,
+        # Assise « debout » canonique : voir --sans-pente.
+        "assise": ((+0.00, +0.00, +1.00), (+0.00, -1.00, +0.00)),
+        "symetrique": False,
+        # Le pied au sol décide de la hauteur ; l'autre est en l'air. Pas
+        # d'`aplomb` : mettre des appuis de niveau demande trois points.
+        "ancrage": ("LeftFoot", "RightFoot"),
+        "cles": [
+            _pose({
+                _os("Spine"): (+0.00, -0.00, +1.00),
+                _os("Spine1"): (+0.00, -0.00, +1.00),
+                _os("Spine2"): (+0.00, -0.00, +1.00),
+                _os("Neck"): (+0.00, -0.28, +0.96),
+                _os("Head"): (+0.00, -0.28, +0.96),
+                _os("LeftArm"): (+0.12, +0.00, -0.99),
+                _os("RightArm"): (-0.12, -0.00, -0.99),
+                _os("LeftForeArm"): (+0.08, +0.10, -0.99),
+                _os("RightForeArm"): (-0.08, +0.10, -0.99),
+                _os("LeftHand"): (-0.00, +0.15, -0.99),
+                _os("RightHand"): (-0.00, +0.15, -0.99),
+                _os("LeftUpLeg"): (+0.00, -0.98, +0.21),
+                _os("RightUpLeg"): (+0.00, +0.00, -1.00),
+                _os("LeftLeg"): (+0.00, +0.36, -0.93),
+                _os("RightLeg"): (+0.00, +0.33, -0.94),
+                _os("LeftFoot"): (+0.00, -0.40, -0.92),
+                _os("RightFoot"): (+0.00, -0.66, -0.75),
+            }),
+            _pose({
+                _os("Spine"): (+0.00, -0.00, +1.00),
+                _os("Spine1"): (+0.00, -0.00, +1.00),
+                _os("Spine2"): (+0.00, -0.00, +1.00),
+                _os("Neck"): (+0.00, -0.28, +0.96),
+                _os("Head"): (+0.00, -0.28, +0.96),
+                _os("RightArm"): (-0.12, -0.00, -0.99),
+                _os("LeftArm"): (+0.12, +0.00, -0.99),
+                _os("RightForeArm"): (-0.08, +0.10, -0.99),
+                _os("LeftForeArm"): (+0.08, +0.10, -0.99),
+                _os("RightHand"): (-0.00, +0.15, -0.99),
+                _os("LeftHand"): (-0.00, +0.15, -0.99),
+                _os("RightUpLeg"): (+0.00, -0.98, +0.21),
+                _os("LeftUpLeg"): (+0.00, +0.00, -1.00),
+                _os("RightLeg"): (+0.00, +0.36, -0.93),
+                _os("LeftLeg"): (+0.00, +0.33, -0.94),
+                _os("RightFoot"): (+0.00, -0.40, -0.92),
+                _os("LeftFoot"): (+0.00, -0.66, -0.75),
+            }),
+        ],
+    },
+
+    # Talons-fesses, relevés sur le plan **de profil** de la même vidéo. C'est
+    # ce qui explique que la cuisse y reste verticale de bout en bout : en
+    # talon-fesse, seul le genou plie. Le tibia part droit vers l'arrière, à
+    # l'horizontale, talon à hauteur de genou.
+    #
+    # Image 894, le pli le plus franc de la vidéo — genou à 70° d'un côté,
+    # 171° de l'autre — et son miroir pour l'autre jambe.
+    "talons-fesses": {
+        # De trois-quarts, et non de profil : le geste est une **alternance**
+        # gauche-droite, et de profil les deux jambes se superposent — six
+        # images de suite s'y ressemblaient au point que le personnage
+        # semblait immobile.
+        "vue": "trois-quarts",
+        "duree": 900,
+        # Assise « debout » canonique : voir --sans-pente.
+        "assise": ((+0.00, +0.00, +1.00), (+0.00, -1.00, +0.00)),
+        "symetrique": False,
+        # Le pied au sol décide de la hauteur ; l'autre est en l'air. Pas
+        # d'`aplomb` : mettre des appuis de niveau demande trois points.
+        "ancrage": ("LeftFoot", "RightFoot"),
+        "cles": [
+            _pose({
+                _os("Spine"): (+0.00, +0.00, +1.00),
+                _os("Spine1"): (+0.00, +0.00, +1.00),
+                _os("Spine2"): (+0.00, +0.00, +1.00),
+                _os("Neck"): (+0.00, -0.31, +0.95),
+                _os("Head"): (+0.00, -0.31, +0.95),
+                _os("LeftArm"): (+0.12, +0.00, -0.99),
+                _os("RightArm"): (-0.12, -0.00, -0.99),
+                _os("LeftForeArm"): (+0.08, +0.10, -0.99),
+                _os("RightForeArm"): (-0.08, +0.10, -0.99),
+                _os("LeftHand"): (-0.00, +0.15, -0.99),
+                _os("RightHand"): (-0.00, +0.15, -0.99),
+                _os("LeftUpLeg"): (+0.00, -0.32, -0.95),
+                _os("RightUpLeg"): (+0.00, +0.15, -0.99),
+                _os("LeftLeg"): (+0.00, +1.00, +0.03),
+                _os("RightLeg"): (+0.00, +0.27, -0.96),
+                _os("LeftFoot"): (+0.00, +0.75, -0.66),
+                _os("RightFoot"): (+0.00, -0.63, -0.78),
+            }),
+            _pose({
+                _os("Spine"): (+0.00, +0.00, +1.00),
+                _os("Spine1"): (+0.00, +0.00, +1.00),
+                _os("Spine2"): (+0.00, +0.00, +1.00),
+                _os("Neck"): (+0.00, -0.31, +0.95),
+                _os("Head"): (+0.00, -0.31, +0.95),
+                _os("RightArm"): (-0.12, -0.00, -0.99),
+                _os("LeftArm"): (+0.12, +0.00, -0.99),
+                _os("RightForeArm"): (-0.08, +0.10, -0.99),
+                _os("LeftForeArm"): (+0.08, +0.10, -0.99),
+                _os("RightHand"): (-0.00, +0.15, -0.99),
+                _os("LeftHand"): (-0.00, +0.15, -0.99),
+                _os("RightUpLeg"): (+0.00, -0.32, -0.95),
+                _os("LeftUpLeg"): (+0.00, +0.15, -0.99),
+                _os("RightLeg"): (+0.00, +1.00, +0.03),
+                _os("LeftLeg"): (+0.00, +0.27, -0.96),
+                _os("RightFoot"): (+0.00, +0.75, -0.66),
+                _os("LeftFoot"): (+0.00, -0.63, -0.78),
+            }),
+        ],
+    },
+
+    # Corde à sauter, relevée sur la fin de la même vidéo. La démonstratrice
+    # y **mime** le mouvement sans corde, ce qui tombe bien : le personnage
+    # n'en tient pas non plus, et l'obstacle qu'on croyait rédhibitoire —
+    # l'agrès non modélisé — n'en était pas un.
+    #
+    # Deux temps du rebond, images 1288 et 1294 : genou de 146° à 156°,
+    # bassin quatorze centimètres plus haut, avant-bras qui tournent. De
+    # **face**, parce que c'est là que la position des avant-bras se lit —
+    # de profil ils se cachent l'un l'autre.
+    "corde-a-sauter": {
+        "vue": "face",
+        "duree": 700,
+        # Assise « debout » canonique : voir --sans-pente.
+        "assise": ((+0.00, +0.00, +1.00), (+0.00, -1.00, +0.00)),
+        "ancrage": ("LeftFoot", "RightFoot"),
+        "cles": [
+            _pose({
+                _os("Spine"): (+0.00, -0.00, +1.00),
+                _os("Spine1"): (+0.00, -0.00, +1.00),
+                _os("Spine2"): (+0.00, -0.00, +1.00),
+                _os("Neck"): (+0.00, -0.34, +0.94),
+                _os("Head"): (+0.00, -0.34, +0.94),
+                _os("LeftArm"): (+0.22, +0.01, -0.98),
+                _os("RightArm"): (-0.22, +0.01, -0.98),
+                _os("LeftForeArm"): (+0.59, -0.73, -0.34),
+                _os("RightForeArm"): (-0.59, -0.73, -0.34),
+                _os("LeftHand"): (+0.47, -0.85, -0.24),
+                _os("RightHand"): (-0.47, -0.85, -0.24),
+                _os("LeftUpLeg"): (-0.14, +0.00, -0.99),
+                _os("RightUpLeg"): (+0.14, +0.00, -0.99),
+                _os("LeftLeg"): (-0.03, +0.46, -0.89),
+                _os("RightLeg"): (+0.03, +0.46, -0.89),
+                _os("LeftFoot"): (+0.05, -0.70, -0.71),
+                _os("RightFoot"): (-0.05, -0.70, -0.71),
+            }),
+            _pose({
+                _os("Spine"): (+0.00, +0.00, +1.00),
+                _os("Spine1"): (+0.00, +0.00, +1.00),
+                _os("Spine2"): (+0.00, +0.00, +1.00),
+                _os("Neck"): (+0.00, -0.45, +0.89),
+                _os("Head"): (+0.00, -0.45, +0.89),
+                _os("LeftArm"): (+0.23, +0.08, -0.97),
+                _os("RightArm"): (-0.23, +0.08, -0.97),
+                _os("LeftForeArm"): (+0.60, -0.80, -0.09),
+                _os("RightForeArm"): (-0.60, -0.80, -0.09),
+                _os("LeftHand"): (+0.51, -0.86, +0.02),
+                _os("RightHand"): (-0.51, -0.86, +0.02),
+                _os("LeftUpLeg"): (-0.14, +0.08, -0.99),
+                _os("RightUpLeg"): (+0.14, +0.08, -0.99),
+                _os("LeftLeg"): (-0.04, +0.42, -0.91),
+                _os("RightLeg"): (+0.04, +0.42, -0.91),
+                _os("LeftFoot"): (+0.04, -0.68, -0.73),
+                _os("RightFoot"): (-0.04, -0.68, -0.73),
+            }),
+        ],
+    },
+
     "mollets": {
         "vue": "profil",
         "duree": 1400,

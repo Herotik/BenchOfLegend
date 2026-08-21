@@ -456,7 +456,7 @@ def avant_bras_au_sol(pose, assise):
 LIBRE = "libre"
 
 
-def bras_libres(pose):
+def bras_libres(pose, assise):
     """Rend les bras au modèle : ils ne font pas partie de l'exercice.
 
     Une démonstratrice tient souvent ses poings en garde, devant le visage.
@@ -464,16 +464,27 @@ def bras_libres(pose):
     Pire : la même démonstration sert les fentes au poids du corps **et** les
     fentes haltères, où les bras pendent le long du corps.
 
-    Les rendre au repos les laisse tomber naturellement, comme le modèle les
-    tient. À n'utiliser que quand les bras ne travaillent pas — sur un développé
-    ou un rowing, ce serait effacer l'exercice.
+    On les **descend le long du corps**, et surtout pas au repos du modèle : la
+    pose de repos d'un mannequin Mixamo est un T, bras à l'horizontale. Les y
+    renvoyer donnait un personnage en croix pendant qu'il courait sur place —
+    plus faux encore que les bras tordus qu'on voulait corriger.
+
+    À n'utiliser que quand les bras ne travaillent pas : sur un développé ou un
+    rowing, ce serait effacer l'exercice.
 
     S'applique **en dernier** : les autres corrections calculent sur des
-    vecteurs, et un os rendu au repos n'en est plus un.
+    vecteurs, et celle-ci écrase ce qu'elles ont trouvé.
     """
-    for cote in COTES.values():
-        for os_nom in ("Arm", "ForeArm", "Hand"):
-            pose[f"{cote}{os_nom}"] = LIBRE
+    haut = normalise(np.array(assise[0], dtype=float))
+    avant = np.array(assise[1], dtype=float)
+    avant = normalise(avant - haut * np.dot(avant, haut))
+    gauche = normalise(np.cross(haut, avant))
+    for cote, signe in (("Left", +1.0), ("Right", -1.0)):
+        # Le bras descend le long du corps, très légèrement écarté pour ne pas
+        # traverser le bassin ; l'avant-bras le prolonge, à peine plié.
+        pose[f"{cote}Arm"] = normalise(-haut + 0.12 * signe * gauche)
+        pose[f"{cote}ForeArm"] = normalise(-haut + 0.08 * signe * gauche - 0.10 * avant)
+        pose[f"{cote}Hand"] = normalise(-haut - 0.15 * avant)
     return pose
 
 
@@ -668,7 +679,7 @@ def main():
     ]
     libres = cles_visees(args.bras_libres, len(poses))
     poses = [
-        bras_libres(pose) if rang in libres else pose
+        bras_libres(pose, assise) if rang in libres else pose
         for rang, pose in enumerate(poses)
     ]
 
