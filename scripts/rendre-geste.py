@@ -564,6 +564,54 @@ def poser_le_banc(hauteur, mini, maxi):
     return banc
 
 
+def poser_la_barre(place, mini, maxi):
+    """Une barre horizontale et ses deux montants, pour les gestes qui tirent.
+
+    Un rowing inversé sans barre, c'est un personnage couché en biais qui plie
+    les bras dans le vide : l'exercice est **défini** par ce qu'on tire, et le
+    corps ne fait que suivre. Le banc du développé couché avait déjà montré
+    qu'un agrès manquant ne se devine pas — il se dessine.
+
+    `place` donne le (y, z) de la barre dans le repère du monde, c'est-à-dire
+    exactement là où les appuis des mains la visent. Les deux valeurs sont donc
+    écrites une seule fois, dans le geste, et servent aux deux : le corps s'y
+    accroche et le décor s'y pose.
+    """
+    y, z = place
+    largeur = 1.10
+
+    bpy.ops.mesh.primitive_cylinder_add(
+        radius=0.022, depth=largeur, location=(0, y, z),
+        rotation=(0, math.radians(90), 0),
+    )
+    barre = bpy.context.object
+
+    matiere = bpy.data.materials.new("Barre")
+    matiere.use_nodes = True
+    principe = matiere.node_tree.nodes["Principled BSDF"]
+    # Le même bleu sombre que le banc : un agrès n'est pas de la chair, et
+    # c'est ce qu'il faut lire au premier coup d'œil.
+    principe.inputs["Base Color"].default_value = (0.13, 0.17, 0.26, 1)
+    principe.inputs["Roughness"].default_value = 0.5
+    barre.data.materials.append(matiere)
+
+    # Deux montants, **en dehors** de l'écartement des mains : plantés entre
+    # elles, ils passeraient au milieu du corps.
+    for cote in (-1, +1):
+        bpy.ops.mesh.primitive_cube_add(
+            size=1, location=(cote * largeur / 2, y, z / 2)
+        )
+        montant = bpy.context.object
+        montant.scale = (0.06, 0.06, z)
+        montant.data.materials.append(matiere)
+        bpy.ops.mesh.primitive_cube_add(
+            size=1, location=(cote * largeur / 2, y, 0.02)
+        )
+        socle = bpy.context.object
+        socle.scale = (0.10, 0.40, 0.04)
+        socle.data.materials.append(matiere)
+
+
 def poser_le_sol(mini, maxi):
     """Un plancher à hauteur zéro, pour vérifier ce qui touche vraiment.
 
@@ -695,6 +743,11 @@ def main():
     )
     if banc:
         poser_le_banc(banc, mini, maxi)
+    barre = (
+        gestes_generes.GESTES[o["geste"]].get("barre") if o["geste"] else None
+    )
+    if barre:
+        poser_la_barre(barre, mini, maxi)
     if o["sol"]:
         poser_le_sol(mini, maxi)
     placer_camera(

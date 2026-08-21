@@ -359,6 +359,44 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 1400,
   },
+  // Quatre gestes relevés sur des vidéos fournies, qui ouvrent le dos et les
+  // abdominaux — les deux catégories les moins couvertes du catalogue.
+  //
+  // Trois mille cent trente millisecondes mesurées de crête à crête, trois
+  // fois de suite au même compte. C'est lent, et c'est l'exercice : on monte,
+  // on tient, on redescend sans lâcher. Vingt images suffisent, rien n'y
+  // traverse le cadre.
+  superman: {
+    source: require("../../assets/gestes/superman.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 3130,
+  },
+  // Le premier geste du catalogue dont le tronc change d'inclinaison en cours
+  // de route — ce qui était noté comme impossible et ne l'était pas.
+  "releve-en-v": {
+    source: require("../../assets/gestes/releve-en-v.png"),
+    images: 32,
+    colonnes: 4,
+    duree: 3220,
+  },
+  // De trois-quarts : la rotation se fait dans la largeur et disparaît de
+  // profil, l'inclinaison du buste disparaît de face.
+  "russian-twist": {
+    source: require("../../assets/gestes/russian-twist.png"),
+    images: 32,
+    colonnes: 4,
+    duree: 1750,
+  },
+  // Le seul du lot dont la vidéo n'a rien donné — elle montre deux personnes
+  // et l'estimateur a suivi le coach. La posture vient de la géométrie : les
+  // talons au sol, les mains sur la barre, le corps droit.
+  "rowing-inverse": {
+    source: require("../../assets/gestes/rowing-inverse.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 2400,
+  },
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
 

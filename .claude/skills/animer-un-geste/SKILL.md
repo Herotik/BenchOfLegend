@@ -72,23 +72,32 @@ de **positions relatives**, pas de sensations :
 pas l'impression que donne le rendu. Un relevé vidéo ne dispense **pas** de
 cette étape : il donne la forme, pas le jugement sur elle.
 
-### 1 bis. Ce qu'un relevé vidéo ne peut pas décrire du tout
+### 1 bis. Un tronc qui se redresse : ce n'est pas le moteur qui bloque
 
-**Un geste dont le tronc change d'inclinaison en cours de route.** C'est une
-limite du moteur, pas de l'estimateur, et elle se voit à ceci : les directions
-sont exprimées dans le repère du corps, donc `Spine` vaut **toujours** l'axe
-« haut » de l'assise, et l'assise est une donnée du geste entier. La colonne ne
-peut pas se redresser d'une pose clé à la suivante.
+Cette section a longtemps dit l'inverse, et elle a coûté onze exercices restés
+au bonhomme vectoriel pour rien. Elle affirmait qu'un geste dont le tronc change
+d'inclinaison — relevé en V, russian twist, pont fessier, crunch inversé — était
+hors de portée du moteur, la colonne gardant l'inclinaison de l'assise d'un bout
+à l'autre.
 
-Les gestes au sol qui gardent le tronc droit — planches, pompes — s'en tirent :
-`aplomb` retrouve la pente par le contact au sol. Un relevé en V, un crunch
-inversé, un burpee, non : leur mouvement **est** le décollement du tronc, et
-rien ne peut le reconstituer. Le relevé sort un corps à la verticale, et aucun
-réglage n'y change quoi que ce soit.
+**C'est faux.** Les os se visent dans le **monde** : `Spine` peut pointer où l'on
+veut quelle que soit l'assise. Un corps couché sur le dos dont on vise la colonne
+à soixante-cinq degrés se redresse, tout simplement. Vérifié par un geste
+d'essai en deux clés — à plat, puis plié en V — dont la mesure donne « regard
+vers le ciel » aux deux poses, les mains à 0,92 m et les chevilles à 0,88.
 
-Il faudra une assise **par pose clé** pour ceux-là. Tant que ce n'est pas fait,
-ne pas perdre de temps dessus : le contrôle les déclare cohérents et l'audit
-les pose proprement au sol. Seul le rendu montre la faute.
+Ce qui est vrai, et qui avait été pris pour l'autre, c'est que
+`geste-depuis-video.py` écrit **toujours** `Spine` sur l'axe « haut » de
+l'assise. Il exprime la pose dans le repère du **tronc**, si bien que
+l'inclinaison de celui-ci se perd en route. Le relevé d'un V sort alors des
+jambes « au-delà de la verticale » : ce sont des jambes à cinquante-trois degrés
+vues d'un tronc à soixante-huit.
+
+La marche à suivre est donc : relever normalement, puis **mesurer l'angle du
+tronc dans l'image** — le segment hanche-épaule contre l'horizontale — et le
+réécrire à la main sur `Spine`, en tournant les membres du même angle. Sur les
+relevés en V, quatre répétitions successives donnent 68,8° / 67,7° / 66,9° /
+65,9° : c'est reproductible, et ça ne s'estime pas à l'œil.
 
 ### 1 ter. Ce qu'un relevé vidéo ne donne pas
 

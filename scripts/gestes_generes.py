@@ -951,6 +951,342 @@ GESTES = {
         ],
     },
 
+    # Superman au sol, relevé sur une vidéo de démonstration. Deux temps :
+    # le corps à plat, puis bras et jambes décollés ensemble.
+    #
+    # L'exercice tient en une phrase — « lever les bras et les jambes en
+    # gardant le ventre au sol » — et c'est exactement ce que l'ancrage par
+    # défaut donne : le point le plus bas du maillage est le bassin, il reste
+    # posé, et tout le reste monte autour de lui. Rien à déclarer.
+    #
+    # Trois exercices s'en servent : le superman, le nageur et les Y-T-W. Les
+    # deux derniers ne diffèrent que par le tracé des bras, que la vignette ne
+    # peut de toute façon pas distinguer de profil.
+    "superman": {
+        "vue": "profil",
+        # Trois mille cent trente millisecondes : mesuré de crête à crête sur
+        # le relevé, trois fois de suite au même compte — images 285, 357 et
+        # 429, soit soixante-douze images à 23 i/s. C'est un exercice lent, et
+        # c'est le sujet : on monte, on tient, on redescend sans lâcher.
+        "duree": 3130,
+        # Assise « ventre » canonique : voir --sans-pente.
+        "assise": ((+0.00, +1.00, +0.00), (+0.00, +0.00, -1.00)),
+        # Le creux est plus long que la crête, et le relevé le dit : la levée
+        # normalisée reste à 0,30 pendant vingt-quatre images et à 0,90
+        # pendant seize. Un tiers du tour en bas, un cinquième en haut.
+        "pauses": [0.18, 0.12],
+        "cles": [
+            # À plat. Les bras reposent tendus devant, les jambes derrière.
+            _pose({
+                _os("Spine"): (+0.00, +1.00, +0.00),
+                _os("Spine1"): (+0.00, +1.00, +0.00),
+                _os("Spine2"): (+0.00, +1.00, +0.00),
+                _os("Neck"): (+0.00, +0.96, -0.27),
+                _os("Head"): (+0.00, +0.96, -0.27),
+                _os("LeftArm"): (+0.00, +0.91, -0.42),
+                _os("RightArm"): (+0.00, +0.91, -0.42),
+                _os("LeftForeArm"): (+0.00, +0.97, -0.23),
+                _os("RightForeArm"): (+0.00, +0.97, -0.23),
+                # La main prolonge l'avant-bras. Le relevé la renvoyait
+                # relevée de quinze degrés vers le plafond pendant que
+                # l'avant-bras plongeait : l'estimateur n'a pas de poignet
+                # orienté, et un bras tendu au sol n'a pas de raison de casser
+                # au poignet.
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+                _os("LeftUpLeg"): (+0.00, -0.99, -0.11),
+                _os("RightUpLeg"): (+0.00, -0.99, -0.11),
+                _os("LeftLeg"): (+0.00, -0.99, -0.11),
+                _os("RightLeg"): (+0.00, -0.99, -0.11),
+                # Pieds posés, cou-de-pied au sol : le pied prolonge la jambe
+                # en plongeant à peine. Le relevé le donnait à soixante degrés
+                # sous l'horizontale, ce qui plantait les orteils dans le
+                # plancher — l'estimateur voit mal un pied de profil au sol.
+                _os("LeftFoot"): (+0.00, -0.93, -0.37),
+                _os("RightFoot"): (+0.00, -0.93, -0.37),
+            }),
+            # Décollé. Bras et jambes montent ensemble, poitrine dégagée.
+            _pose({
+                _os("Spine"): (+0.00, +1.00, +0.00),
+                _os("Spine1"): (+0.00, +1.00, +0.00),
+                _os("Spine2"): (+0.00, +1.00, +0.00),
+                _os("Neck"): (+0.00, +0.87, +0.50),
+                _os("Head"): (+0.00, +0.87, +0.50),
+                _os("LeftArm"): (+0.00, +0.85, +0.53),
+                _os("RightArm"): (+0.00, +0.85, +0.53),
+                _os("LeftForeArm"): (+0.00, +0.95, +0.30),
+                _os("RightForeArm"): (+0.00, +0.95, +0.30),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+                _os("LeftUpLeg"): (+0.00, -0.97, +0.26),
+                _os("RightUpLeg"): (+0.00, -0.97, +0.26),
+                _os("LeftLeg"): (+0.00, -0.97, +0.26),
+                _os("RightLeg"): (+0.00, -0.97, +0.26),
+                _os("LeftFoot"): (+0.00, -0.93, +0.37),
+                _os("RightFoot"): (+0.00, -0.93, +0.37),
+            }),
+        ],
+    },
+
+    # Relevés en V, relevés sur une vidéo de démonstration. Deux temps : le
+    # corps à plat bras au-dessus de la tête, puis le pli en V, mains aux
+    # chevilles.
+    #
+    # C'est le premier geste du catalogue dont le tronc **change
+    # d'inclinaison** en cours de route, et il a longtemps été noté comme
+    # impossible. Il ne l'était pas : les os se visent dans le monde, donc
+    # `Spine` peut pointer où l'on veut quelle que soit l'assise. Ce qui était
+    # vrai, c'est que `geste-depuis-video.py` écrit toujours `Spine` sur l'axe
+    # « haut » de l'assise — il exprime la pose dans le repère du **tronc**, et
+    # l'inclinaison de celui-ci se perd donc en route. Le relevé sort alors des
+    # jambes « au-delà de la verticale », qui sont en fait des jambes à
+    # cinquante-trois degrés vues d'un tronc à soixante-huit.
+    #
+    # Les deux angles sont mesurés sur le relevé et non estimés : sur quatre
+    # répétitions successives, le tronc fait 68,8° / 67,7° / 66,9° / 65,9° avec
+    # l'horizontale et les jambes 52,9° / 52,3° / 51,1° / 54,6°.
+    "releve-en-v": {
+        "vue": "profil",
+        # Trois mille deux cent vingt millisecondes : crête à crête sur le
+        # relevé, 60, 78 et 84 images à 23 i/s. La démonstratrice souffle entre
+        # deux répétitions.
+        "duree": 3220,
+        "assise": SUR_LE_DOS,
+        # Le corps à plat dure, le V ne dure pas : le relevé reste à 0,01 de
+        # pli pendant quarante-deux images et ne passe au-dessus de 0,60 que
+        # sur six. On ne reprend pas les 57 % du tour passés à plat — c'est le
+        # repos de la démonstratrice, pas l'exercice — mais on garde l'ordre
+        # des grandeurs.
+        "pauses": [0.25, 0.03],
+        "cles": [
+            # À plat, bras allongés au-dessus de la tête.
+            _pose({
+                _os("Spine"): (+0.00, +1.00, +0.00),
+                _os("Spine1"): (+0.00, +1.00, +0.00),
+                _os("Spine2"): (+0.00, +1.00, +0.00),
+                _os("Neck"): (+0.00, +0.99, +0.12),
+                _os("Head"): (+0.00, +0.99, +0.12),
+                _os("LeftArm"): (+0.00, +1.00, +0.03),
+                _os("RightArm"): (+0.00, +1.00, +0.03),
+                _os("LeftForeArm"): (+0.00, +0.99, +0.10),
+                _os("RightForeArm"): (+0.00, +0.99, +0.10),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+                _os("LeftUpLeg"): (+0.00, -1.00, +0.01),
+                _os("RightUpLeg"): (+0.00, -1.00, +0.01),
+                _os("LeftLeg"): (+0.00, -1.00, +0.01),
+                _os("RightLeg"): (+0.00, -1.00, +0.01),
+                # Couché sur le dos, le pied retombe pointe vers le plafond.
+                _os("LeftFoot"): (+0.00, -0.30, +0.95),
+                _os("RightFoot"): (+0.00, -0.30, +0.95),
+            }),
+            # Le V. Tronc à 68° de l'horizontale, jambes à 53°, et les bras
+            # vont chercher les chevilles.
+            _pose({
+                _os("Spine"): (+0.00, +0.37, +0.93),
+                _os("Spine1"): (+0.00, +0.37, +0.93),
+                _os("Spine2"): (+0.00, +0.37, +0.93),
+                # La nuque bascule vers les genoux : on regarde ses pieds, on
+                # ne cherche pas le plafond.
+                _os("Neck"): (+0.00, +0.45, +0.89),
+                _os("Head"): (+0.00, +0.60, +0.80),
+                _os("LeftArm"): (+0.00, -0.90, +0.44),
+                _os("RightArm"): (+0.00, -0.90, +0.44),
+                _os("LeftForeArm"): (+0.00, -0.90, +0.44),
+                _os("RightForeArm"): (+0.00, -0.90, +0.44),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+                _os("LeftUpLeg"): (+0.00, -0.60, +0.80),
+                _os("RightUpLeg"): (+0.00, -0.60, +0.80),
+                _os("LeftLeg"): (+0.00, -0.60, +0.80),
+                _os("RightLeg"): (+0.00, -0.60, +0.80),
+                _os("LeftFoot"): (+0.00, -0.55, +0.84),
+                _os("RightFoot"): (+0.00, -0.55, +0.84),
+            }),
+        ],
+    },
+
+    # Russian twist, relevé sur deux vidéos de démonstration — à vide et lesté.
+    # Trois temps : mains à gauche, au centre, à droite.
+    #
+    # Les deux vidéos donnent la même posture à quelques degrés près, ce qui
+    # vaut mieux qu'une seule : tronc à 63,4° et 68,3° de l'horizontale sur 243
+    # et 490 images, cuisse à 63,8° et 64,1°, tibia à -42,4° et -46,2°. On
+    # retient 65°, 64° et -44°.
+    #
+    # De **trois-quarts** : la rotation se fait dans la largeur et disparaît de
+    # profil, mais l'inclinaison du buste — qui est l'autre moitié de
+    # l'exercice — disparaît de face. C'est le même raisonnement que pour les
+    # alternances de cardio.
+    "russian-twist": {
+        "vue": "trois-quarts",
+        # Mille sept cent cinquante millisecondes pour un aller-retour complet.
+        # Relevé sur le va-et-vient du poignet : 1877 ms à vide, 1609 ms lesté.
+        "duree": 1750,
+        # Assis en arrière, et c'est l'assise du dos qui sert : le bassin est
+        # basculé en arrière, on est posé sur le sacrum. Le buste se redresse
+        # ensuite en visant `Spine` à soixante-cinq degrés — ce que le moteur
+        # sait faire, contrairement à ce qui était noté.
+        "assise": SUR_LE_DOS,
+        # Gauche et droite ne font pas la même chose : le bras qui traverse va
+        # chercher plus loin que celui qui accompagne.
+        "symetrique": False,
+        # Un temps de chaque côté, rien au centre — on y passe, on ne s'y
+        # arrête pas.
+        "pauses": [0.14, 0.00, 0.14],
+        "cles": [
+            # Mains à **gauche** du personnage. Debout comme couché sur le dos,
+            # sa gauche est en +X.
+            _pose({
+                _os("Spine"): (+0.00, +0.42, +0.91),
+                _os("Spine1"): (+0.00, +0.42, +0.91),
+                # Le haut du buste se tourne du côté où vont les mains : c'est
+                # la rotation qui fait l'exercice, et sans elle on ne verrait
+                # que des bras qui balaient devant un tronc immobile.
+                _os("Spine2"): (+0.22, +0.38, +0.90),
+                _os("Neck"): (+0.15, +0.45, +0.88),
+                _os("Head"): (+0.30, +0.50, +0.81),
+                # Les deux mains se rejoignent : le bras opposé traverse
+                # davantage que celui du côté visé.
+                _os("LeftArm"): (+0.45, -0.72, -0.53),
+                _os("RightArm"): (+0.68, -0.62, -0.39),
+                _os("LeftForeArm"): (+0.52, -0.70, -0.49),
+                _os("RightForeArm"): (+0.60, -0.66, -0.45),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+                _os("LeftUpLeg"): (+0.04, -0.44, +0.90),
+                _os("RightUpLeg"): (-0.04, -0.44, +0.90),
+                _os("LeftLeg"): (+0.03, -0.72, -0.69),
+                _os("RightLeg"): (-0.03, -0.72, -0.69),
+                _os("LeftFoot"): (+0.00, -0.90, -0.44),
+                _os("RightFoot"): (+0.00, -0.90, -0.44),
+            }),
+            # Au centre : mains devant le sternum, buste dans l'axe.
+            _pose({
+                _os("Spine"): (+0.00, +0.42, +0.91),
+                _os("Spine1"): (+0.00, +0.42, +0.91),
+                _os("Spine2"): (+0.00, +0.42, +0.91),
+                _os("Neck"): (+0.00, +0.50, +0.87),
+                _os("Head"): (+0.00, +0.55, +0.84),
+                _os("LeftArm"): (+0.12, -0.78, -0.61),
+                _os("RightArm"): (-0.12, -0.78, -0.61),
+                _os("LeftForeArm"): (+0.08, -0.80, -0.59),
+                _os("RightForeArm"): (-0.08, -0.80, -0.59),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+                _os("LeftUpLeg"): (+0.04, -0.44, +0.90),
+                _os("RightUpLeg"): (-0.04, -0.44, +0.90),
+                _os("LeftLeg"): (+0.03, -0.72, -0.69),
+                _os("RightLeg"): (-0.03, -0.72, -0.69),
+                _os("LeftFoot"): (+0.00, -0.90, -0.44),
+                _os("RightFoot"): (+0.00, -0.90, -0.44),
+            }),
+            # Mains à **droite**, exact miroir de la première clé.
+            _pose({
+                _os("Spine"): (+0.00, +0.42, +0.91),
+                _os("Spine1"): (+0.00, +0.42, +0.91),
+                _os("Spine2"): (-0.22, +0.38, +0.90),
+                _os("Neck"): (-0.15, +0.45, +0.88),
+                _os("Head"): (-0.30, +0.50, +0.81),
+                _os("LeftArm"): (-0.68, -0.62, -0.39),
+                _os("RightArm"): (-0.45, -0.72, -0.53),
+                _os("LeftForeArm"): (-0.60, -0.66, -0.45),
+                _os("RightForeArm"): (-0.52, -0.70, -0.49),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+                _os("LeftUpLeg"): (+0.04, -0.44, +0.90),
+                _os("RightUpLeg"): (-0.04, -0.44, +0.90),
+                _os("LeftLeg"): (+0.03, -0.72, -0.69),
+                _os("RightLeg"): (-0.03, -0.72, -0.69),
+                _os("LeftFoot"): (+0.00, -0.90, -0.44),
+                _os("RightFoot"): (+0.00, -0.90, -0.44),
+            }),
+        ],
+    },
+
+    # Rowing inversé. Corps gainé sous une barre, talons au sol, on tire la
+    # poitrine vers la barre.
+    #
+    # C'est le seul des cinq gestes de ce lot dont la vidéo n'a **rien** donné,
+    # et il faut le dire : elle montre deux personnes — l'athlète sous la barre
+    # et un coach agenouillé au premier plan — et l'estimateur a suivi le
+    # coach. Bassin relevé au quart gauche de l'image sur toute la séquence,
+    # et plus une seule image exploitable passé la quatre-centième. La posture
+    # ci-dessous vient donc de la **géométrie**, pas d'un relevé : elle est
+    # entièrement déterminée par trois faits — les talons au sol, les mains
+    # sur la barre, le corps droit.
+    #
+    # Le compte tombe alors tout seul. Bras tendus, l'épaule est à une longueur
+    # de bras sous la barre, soit 0,95 - 0,562 = 0,39 m ; le tronc mesure
+    # 0,432 m, donc le bassin est à 0,31 m et le corps monte de onze degrés.
+    # Poitrine à la barre, l'épaule arrive à 0,75 m, le bassin à 0,55, et
+    # l'inclinaison passe à vingt-huit degrés. Les vingt-quatre centimètres
+    # entre les deux sont ce que `bassin` déclare.
+    "rowing-inverse": {
+        "vue": "profil",
+        "duree": 2400,
+        "assise": SUR_LE_DOS,
+        # La barre : (y, z) dans le monde. La même paire sert aux appuis des
+        # mains et au décor, ce qui rend impossible qu'ils se contredisent.
+        "barre": (0.42, 0.95),
+        # Poings fermés : on **tient** la barre. Main ouverte, les doigts la
+        # traversaient et le personnage paraissait la pousser plutôt que s'y
+        # suspendre — la même faute que la corde à sauter, et le même remède.
+        "poings": 1.0,
+        # Le corps ne touche le sol que par les talons, et sa hauteur est
+        # imposée par la barre : c'est un cas d'école pour `hauteur` et
+        # `bassin`, comme le développé couché.
+        "ancrage": False,
+        "hauteur": 0.306,
+        "bassin": [(0, 0, 0.0), (0, 0, 0.24)],
+        # On tire vite et l'on redescend en retenant ; faute de pouvoir dire
+        # une descente plus lente que la montée, on marque le haut.
+        "pauses": [0.08, 0.14],
+        "cles": [
+            # Bras tendus, corps à onze degrés.
+            _pose({
+                _os("Spine"): (+0.00, +0.982, +0.191),
+                _os("Spine1"): (+0.00, +0.982, +0.191),
+                _os("Spine2"): (+0.00, +0.982, +0.191),
+                _os("Neck"): (+0.00, +0.982, +0.191),
+                _os("Head"): (+0.00, +0.982, +0.191),
+                # Les mains **tiennent** la barre : on connaît le point, pas
+                # l'angle. C'est ce qu'un appui exprime, et c'est ce qui
+                # garantit qu'elles n'en décollent pas d'une image à l'autre.
+                _os("LeftArm"): Appui((+0.25, 0.42, 0.95), (0, -0.30, -0.95)),
+                _os("RightArm"): Appui((-0.25, 0.42, 0.95), (0, -0.30, -0.95)),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+                _os("LeftUpLeg"): (+0.03, -0.974, -0.225),
+                _os("RightUpLeg"): (-0.03, -0.974, -0.225),
+                _os("LeftLeg"): (+0.02, -0.974, -0.225),
+                _os("RightLeg"): (-0.02, -0.974, -0.225),
+                # Talon posé, pointe vers le haut : c'est le talon qui porte
+                # dans un rowing inversé, jamais l'avant-pied.
+                _os("LeftFoot"): (+0.00, -0.45, +0.89),
+                _os("RightFoot"): (+0.00, -0.45, +0.89),
+            }),
+            # Poitrine à la barre, corps à vingt-huit degrés.
+            _pose({
+                _os("Spine"): (+0.00, +0.883, +0.469),
+                _os("Spine1"): (+0.00, +0.883, +0.469),
+                _os("Spine2"): (+0.00, +0.883, +0.469),
+                _os("Neck"): (+0.00, +0.883, +0.469),
+                _os("Head"): (+0.00, +0.930, +0.367),
+                _os("LeftArm"): Appui((+0.25, 0.42, 0.95), (0, -0.30, -0.95)),
+                _os("RightArm"): Appui((-0.25, 0.42, 0.95), (0, -0.30, -0.95)),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+                _os("LeftUpLeg"): (+0.03, -0.879, -0.476),
+                _os("RightUpLeg"): (-0.03, -0.879, -0.476),
+                _os("LeftLeg"): (+0.02, -0.879, -0.476),
+                _os("RightLeg"): (-0.02, -0.879, -0.476),
+                _os("LeftFoot"): (+0.00, -0.45, +0.89),
+                _os("RightFoot"): (+0.00, -0.45, +0.89),
+            }),
+        ],
+    },
+
     # Talons-fesses, relevés sur le plan **de profil** de la même vidéo. C'est
     # ce qui explique que la cuisse y reste verticale de bout en bout : en
     # talon-fesse, seul le genou plie. Le tibia part droit vers l'arrière, à

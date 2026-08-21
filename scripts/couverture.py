@@ -20,10 +20,6 @@ Chaque geste encore à faire est rangé sous ce qui l'empêche, et la nuance
 compte pour décider par quoi continuer :
 
 - **rien** — faisable avec le moteur d'aujourd'hui. C'est là qu'il faut aller.
-- **tronc** — le mouvement *est* le décollement du buste : relevé en V, pont
-  fessier, crunch inversé. Les directions étant exprimées dans le repère du
-  corps, la colonne garde l'inclinaison de l'assise d'un bout à l'autre du
-  geste. Il y faudra une assise par pose clé.
 - **suspension** — le corps pend à une barre. Rien ne le tient dans le moteur,
   qui pose toujours le personnage sur le sol.
 - **agrès** — un tapis roulant. Le sol défile sous les pieds, et une
@@ -62,10 +58,24 @@ def lire(chemin):
 #: main faute de pouvoir se déduire : le catalogue dit le matériel, pas ce que
 #: le moteur sait faire.
 OBSTACLES = {
-    "tronc": (
-        "releve-en-v", "releve-jambes", "pont-fessier", "russian-twist",
-        "crunch-genoux", "tenue-creux", "dead-bug",
-    ),
+    # L'obstacle « tronc » a été **retiré**, et c'est la plus utile des
+    # corrections apportées à cette table.
+    #
+    # Sept gestes y étaient rangés — relevé en V, pont fessier, russian twist,
+    # dead bug, tenue en creux, relevés de jambes, crunchs à genoux — au motif
+    # que la colonne, exprimée dans le repère du corps, gardait l'inclinaison
+    # de l'assise d'un bout à l'autre du geste. C'était faux. Les os se visent
+    # dans le **monde** : `Spine` peut pointer où l'on veut, quelle que soit
+    # l'assise, et un corps peut donc passer de couché à plié en V.
+    #
+    # Ce qui était vrai, c'est que `geste-depuis-video.py` écrit toujours
+    # `Spine` sur l'axe « haut » de l'assise — il exprime la pose dans le
+    # repère du tronc, si bien que l'inclinaison de celui-ci se perd. On avait
+    # pris une convention de l'outil de relevé pour une limite du moteur, et
+    # onze exercices sont restés bloqués derrière pendant tout ce temps.
+    #
+    # Le relevé en V et le russian twist sont rendus depuis ; les cinq autres
+    # sont désormais rangés sous « rien ».
     "suspension": (
         "traction", "suspension", "releve-jambes-suspendu",
     ),
@@ -129,7 +139,7 @@ def main():
         par_slug[slug].append(nom)
 
     print("\nCe qui reste, par obstacle :")
-    for nom in ("rien", "tronc", "suspension", "agrès"):
+    for nom in ("rien", "suspension", "agrès"):
         concernes = {s: l for s, l in par_slug.items() if obstacle(s) == nom}
         exercices = sum(len(l) for l in concernes.values())
         etiquette = "faisable aujourd'hui" if nom == "rien" else nom

@@ -89,18 +89,20 @@ seul l'œil sait si l'arrêt appartient à l'exercice.
 
 ## Ce qui reste ouvert
 
-- **Une assise par pose clé.** Les directions s'expriment dans le repère du
-  corps, fixé une fois pour tout le geste : la colonne ne peut donc pas changer
-  d'inclinaison d'une clé à l'autre. Onze exercices attendent ça — relevé en V,
-  pont fessier, crunch inversé, russian twist.
+- ~~**Une assise par pose clé.**~~ Levée, et elle n'avait jamais existé : les os
+  se visent dans le monde, donc `Spine` peut pointer où l'on veut quelle que
+  soit l'assise. Ce qui était vrai, c'est que `geste-depuis-video.py` écrit
+  toujours `Spine` sur l'axe de l'assise — une convention de l'outil de relevé,
+  prise pour une limite du moteur. Le relevé en V et le russian twist sont
+  rendus depuis ; il reste à mesurer l'angle du tronc à la main.
 - **La suspension.** Rien ne tient un corps qui pend à une barre ; le moteur
   pose toujours le personnage au sol. Sept exercices.
 - **Le tapis roulant.** Le sol défile sous les pieds, et une boucle de vingt
   images ne peut pas le dire. Quatre exercices.
 - **Le pied arrière de la fente**, au point bas, ne touche pas tout à fait le
   sol. Il est occulté dans la vidéo et l'estimateur le renvoie dans le vide.
-- **Une assise par pose clé manque aussi aux grimpeurs.** La planche est écrite
-  avec un tronc à douze degrés, fixe pour tout le geste ; un pratiquant qui
-  ramène le genou creuse un peu plus les hanches, et cela ne se dit pas.
+- **Le tronc des grimpeurs ne bouge pas d'une clé à l'autre.** Rien ne l'en
+  empêche depuis — il suffirait de viser `Spine` un peu plus haut sur la pose
+  genou ramené —, c'est simplement que personne ne l'a encore mesuré.
 - **Deux planches ne servent aucun exercice** : `crunch-velo` et
   `planche-jambes-alternees`. La page de revue les signale.

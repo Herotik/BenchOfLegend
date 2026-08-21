@@ -103,10 +103,22 @@ def appuis_a_portee(pose, geste):
 
     # Un bras part de l'épaule, pas de la hanche : mesurer sa portée depuis le
     # bassin la sous-estimait d'une demi-longueur de tronc, et le contrôle
-    # refusait des appuis parfaitement atteignables. L'épaule se déduit de
-    # l'assise — elle est à un demi-mètre du bassin, vers la tête.
-    haut = _normalise(geste.get("assise", ((0, 0, 1), None))[0])
-    epaule = tuple(h * TRONC for h in haut)
+    # refusait des appuis parfaitement atteignables.
+    #
+    # L'épaule se cherche donc **le long de la colonne telle que la pose la
+    # vise**, et non le long de l'axe de l'assise. Les deux se confondaient
+    # tant qu'aucun geste ne redressait le buste : `Spine` valait toujours cet
+    # axe-là. Depuis qu'un relevé en V, un russian twist et un rowing inversé
+    # existent, ce n'est plus vrai, et l'approximation coûtait cher — sur le
+    # rowing, elle plaçait l'épaule à plat à 0,31 m pendant qu'elle est en
+    # réalité à 0,40, et refusait comme « hors de portée » une barre que la
+    # main tient très bien.
+    colonne = pose.get(g._os("Spine"))
+    axe = _normalise(
+        colonne if isinstance(colonne, (tuple, list)) and len(colonne) == 3
+        else geste.get("assise", ((0, 0, 1), None))[0]
+    )
+    epaule = tuple(a * TRONC for a in axe)
     epaule = (epaule[0], epaule[1], epaule[2] + (hauteur or 0))
     fautes = []
     for nom, valeur in pose.items():
