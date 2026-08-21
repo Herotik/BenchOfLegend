@@ -155,7 +155,7 @@ def mesures(chemin, images, colonnes):
     moyen = sum(ecarts) / len(ecarts) if ecarts else 0.0
     # Rapporté au **pas moyen** et non à l'amplitude : ce qu'on veut savoir est
     # si le retour au départ se voit davantage qu'un pas ordinaire du geste.
-    return amplitude, (saut / moyen if moyen > 1e-6 else 0.0)
+    return amplitude, (saut / moyen if moyen > 1e-6 else 0.0), moyen
 
 
 def allegee(chemin):
@@ -187,15 +187,23 @@ def allegee(chemin):
 
 
 def carte(slug, planche, exos, vue, origine, mesure, orphelin):
-    amplitude, saut = mesure
+    amplitude, saut, pas = mesure
     source = os.path.join(ASSETS, f"{slug}.png")
     donnee = base64.b64encode(allegee(source)).decode("ascii")
 
     colonnes, images = planche["colonnes"], planche["images"]
     lignes = -(-images // colonnes)
-    # La fenêtre glisse colonne par colonne, puis ligne par ligne : c'est
-    # exactement ce que fait `Silhouette.tsx`, à la même vitesse.
-    pas_colonne = planche["duree"] // colonnes
+    # La fenêtre glisse colonne par colonne, puis ligne par ligne. Les deux
+    # animations doivent avancer **du même pas**, faute de quoi elles dérivent
+    # l'une par rapport à l'autre et la planche joue ses images dans le
+    # désordre : certaines deux fois, d'autres jamais. C'est ce qui donnait un
+    # personnage montant deux fois le genou gauche puis deux fois le droit.
+    #
+    # Une image dure `duree / images`. Les colonnes font donc un tour en
+    # `duree × colonnes / images` — et non `duree / colonnes`, qui est la même
+    # chose seulement quand la planche est carrée. Sur une grille de quatre
+    # colonnes et vingt images, l'écart est de 25 %.
+    pas_colonne = round(planche["duree"] * colonnes / images)
     cote = 128
     liste = "".join(f"<li>{nom}</li>" for nom in sorted(exos)) or (
         '<li class="orphelin">aucun exercice ne l\'utilise</li>'
@@ -203,8 +211,12 @@ def carte(slug, planche, exos, vue, origine, mesure, orphelin):
     faits = [
         ("origine", origine),
         ("vue", vue),
-        ("durée", f"{planche['duree']} ms"),
+        ("durée", f"{planche['duree']} ms · {images} img"),
         ("amplitude", "—" if amplitude is None else f"{amplitude:.1f}"),
+        # Au-delà de 4, le corps traverse trop de chemin entre deux images et
+        # le geste saccade : il lui faut davantage d'images. C'est la mesure
+        # qui a fait passer six planches de vingt à trente-deux.
+        ("saut par image", "—" if pas is None else f"{pas:.1f}"),
         ("saut de boucle", "—" if saut is None else f"{saut:.0%}"),
     ]
     return f"""

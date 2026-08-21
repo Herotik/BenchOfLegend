@@ -291,6 +291,35 @@ def assise_utilisable(_pose, geste):
     return []
 
 
+def bras_pas_en_croix(pose, geste):
+    """Un bras laissé au repos, debout, se retrouve **en croix**.
+
+    C'est le piège le plus coûteux du moteur, et il ne se voit pas dans le
+    code : `REPOS` se lit « au repos » et veut dire « comme le modèle se
+    tient ». Or ce mannequin-ci se tient en T. Une élévation latérale partant
+    de là commence bras déjà à l'horizontale et n'a plus rien à élever — deux
+    poses identiques, un personnage immobile pendant deux secondes.
+
+    La faute est restée invisible tant que les rendus se faisaient sur
+    l'ancien personnage habillé, qui se tenait bras le long du corps. Elle est
+    apparue d'un coup le jour où tout est passé sur le mannequin.
+
+    Le contrôle ne porte que sur les gestes **debout** : un corps couché a une
+    tout autre raison de laisser un bras au repos, et l'assise fait alors
+    tourner ce repos avec lui.
+    """
+    if geste.get("assise"):
+        return []
+    fautes = []
+    for cote in ("Left", "Right"):
+        if pose.get(g._os(f"{cote}Arm")) is None:
+            fautes.append(
+                f"{cote}Arm est au repos sur un geste debout : le modèle se "
+                "tient en croix, il faut poser `BRAS_LE_LONG`"
+            )
+    return fautes
+
+
 def rythme_tenable(geste):
     """Les temps d'arrêt déclarés doivent laisser de quoi se déplacer.
 
@@ -330,6 +359,7 @@ CONTROLES = (
     assise_utilisable,
     appuis_a_portee,
     pole_a_lendroit,
+    bras_pas_en_croix,
 )
 
 #: Contrôles qui portent sur le geste entier et non sur une pose.

@@ -11,8 +11,23 @@ import { Silhouette } from "./Silhouette";
  * déclarant une planche dans `donnees/planches.ts` — sans toucher à un écran.
  */
 
-/** Images par seconde. Douze suffisent à lire un geste et ménagent la batterie. */
-const CADENCE = 12;
+/**
+ * Cadence maximale, en images par seconde.
+ *
+ * Le rythme d'affichage se règle sur la planche — une image de planche par
+ * battement — et ce plafond ne sert qu'à protéger la batterie sur les gestes
+ * les plus rapides. Une cadence **fixe** ne convenait pas : à douze images par
+ * seconde, une corde à sauter de 417 ms n'en montrait que cinq sur ses vingt,
+ * et pas les mêmes d'un tour à l'autre. Le geste paraissait haché alors que la
+ * planche est complète.
+ *
+ * Vingt-quatre est un **plafond**, pas un objectif : une planche lente bat plus
+ * lentement que ça et consomme donc moins qu'avec l'ancienne cadence fixe.
+ * C'est la cadence du cinéma, largement suffisante pour lire un geste, et deux
+ * fois moins de rendus React par seconde qu'à trente — ce qui compte sur un
+ * écran de séance qui reste allumé.
+ */
+const CADENCE_MAX = 24;
 
 /** Durée d'une répétition entière, quand la planche n'en impose pas. */
 const DUREE_DEFAUT = 1400;
@@ -59,12 +74,15 @@ function PlancheAnimee({ planche, taille }: { planche: Planche; taille: number }
     if (reduit) return;
 
     debut.current = Date.now();
+    // Un battement par image de planche, sans dépasser le plafond : c'est la
+    // planche qui décide de son rythme, pas une constante.
+    const intervalle = Math.max(1000 / CADENCE_MAX, duree / planche.images);
     const battement = setInterval(() => {
       // Depuis un instant absolu, jamais en incrémentant : un intervalle dérive,
       // et la répétition finirait plus lente que la durée annoncée.
       const ecoule = (Date.now() - debut.current) % duree;
       setIndex(Math.floor((ecoule / duree) * planche.images) % planche.images);
-    }, 1000 / CADENCE);
+    }, intervalle);
 
     return () => clearInterval(battement);
   }, [planche.images, duree, reduit]);

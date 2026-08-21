@@ -187,6 +187,27 @@ ORDRE = [
 
 BASSIN = "mixamorig:Hips"
 
+#: Les quatre doigts longs. Le pouce se referme autrement et se traite à part.
+DOIGTS = ("Index", "Middle", "Ring", "Pinky")
+
+#: De combien chaque phalange se replie, en degrés, pour un poing fermé sur une
+#: poignée. Trois valeurs : la phalange proximale, l'intermédiaire, la distale.
+#:
+#: Le repli se fait autour du **X local** de chaque phalange, dans le sens
+#: positif. Ce n'est pas une supposition : on l'a mesuré en projetant le bout
+#: du doigt sur la normale de la paume, qui passe de +0,3 à +5,7 cm — donc vers
+#: la paume. Le sens opposé l'en éloigne d'autant.
+#:
+#: C'est la seule rotation **locale** du moteur, et c'est justifié : un poing
+#: est un poing quelle que soit l'orientation de la main, alors que tout le
+#: reste se dit en directions du monde parce que la question y est toujours
+#: « où pointe ce membre ».
+FERMETURE = (52.0, 78.0, 62.0)
+
+#: Le pouce se replie moins, et il **croise** la prise au lieu de s'enrouler
+#: avec les autres. Trop fermé, il traverse l'index.
+FERMETURE_POUCE = (24.0, 38.0, 34.0)
+
 
 def _os(nom):
     return f"mixamorig:{nom}"
@@ -442,12 +463,19 @@ def _pose(*couches):
 
 GESTES = {
     # ---- Épaules ---------------------------------------------------------
+    # `BRAS_LE_LONG` et non `_pose()` nu, et c'est **le** piège du moteur :
+    # `REPOS` ne veut pas dire « au repos » mais « comme le modèle se tient »,
+    # et ce mannequin-ci se tient **en croix**. Une élévation latérale partant
+    # de là commençait bras déjà à l'horizontale et n'avait donc plus rien à
+    # élever — deux poses identiques, un personnage immobile en T pendant deux
+    # secondes. La faute était invisible tant que le rendu se faisait sur
+    # l'ancien personnage, qui, lui, se tenait bras le long du corps.
     "elevations-laterales": {
         "vue": "face",
         "duree": 2000,
         "cles": [
-            _pose(),
-            _pose({
+            _pose(BRAS_LE_LONG),
+            _pose(BRAS_LE_LONG, {
                 _os("LeftArm"): (1, -0.05, 0.05),
                 _os("LeftForeArm"): (1, -0.20, -0.10),
                 _os("RightArm"): (-1, -0.05, 0.05),
@@ -460,9 +488,11 @@ GESTES = {
         # bras qui ne bouge pas — le mouvement se fait dans l'axe de la caméra.
         "vue": "profil",
         "duree": 2000,
+        # Bras le long du corps au départ : voir l'élévation latérale, `REPOS`
+        # laisse ce mannequin en croix.
         "cles": [
-            _pose(),
-            _pose({
+            _pose(BRAS_LE_LONG),
+            _pose(BRAS_LE_LONG, {
                 _os("LeftArm"): (0.14, -1, 0.04),
                 _os("LeftForeArm"): (0.16, -1, -0.06),
                 _os("RightArm"): (-0.14, -1, 0.04),
@@ -829,6 +859,12 @@ GESTES = {
         # les bras écartés.
         "ancrage": False,
         "bassin": [(0, 0, -0.03), (0, 0, 0.09)],
+        # Poings **fermés** sur les poignées. La pose de repos du mannequin a
+        # les mains ouvertes, doigts écartés, ce qui est le bon défaut partout
+        # ailleurs — le personnage ne tient pas l'haltère non plus. Ici c'est
+        # l'inverse : la corde ne se démontre que par les mains, et une main
+        # grande ouverte dit exactement le contraire du geste.
+        "poings": 1.0,
         "cles": [
             _pose({
                 _os("Spine"): (+0.00, -0.00, +1.00),
@@ -1033,18 +1069,12 @@ GESTES = {
         "ancrage": ("LeftFoot", "RightFoot"),
         "aplomb": True,
         "cles": [
-            _pose({
+            _pose(BRAS_LE_LONG, {
                 _os("Spine"): (+0.00, -0.55, +0.83),
                 _os("Spine1"): (+0.00, -0.55, +0.83),
                 _os("Spine2"): (+0.00, -0.55, +0.83),
                 _os("Neck"): (+0.00, -0.63, +0.77),
                 _os("Head"): (+0.00, -0.63, +0.77),
-                _os("LeftArm"): REPOS,
-                _os("RightArm"): REPOS,
-                _os("LeftForeArm"): REPOS,
-                _os("RightForeArm"): REPOS,
-                _os("LeftHand"): REPOS,
-                _os("RightHand"): REPOS,
                 _os("LeftUpLeg"): (-0.14, +0.33, -0.93),
                 _os("RightUpLeg"): (+0.14, +0.33, -0.93),
                 _os("LeftLeg"): (-0.14, +0.33, -0.93),
@@ -1052,18 +1082,12 @@ GESTES = {
                 _os("LeftFoot"): (+0.16, -0.54, -0.82),
                 _os("RightFoot"): (-0.16, -0.54, -0.82),
             }),
-            _pose({
+            _pose(BRAS_LE_LONG, {
                 _os("Spine"): (+0.00, -0.55, +0.83),
                 _os("Spine1"): (+0.00, -0.55, +0.83),
                 _os("Spine2"): (+0.00, -0.55, +0.83),
                 _os("Neck"): (+0.00, -0.63, +0.77),
                 _os("Head"): (+0.00, -0.63, +0.77),
-                _os("LeftArm"): REPOS,
-                _os("RightArm"): REPOS,
-                _os("LeftForeArm"): REPOS,
-                _os("RightForeArm"): REPOS,
-                _os("LeftHand"): REPOS,
-                _os("RightHand"): REPOS,
                 _os("LeftUpLeg"): (-0.14, +0.33, -0.93),
                 _os("RightUpLeg"): (+0.14, +0.33, -0.93),
                 _os("LeftLeg"): (-0.14, +0.33, -0.93),
@@ -1071,18 +1095,12 @@ GESTES = {
                 _os("LeftFoot"): (+0.16, -0.54, -0.82),
                 _os("RightFoot"): (-0.16, -0.54, -0.82),
             }),
-            _pose({
+            _pose(BRAS_LE_LONG, {
                 _os("Spine"): (-0.00, -0.55, +0.83),
                 _os("Spine1"): (-0.00, -0.55, +0.83),
                 _os("Spine2"): (-0.00, -0.55, +0.83),
                 _os("Neck"): (-0.14, -0.47, +0.87),
                 _os("Head"): (-0.14, -0.47, +0.87),
-                _os("LeftArm"): REPOS,
-                _os("RightArm"): REPOS,
-                _os("LeftForeArm"): REPOS,
-                _os("RightForeArm"): REPOS,
-                _os("LeftHand"): REPOS,
-                _os("RightHand"): REPOS,
                 _os("LeftUpLeg"): (+0.83, +0.03, -0.55),
                 _os("RightUpLeg"): (-0.02, -0.33, -0.94),
                 _os("LeftLeg"): (+0.91, +0.21, -0.35),
@@ -1090,18 +1108,12 @@ GESTES = {
                 _os("LeftFoot"): (+0.68, -0.70, -0.21),
                 _os("RightFoot"): (-0.15, -0.76, -0.63),
             }),
-            _pose({
+            _pose(BRAS_LE_LONG, {
                 _os("Spine"): (-0.00, -0.55, +0.83),
                 _os("Spine1"): (-0.00, -0.55, +0.83),
                 _os("Spine2"): (-0.00, -0.55, +0.83),
                 _os("Neck"): (-0.02, -0.17, +0.98),
                 _os("Head"): (-0.02, -0.17, +0.98),
-                _os("LeftArm"): REPOS,
-                _os("RightArm"): REPOS,
-                _os("LeftForeArm"): REPOS,
-                _os("RightForeArm"): REPOS,
-                _os("LeftHand"): REPOS,
-                _os("RightHand"): REPOS,
                 _os("LeftUpLeg"): (+0.87, +0.06, -0.49),
                 _os("RightUpLeg"): (-0.01, -1.00, -0.09),
                 _os("LeftLeg"): (+0.95, +0.16, -0.28),
@@ -1109,18 +1121,12 @@ GESTES = {
                 _os("LeftFoot"): (+0.82, -0.48, +0.31),
                 _os("RightFoot"): (+0.07, -0.95, -0.30),
             }),
-            _pose({
+            _pose(BRAS_LE_LONG, {
                 _os("Spine"): (-0.00, -0.55, +0.83),
                 _os("Spine1"): (-0.00, -0.55, +0.83),
                 _os("Spine2"): (-0.00, -0.55, +0.83),
                 _os("Neck"): (-0.02, -0.17, +0.98),
                 _os("Head"): (-0.02, -0.17, +0.98),
-                _os("LeftArm"): REPOS,
-                _os("RightArm"): REPOS,
-                _os("LeftForeArm"): REPOS,
-                _os("RightForeArm"): REPOS,
-                _os("LeftHand"): REPOS,
-                _os("RightHand"): REPOS,
                 _os("LeftUpLeg"): (+0.87, +0.06, -0.49),
                 _os("RightUpLeg"): (-0.01, -1.00, -0.09),
                 _os("LeftLeg"): (+0.95, +0.16, -0.28),
@@ -1578,6 +1584,44 @@ def _adoucir(t):
     from math import cos, pi
 
     return (1 - cos(pi * t)) / 2
+
+
+def fermer_les_poings(armature, contexte, numero, serrage=1.0):
+    """Referme les doigts, comme sur une poignée.
+
+    ## Pourquoi le mannequin ne le fait pas tout seul
+
+    Sa pose de repos a les mains **ouvertes**, doigts écartés. C'est le bon
+    défaut : la plupart des gestes n'ont rien à tenir, et une main ouverte au
+    bout d'un bras qui monte une charge ne choque personne — le personnage ne
+    tient pas l'haltère non plus.
+
+    La corde à sauter, elle, ne se démontre que par les mains. C'est le seul
+    signe qui la distingue d'un rebond sur place, et une main grande ouverte
+    dit exactement le contraire de ce que le geste demande.
+
+    `serrage` va de zéro — main ouverte — à un, poing fermé sur une poignée.
+    """
+    import math
+    from mathutils import Quaternion
+
+    for cote in ("Left", "Right"):
+        for doigt in DOIGTS + ("Thumb",):
+            angles = FERMETURE_POUCE if doigt == "Thumb" else FERMETURE
+            for rang, degres in enumerate(angles, start=1):
+                nom = _os(f"{cote}Hand{doigt}{rang}")
+                if nom not in armature.pose.bones:
+                    continue
+                os_pose = armature.pose.bones[nom]
+                os_pose.rotation_mode = "QUATERNION"
+                os_pose.rotation_quaternion = Quaternion(
+                    (1, 0, 0), math.radians(degres * serrage)
+                )
+                # Posée en clé comme tout le reste : sans elle la fermeture
+                # existerait dans la pose vivante et disparaîtrait du rendu,
+                # qui relit les clés.
+                os_pose.keyframe_insert("rotation_quaternion", frame=numero)
+    contexte.view_layer.update()
 
 
 def _boucle_resolue(cles, repos):
@@ -2694,6 +2738,13 @@ def appliquer(armature, nom, images, contexte):
             )
             os_pose.rotation_mode = "QUATERNION"
             os_pose.keyframe_insert("rotation_quaternion", frame=numero)
+
+        # Les doigts **après** le poignet, comme partout : ils le suivent.
+        # Avant l'ancrage, en revanche, parce qu'un poing fermé change le point
+        # le plus bas du maillage — ce qui ne compte pas pour la corde à
+        # sauter, mains en l'air, mais compterait pour une planche.
+        if geste.get("poings"):
+            fermer_les_poings(armature, contexte, numero, geste["poings"])
 
         # **Après** avoir posé les membres, jamais avant : c'est la pose finie
         # qui dit où est le point le plus bas. Un corps ancré puis plié

@@ -55,7 +55,20 @@ import type { ImageSourcePropType } from "react-native";
 
 export interface Planche {
   source: ImageSourcePropType;
-  /** Nombre d'images dans la planche. */
+  /**
+   * Nombre d'images dans la planche.
+   *
+   * Vingt suffisent tant que le corps se déplace peu d'une image à l'autre. Ce
+   * qui décide n'est pas la durée mais le **chemin parcouru par image** : un
+   * maintien de planche de 3,6 s en vingt images est fluide parce que rien n'y
+   * bouge, alors qu'un burpee de 2 s en vingt images saccade parce que le
+   * corps y traverse tout le cadre. Les six gestes de grande amplitude —
+   * burpee, squat, squat barre, squat sauté, fente, planche jambes alternées —
+   * en ont donc trente-deux, ce qui divise le saut par deux.
+   *
+   * `scripts/revue-planches.py` mesure ce saut moyen et le donne pour chaque
+   * planche : au-delà de 4, il faut plus d'images.
+   */
   images: number;
   /** Images par ligne. `scripts/planche-geste.py` en pose quatre. */
   colonnes: number;
@@ -146,11 +159,11 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 3600,
   },
-  // Vingt-quatre images et non vingt : celle-ci enchaîne deux élévations, une
+  // Trente-deux images et non vingt : celle-ci enchaîne deux élévations, une
   // par jambe, là où les deux autres ne montrent qu'une mise en position.
   "planche-jambes-alternees": {
     source: require("../../assets/gestes/planche-jambes-alternees.png"),
-    images: 24,
+    images: 32,
     colonnes: 4,
     duree: 4400,
   },
@@ -170,7 +183,7 @@ export const PLANCHES: Record<string, Planche> = {
   // cheville sans figer la hauteur du bassin.
   fente: {
     source: require("../../assets/gestes/fente.png"),
-    images: 20,
+    images: 32,
     colonnes: 4,
     duree: 3087,
   },
@@ -265,7 +278,7 @@ export const PLANCHES: Record<string, Planche> = {
   // qui part du squat et n'ajoute que l'extension.
   "squat-saute": {
     source: require("../../assets/gestes/squat-saute.png"),
-    images: 20,
+    images: 32,
     colonnes: 4,
     duree: 1400,
   },

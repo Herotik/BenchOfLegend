@@ -263,6 +263,28 @@ pixel. `shadow_cascade_max_distance` la ramène à la taille du sujet.
 Ce mode ne sert **qu'au contrôle** : la vignette de l'app est détourée, un
 plancher la fermerait.
 
+### 4 ter. Le rythme se mesure sur la vidéo, il ne s'estime pas
+
+    python3 scripts/rythme-video.py <relevé.npz> [--debut N] [--fin N]
+
+Un relevé garde **toutes** les images de la vidéo et sa cadence. Ne prendre que
+les deux poses extrêmes jette la durée d'une répétition, les temps d'arrêt, le
+fait qu'un genou marque en haut — et c'est souvent là qu'est l'exercice. Les
+trois gestes d'une vidéo de cardio avaient été écrits à 700 et 900 ms ; ils
+tournent à 417, 751 et 792. Une corde à sauter démontrée à 60 % de sa vitesse
+n'est plus une corde à sauter.
+
+L'outil sort la période, les poses clés, et les `pauses` à recopier — la part
+du tour passée immobile sur chaque pose. Le moteur répartit le reste **au
+prorata du chemin parcouru**, un grand mouvement prenant plus de temps qu'un
+petit. Sans `pauses` déclarées, le découpage régulier d'origine est rendu à
+l'identique.
+
+Il refuse de répondre quand il n'y a rien à mesurer : une autocorrélation qui
+ne fait que décroître dit qu'il n'y a **aucune** période, pas qu'il y en a une
+courte. Et il signale un aller-retour dissymétrique — descente lente, remontée
+rapide —, que le moteur ne sait pas rendre puisqu'il rejoue ses clés en miroir.
+
 ### 5. Rendre, et seulement alors
 
     blender -b -noaudio -P scripts/rendre-geste.py -- <corps.fbx> <sortie> \
@@ -276,6 +298,46 @@ frontale ne se lit pas de face, une latérale pas de profil, un buste penché ni
 de l'une ni de l'autre — d'où `trois-quarts`. Un corps à plat ventre, lui, se
 lit très bien de profil : toutes les photos de l'exercice sont prises ainsi.
 
+Une **alternance gauche-droite** ne se rend jamais de profil : les deux jambes
+s'y superposent et les deux poses deviennent des images en miroir, donc
+indiscernables. Montées de genoux, talons-fesses et mountain climber sont tous
+passés au trois-quarts pour cette raison.
+
+### 5 bis. Combien d'images, et pourquoi vingt ne suffisent pas toujours
+
+Ce qui décide n'est pas la durée mais le **chemin parcouru par image**. Un
+maintien de planche de 3,6 s en vingt images est fluide parce que rien n'y
+bouge ; un burpee de 2 s saccade parce que le corps traverse tout le cadre.
+`scripts/revue-planches.py` donne ce « saut par image » pour chaque planche :
+au-delà de 4, passer à trente-deux.
+
+Et la planche doit être **jouée** au même pas dans les deux sens. Une grille de
+quatre colonnes et vingt images avance d'une colonne toutes les `durée / 20`,
+donc les colonnes font un tour en `durée × 4 / 20` — et non `durée / 4`, qui
+n'est la même chose que sur une planche carrée. L'erreur fait dériver colonnes
+et lignes l'une par rapport à l'autre : la planche joue alors ses images dans
+le désordre, certaines deux fois, d'autres jamais. Ça se voyait comme un
+personnage montant deux fois le genou gauche puis deux fois le droit.
+
+Côté app, le battement se règle sur la planche — une image par battement — et
+non sur une cadence fixe. À douze images par seconde, une corde à sauter de
+417 ms n'en montrait que cinq sur vingt, et pas les mêmes d'un tour à l'autre.
+
+### 5 ter. Les mains, quand le geste tient quelque chose
+
+La pose de repos du mannequin a les mains **ouvertes**, doigts écartés. C'est
+le bon défaut : le personnage ne tient pas l'haltère non plus, et personne ne
+s'en plaint. Mais un geste dont les mains **sont** la démonstration — la corde
+à sauter, qu'on ne distingue d'un rebond sur place que par la prise — réclame
+un poing fermé. `"poings": 1.0` s'en charge.
+
+C'est la seule rotation **locale** du moteur, et c'est justifié : un poing est
+un poing quelle que soit l'orientation de la main, alors que tout le reste se
+dit en directions du monde parce que la question y est toujours « où pointe ce
+membre ». Le repli se fait autour du X local de chaque phalange, dans le sens
+positif — mesuré, pas supposé : le bout du doigt passe de +0,3 à +5,7 cm sur la
+normale de la paume, le sens opposé l'en éloigne d'autant.
+
 ### 6. Porter dans l'app
 
     python3 scripts/planche-geste.py <dossier> <slug> --sans-recadrage
@@ -288,10 +350,26 @@ les 147 exercices aient un geste ; il échouera si l'un est oublié.
 
 ## Le corps de référence
 
-Utiliser le mannequin **nu** pour juger une posture. Un personnage habillé cache
-les lignes du corps : sur un geste au sol, la cape se confond avec le dos et
-l'on ne distingue plus ni les genoux ni l'alignement. Le vêtement se remet une
-fois la pose juste.
+Le mannequin **nu**, et pas seulement pour juger : c'est le personnage que
+l'app montre partout. Un personnage habillé cache les lignes du corps — sur un
+geste au sol, la cape se confond avec le dos et l'on ne distingue plus ni les
+genoux ni l'alignement.
+
+Une captation Mixamo arrive avec son propre personnage. Il n'y a pas à la
+refaire pour autant : les squelettes sont les mêmes d'un personnage Mixamo à
+l'autre, et une action ne stocke que des rotations d'os nommés.
+
+    blender ... -- <captation.fbx> <sortie> --corps <X_Bot.fbx>
+
+la rejoue sur le mannequin sans toucher au mouvement. Le contrôle de
+compatibilité porte sur les os que l'action **anime**, jamais sur tous ceux du
+squelette source : les gréements diffèrent sur des détails — un os d'œil — qui
+ne tournent pas et ne concernent pas la démonstration.
+
+Contrôler que rien ne porte encore l'ancien personnage se fait en une passe sur
+les planches livrées : chercher les pixels franchement rouges, la robe de
+l'hoplite étant la seule teinte saturée du lot. Sept planches écrites avaient
+été rendues sur lui et personne ne l'avait vu.
 
 ## Quand s'arrêter
 
