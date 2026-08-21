@@ -344,6 +344,25 @@ JAMBE_REPLIEE = {
 }
 
 
+# Jambes d'un corps allongé sur un banc, pieds posés au sol de part et d'autre.
+#
+# Le calcul se lit : bassin à 54 cm, cuisse et tibia de 42 cm, cheville à 9 cm
+# du sol. La cuisse part vers les pieds presque à l'horizontale — le genou
+# reste à 44 cm — et le tibia **redescend vers l'arrière** chercher un pied
+# posé sous le genou. C'est ce dernier point qui compte : un tibia qui
+# continuerait vers l'avant plierait le genou à l'envers, ce que
+# `verifier-gestes.py` a refusé au premier essai. Sur un banc, le pied est sous
+# le genou et non devant lui.
+SUR_LE_BANC = {
+    _os("LeftUpLeg"): (+0.08, -0.96, -0.24),
+    _os("RightUpLeg"): (-0.08, -0.96, -0.24),
+    _os("LeftLeg"): (+0.04, +0.55, -0.83),
+    _os("RightLeg"): (-0.04, +0.55, -0.83),
+    _os("LeftFoot"): (+0.02, -0.99, -0.10),
+    _os("RightFoot"): (-0.02, -0.99, -0.10),
+}
+
+
 def bras_de_course(devant, amplitude=1.0):
     """Bras de coureur : coude à angle droit, l'un devant, l'autre derrière.
 
@@ -378,7 +397,54 @@ def bras_de_course(devant, amplitude=1.0):
     return couche
 
 
-def grimpeur(genou):
+# La planche **basse** tenue : coudes sous les épaules, avant-bras à plat vers
+# l'avant, poings joints devant la tête, orteils recourbés. C'est la position
+# de gainage dont partent les variantes, et elle vaut d'être écrite une fois
+# plutôt que recopiée dans chaque clé.
+PLANCHE_BASSE_APPUI = {
+    _os("Spine"): (+0.00, +0.98, +0.22),
+    _os("Spine1"): (+0.00, +0.98, +0.22),
+    _os("Spine2"): (+0.00, +0.98, +0.22),
+    _os("Neck"): (+0.00, +0.97, +0.25),
+    _os("Head"): (+0.00, +0.97, +0.25),
+    _os("LeftArm"): (-0.21, +0.16, -0.97),
+    _os("RightArm"): (+0.21, +0.16, -0.97),
+    _os("LeftForeArm"): (+0.00, +1.00, +0.00),
+    _os("RightForeArm"): (+0.00, +1.00, +0.00),
+    _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
+    _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
+    _os("LeftUpLeg"): (+0.03, -0.95, -0.32),
+    _os("RightUpLeg"): (-0.03, -0.95, -0.32),
+    _os("LeftLeg"): (-0.07, -0.97, -0.25),
+    _os("RightLeg"): (+0.07, -0.97, -0.25),
+    _os("LeftFoot"): (+0.00, +0.00, -1.00),
+    _os("RightFoot"): (+0.00, +0.00, -1.00),
+}
+
+
+def JAMBE_LEVEE(cote):
+    """La jambe qu'on décolle en gainage, tendue et pointe allongée.
+
+    Les directions se lisent dans le repère du monde, corps à plat ventre : la
+    jambe part vers les pieds (-Y) en **montant** (+Z). Vingt-cinq degrés au-
+    dessus de la ligne du corps, ce qui met le talon à hauteur de nuque — la
+    hauteur que montre la photo de référence, et celle que les descriptions
+    demandent : « à l'horizontale ou un peu au-dessus, sans creuser le dos ».
+
+    La pointe est **tendue**. Le pied du gainage est recourbé sous la cheville
+    parce qu'il pousse sur le sol ; celui qui est en l'air ne pousse sur rien,
+    et le garder recourbé donnait une jambe levée qui cherchait encore un
+    appui.
+    """
+    signe = +1 if cote == "Left" else -1
+    return {
+        _os(f"{cote}UpLeg"): (signe * 0.03, -0.90, +0.44),
+        _os(f"{cote}Leg"): (signe * 0.02, -0.92, +0.39),
+        _os(f"{cote}Foot"): (+0.00, -0.72, +0.69),
+    }
+
+
+def grimpeur(genou, croise=False):
     """Une pose de mountain climber : quel genou est ramené, ou aucun.
 
     `genou` vaut `"G"`, `"D"`, ou `None` pour la planche pleine — les deux
@@ -429,8 +495,13 @@ def grimpeur(genou):
     for cote, lettre, signe in (("Left", "G", -1), ("Right", "D", +1)):
         if lettre == genou:
             # Genou ramené sous la poitrine : la cheville se rapproche.
+            #
+            # Croisé, il traverse l'axe du corps pour aller chercher le coude
+            # opposé — d'où le signe inversé. C'est ce qui distingue les deux
+            # exercices du catalogue, et de trois-quarts ça se voit.
+            x = (-signe * 0.16) if croise else (signe * 0.14)
             couche[_os(f"{cote}UpLeg")] = Appui(
-                (signe * 0.14, -0.20, 0.24), (0, 0.35, -0.94)
+                (x, -0.20, 0.24), (0, 0.35, -0.94)
             )
         else:
             # Jambe tendue en arrière, cheville juste au-dessus du sol. La
@@ -510,9 +581,18 @@ GESTES = {
             }),
         ],
     },
+    # Développé militaire, **haltères** et non barre : le personnage n'en tient
+    # aucun, mais ses mains doivent dire lequel des deux il ferait.
+    #
+    # Poings fermés, paumes tournées vers l'avant, poignets dans le
+    # prolongement de l'avant-bras — c'est la prise d'un haltère tenu à
+    # l'épaule puis poussé au plafond. Laissées ouvertes et libres, les mains
+    # partaient doigts écartés vers l'extérieur, ce qui ne ressemble à aucune
+    # prise et faisait douter de ce que le geste montrait.
     "developpe-militaire": {
         "vue": "face",
         "duree": 2200,
+        "poings": 1.0,
         "cles": [
             # Départ coudes à hauteur d'épaules, avant-bras verticaux.
             _pose({
@@ -520,12 +600,19 @@ GESTES = {
                 _os("LeftForeArm"): (0.34, -0.10, 1),
                 _os("RightArm"): (-0.80, -0.18, -0.30),
                 _os("RightForeArm"): (-0.34, -0.10, 1),
+                # Paume vers l'avant : c'est ce qui met les phalanges face à
+                # la caméra et le pouce à l'intérieur, comme sur une poignée
+                # d'haltère tenue à l'épaule.
+                _os("LeftHand"): APlat((0.34, -0.10, 1), paume=(0, -1, 0)),
+                _os("RightHand"): APlat((-0.34, -0.10, 1), paume=(0, -1, 0)),
             }),
             _pose({
                 _os("LeftArm"): (0.32, -0.06, 1),
                 _os("LeftForeArm"): (0.12, 0, 1),
                 _os("RightArm"): (-0.32, -0.06, 1),
                 _os("RightForeArm"): (-0.12, 0, 1),
+                _os("LeftHand"): APlat((0.12, 0, 1), paume=(0, -1, 0)),
+                _os("RightHand"): APlat((-0.12, 0, 1), paume=(0, -1, 0)),
             }),
         ],
     },
@@ -591,33 +678,41 @@ GESTES = {
         ],
     },
     # ---- Cinq épreuves, pour juger si le procédé tient hors du debout -------
+    # Développé couché, sur un **banc**.
+    #
+    # Sans lui, le geste était faux d'une façon qui ne se voyait qu'en
+    # mouvement : à chaque descente le coude passait sous le dos, devenait le
+    # point le plus bas du maillage, et le moteur remontait le corps entier
+    # pour l'y poser. Le personnage montait et descendait au rythme de ses
+    # bras, comme sur un trampoline.
+    #
+    # D'où `ancrage: False` — le corps ne se pose sur rien, il **repose** — et
+    # une hauteur de bassin déclarée. Le banc est à quarante-cinq centimètres,
+    # le bassin à cinquante-quatre : l'épaisseur du corps. Les jambes sont
+    # refaites pour que les pieds touchent le sol de part et d'autre, ce qui
+    # est la position de l'exercice et ce qui donne l'échelle du banc.
     "developpe-couche": {
         "vue": "profil",
         "duree": 2200,
         "assise": SUR_LE_DOS,
+        "ancrage": False,
+        "hauteur": 0.54,
+        "banc": 0.45,
         "cles": [
             # Couché sur le dos : le haut du corps suit le bassin sans qu'on ait
             # à le dire, les membres se décrivent dans le monde. +Z est donc le
             # plafond, -Y les pieds.
-            _pose({
+            _pose(SUR_LE_BANC, {
                 _os("LeftArm"): (0.85, -0.30, -0.35),
                 _os("LeftForeArm"): (0.30, -0.10, 0.95),
                 _os("RightArm"): (-0.85, -0.30, -0.35),
                 _os("RightForeArm"): (-0.30, -0.10, 0.95),
-                _os("LeftUpLeg"): (0.10, -0.70, 0.70),
-                _os("LeftLeg"): (0.06, -0.60, -0.80),
-                _os("RightUpLeg"): (-0.10, -0.70, 0.70),
-                _os("RightLeg"): (-0.06, -0.60, -0.80),
             }),
-            _pose({
+            _pose(SUR_LE_BANC, {
                 _os("LeftArm"): (0.28, -0.10, 0.95),
                 _os("LeftForeArm"): (0.12, 0, 1),
                 _os("RightArm"): (-0.28, -0.10, 0.95),
                 _os("RightForeArm"): (-0.12, 0, 1),
-                _os("LeftUpLeg"): (0.10, -0.70, 0.70),
-                _os("LeftLeg"): (0.06, -0.60, -0.80),
-                _os("RightUpLeg"): (-0.10, -0.70, 0.70),
-                _os("RightLeg"): (-0.06, -0.60, -0.80),
             }),
         ],
     },
@@ -651,20 +746,14 @@ GESTES = {
         # ce qui fait un pas. Sans lui, les deux pieds s'écartaient autour d'un
         # bassin immobile — un grand écart, pas une fente.
         "plante": "RightFoot",
+        # Trois clés et deux temps d'arrêt, là où il y en avait cinq dont
+        # quatre doublées pour faire des pauses. Le doublage figeait
+        # quatorze images sur trente-deux et tassait tout le pas dans les
+        # sept restantes : le personnage restait planté, se jetait en
+        # avant, puis se figeait à nouveau. Déclarer les arrêts laisse la
+        # répartition au prorata du chemin faire son travail.
+        "pauses": [0.10, 0.00, 0.12],
         "cles": [
-            _pose(BRAS_LE_LONG, {
-                _os("Spine"): (+0.00, +0.01, +1.00),
-                _os("Spine1"): (+0.00, +0.01, +1.00),
-                _os("Spine2"): (+0.00, +0.01, +1.00),
-                _os("Neck"): (+0.00, -0.22, +0.98),
-                _os("Head"): (+0.00, -0.22, +0.98),
-                _os("LeftUpLeg"): (+0.00, -0.02, -1.00),
-                _os("RightUpLeg"): (+0.00, -0.02, -1.00),
-                _os("LeftLeg"): (+0.00, -0.02, -1.00),
-                _os("RightLeg"): (+0.00, -0.02, -1.00),
-                _os("LeftFoot"): (+0.00, -0.90, -0.43),
-                _os("RightFoot"): (+0.00, -0.90, -0.43),
-            }),
             _pose(BRAS_LE_LONG, {
                 _os("Spine"): (+0.00, +0.01, +1.00),
                 _os("Spine1"): (+0.00, +0.01, +1.00),
@@ -690,26 +779,6 @@ GESTES = {
                 _os("RightLeg"): (+0.00, +0.62, -0.78),
                 _os("LeftFoot"): (+0.00, -1.00, -0.05),
                 _os("RightFoot"): (+0.00, -0.59, -0.81),
-            }),
-            _pose(bras_de_course("D", 0.35), {
-                _os("Spine"): (+0.00, +0.01, +1.00),
-                _os("Spine1"): (+0.00, +0.01, +1.00),
-                _os("Spine2"): (+0.00, +0.01, +1.00),
-                _os("Neck"): (+0.00, -0.08, +1.00),
-                _os("Head"): (+0.00, -0.08, +1.00),
-                _os("LeftUpLeg"): (+0.00, -0.99, -0.13),
-                _os("RightUpLeg"): (+0.00, +0.25, -0.97),
-                _os("LeftLeg"): (+0.00, +0.25, -0.97),
-                _os("RightLeg"): (+0.00, +0.96, +0.29),
-                # Les deux pieds sont corrigés à la main, et c'est assumé :
-                # au point bas d'une fente, le pied arrière est **occulté** par
-                # le corps et l'estimateur le renvoie orteils vers l'arrière,
-                # donc pointant dans le vide. Ce que la posture impose se dit
-                # en une phrase : le pied avant est **à plat**, orteils dans le
-                # sens de la marche ; le pied arrière est **sur la pointe**,
-                # orteils sous la cheville.
-                _os("LeftFoot"): (+0.00, -1.00, +0.00),
-                _os("RightFoot"): (+0.00, +0.00, -1.00),
             }),
             _pose(bras_de_course("D", 0.35), {
                 _os("Spine"): (+0.00, +0.01, +1.00),
@@ -807,6 +876,9 @@ GESTES = {
         # Le pied au sol décide de la hauteur ; l'autre est en l'air. Pas
         # d'`aplomb` : mettre des appuis de niveau demande trois points.
         "ancrage": ("LeftFoot", "RightFoot"),
+        # Poings fermés : on court les mains fermées, pas les doigts
+        # écartés. Le mannequin les a ouverts au repos.
+        "poings": 0.75,
         "cles": [
             # Talon **gauche** qui remonte : la jambe gauche est donc en
             # arrière, et c'est le bras gauche qui part devant.
@@ -818,9 +890,9 @@ GESTES = {
                 _os("Head"): (+0.00, -0.31, +0.95),
                 _os("LeftUpLeg"): (+0.00, -0.32, -0.95),
                 _os("RightUpLeg"): (+0.00, +0.15, -0.99),
-                _os("LeftLeg"): (+0.00, +1.00, +0.03),
+                _os("LeftLeg"): (+0.00, +0.53, +0.85),
                 _os("RightLeg"): (+0.00, +0.27, -0.96),
-                _os("LeftFoot"): (+0.00, +0.75, -0.66),
+                _os("LeftFoot"): (+0.00, +0.92, +0.39),
                 _os("RightFoot"): (+0.00, -0.63, -0.78),
             }),
             _pose(bras_de_course("D"), {
@@ -831,9 +903,9 @@ GESTES = {
                 _os("Head"): (+0.00, -0.31, +0.95),
                 _os("RightUpLeg"): (+0.00, -0.32, -0.95),
                 _os("LeftUpLeg"): (+0.00, +0.15, -0.99),
-                _os("RightLeg"): (+0.00, +1.00, +0.03),
+                _os("RightLeg"): (+0.00, +0.53, +0.85),
                 _os("LeftLeg"): (+0.00, +0.27, -0.96),
-                _os("RightFoot"): (+0.00, +0.75, -0.66),
+                _os("RightFoot"): (+0.00, +0.92, +0.39),
                 _os("LeftFoot"): (+0.00, -0.63, -0.78),
             }),
         ],
@@ -949,58 +1021,57 @@ GESTES = {
             }),
         ],
     },
-    # Squat sauté, **écrit** et non capté.
+    # Squat sauté.
     #
-    # La captation Mixamo qui servait jusqu'ici s'appelait « Jump » et c'en
-    # était un : élan, ramené de genoux, réception souple — le saut d'un
-    # personnage de jeu vidéo, pas celui d'un exercice. Or la consigne du
-    # catalogue tient en une phrase : « descendre en squat puis pousser
-    # explosivement pour décoller, réceptionner en amortissant genoux
-    # fléchis ». Le geste part donc du squat, et le saut n'en est que
-    # l'extension.
+    # Deux reproches, deux corrections.
     #
-    # Quatre poses, parcourues en aller-retour : debout, squat, extension,
-    # envol — puis le chemin inverse, qui est exactement la réception, genoux
-    # fléchis, jusqu'au squat avant de se relever. Une seule série de clés dit
-    # donc la montée et la descente, et la boucle se referme sans saut.
+    # Le squat était **mal exécuté** : écrit à la main, genou à 83°, il ne
+    # ressemblait pas à celui de la planche `squat`, qui vient d'une captation
+    # et que personne ne conteste. Les angles ci-dessous sont donc **lus sur
+    # elle**, à son image la plus basse — bassin descendu de 117 à 51 cm, soit
+    # 67 centimètres, cuisse qui part vers l'avant en remontant, tibia qui
+    # replonge vers l'arrière, buste penché de 28° à la hanche. Mesurer ce qui
+    # marche plutôt que retoucher ce qui ne marche pas.
     #
-    # Le genou descend à quatre-vingt-trois degrés au point bas : c'est un
-    # squat sous la parallèle, et non le demi-squat qu'on voit partout. Le dos
-    # reste **plat** et penche de vingt-cinq degrés à la hanche — l'arrondir
-    # serait montrer la faute qu'on passe son temps à corriger.
+    # Et il **faisait deux squats** par tour. C'est le parcours en aller-retour
+    # qui le voulait : partant de debout, la position accroupie était traversée
+    # deux fois, à la descente et à la réception. Un squat sauté enchaîné ne
+    # repasse pas par la station debout — on retombe dans le squat et on
+    # repart. La station debout disparaît donc des clés, et le tour se lit :
+    # accroupi, extension, envol, retour.
     "squat-saute": {
         "vue": "profil",
         "duree": 1400,
-        # Le corps quitte vraiment le sol, et c'est `envol` qui le dit : le
-        # contact est calculé normalement à chaque pose, sur le maillage, puis
-        # le corps est soulevé de la hauteur déclarée. Trois centimètres à
-        # l'extension — le talon vient de décoller —, vingt-deux en l'air.
-        "envol": [0.0, 0.0, 0.03, 0.22],
+        # Le corps quitte vraiment le sol : le contact est calculé normalement
+        # sur le maillage à chaque pose, puis le corps est soulevé de la
+        # hauteur déclarée. Trois centimètres à l'extension — le talon vient de
+        # décoller —, vingt-deux en l'air.
+        "envol": [0.0, 0.03, 0.22],
+        # Un temps au point bas : c'est là qu'on amortit et qu'on réarme.
+        "pauses": [0.16, 0.00, 0.00],
         "cles": [
-            # Debout, bras le long du corps.
-            _pose(BRAS_LE_LONG),
-            # Le point bas. Les bras partent **en arrière** : c'est l'armé du
-            # saut, et sans lui l'extension qui suit n'a pas d'élan à montrer.
+            # Le point bas, relevé sur la captation du squat.
             _pose({
-                _os("Spine"): (+0.00, -0.42, +0.91),
+                _os("Spine"): (+0.00, -0.34, +0.94),
                 _os("Spine1"): (+0.00, -0.40, +0.92),
-                _os("Spine2"): (+0.00, -0.38, +0.93),
-                _os("Neck"): (+0.00, -0.20, +0.98),
-                _os("Head"): (+0.00, -0.10, +0.99),
+                _os("Spine2"): (+0.00, -0.47, +0.88),
+                _os("Neck"): (+0.00, -0.12, +0.99),
+                _os("Head"): (+0.00, -0.24, +0.97),
+                # Les bras partent **en arrière** : c'est l'armé du saut, et
+                # c'est la seule chose qui distingue ce point bas de celui du
+                # squat ordinaire, où ils se tendent devant pour équilibrer.
                 _os("LeftArm"): (+0.16, +0.55, -0.82),
                 _os("RightArm"): (-0.16, +0.55, -0.82),
                 _os("LeftForeArm"): (+0.12, +0.30, -0.95),
                 _os("RightForeArm"): (-0.12, +0.30, -0.95),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
-                _os("LeftUpLeg"): (+0.08, -0.95, -0.31),
-                _os("RightUpLeg"): (-0.08, -0.95, -0.31),
-                _os("LeftLeg"): (+0.05, +0.42, -0.91),
-                _os("RightLeg"): (-0.05, +0.42, -0.91),
-                # Pied **à plat** : c'est là que le squat prend appui, et un
-                # talon décollé au point bas serait la faute même.
-                _os("LeftFoot"): (+0.03, -0.90, -0.44),
-                _os("RightFoot"): (-0.03, -0.90, -0.44),
+                _os("LeftUpLeg"): (+0.32, -0.91, +0.26),
+                _os("RightUpLeg"): (-0.32, -0.91, +0.26),
+                _os("LeftLeg"): (-0.02, +0.54, -0.84),
+                _os("RightLeg"): (+0.02, +0.54, -0.84),
+                _os("LeftFoot"): (+0.31, -0.70, -0.65),
+                _os("RightFoot"): (-0.31, -0.70, -0.65),
             }),
             # L'extension : corps aligné de la cheville à la tête, talons
             # décollés, bras lancés vers l'avant et le haut.
@@ -1280,6 +1351,28 @@ GESTES = {
             _pose(PLANCHE_DROITE, grimpeur("G")),
         ],
     },
+    # Mountain climbers **croisés**. Même appui, même rythme, une seule
+    # différence : le genou traverse l'axe du corps pour aller chercher le
+    # coude opposé au lieu de rentrer sous la poitrine. C'est ce que le
+    # catalogue décrit sous « Mountain climbers croisés », et qui partageait
+    # jusqu'ici la planche du mountain climber ordinaire — deux exercices, une
+    # seule démonstration, et celle qui montrait l'autre mouvement.
+    #
+    # De trois-quarts comme lui : le croisement se fait dans la largeur, et de
+    # profil il disparaît entièrement.
+    "mountain-climber-croise": {
+        "vue": "trois-quarts",
+        "duree": 1400,
+        "assise": SUR_LE_VENTRE,
+        "symetrique": False,
+        "hauteur": 0.50,
+        "pauses": [0.22, 0.00, 0.22],
+        "cles": [
+            _pose(PLANCHE_DROITE, grimpeur("D", croise=True)),
+            _pose(PLANCHE_DROITE, grimpeur(None)),
+            _pose(PLANCHE_DROITE, grimpeur("G", croise=True)),
+        ],
+    },
     # Planche basse, relevée sur une vidéo de démonstration. Trois temps :
     # la position de départ à quatre pattes, la mise en position, puis le
     # maintien. Les clés sont doublées aux deux extrémités — deux clés
@@ -1472,113 +1565,36 @@ GESTES = {
     # La seconde élévation est le **reflet** de la première : la vidéo montre
     # les deux côtés, mais pas avec la même amplitude, et une démonstration
     # doit être symétrique là où l'exercice l'est.
+    # Planche **basse** avec élévation alternée des jambes.
+    #
+    # Elle partait d'une planche **haute**, bras tendus, et c'était faux : la
+    # progression décrite part du gainage sur les avant-bras. Coudes posés,
+    # avant-bras à plat vers l'avant, poings joints devant la tête comme sur
+    # toutes les photos du geste.
+    #
+    # Le pied qui se lève est **tendu**, pointe dans le prolongement du tibia,
+    # et non recourbé sous la cheville : un pied en l'air n'a plus rien à
+    # pousser. C'est ce que montre la photo de référence, et c'est aussi ce qui
+    # distingue une jambe levée d'une jambe qui cherche le sol.
     "planche-jambes-alternees": {
         "vue": "profil",
         "duree": 4400,
-        # Assise « ventre », penchée des -3° mesurés sur la vidéo.
-        "assise": ((+0.00, +1.00, +0.06), (+0.00, +0.06, -1.00)),
+        "assise": ((+0.00, +0.98, +0.22), (+0.00, +0.22, -0.98)),
         "symetrique": False,
-        # Les quatre appuis sont déclarés, y compris le pied qui se lève : la
-        # mise d'aplomb écarte d'elle-même celui qui flotte au-dessus des
-        # autres, et il redevient porteur quand il redescend.
-        "ancrage": ("LeftHand", "RightHand", "LeftFoot", "RightFoot"),
+        # Les appuis de la planche basse : coudes, avant-bras, poings, orteils.
+        # Le pied levé y figure aussi — la mise d'aplomb écarte d'elle-même
+        # celui qui flotte au-dessus des autres, et il redevient porteur quand
+        # il redescend.
+        "ancrage": ("LeftForeArm", "RightForeArm", "LeftHand", "RightHand",
+                    "LeftFoot", "RightFoot"),
         "aplomb": True,
+        # Un temps sur chaque jambe levée, rien au passage : c'est un geste de
+        # gainage, on **tient** la jambe en l'air.
+        "pauses": [0.18, 0.00, 0.18],
         "cles": [
-            _pose({
-                _os("Spine"): (+0.00, +1.00, +0.06),
-                _os("Spine1"): (+0.00, +1.00, +0.06),
-                _os("Spine2"): (+0.00, +1.00, +0.06),
-                _os("Neck"): (+0.00, +0.97, +0.24),
-                _os("Head"): (+0.00, +0.97, +0.24),
-                _os("LeftArm"): (+0.00, +0.00, -1.00),
-                _os("RightArm"): (+0.00, +0.00, -1.00),
-                _os("LeftForeArm"): (+0.00, +0.00, -1.00),
-                _os("RightForeArm"): (+0.00, +0.00, -1.00),
-                _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("LeftUpLeg"): (+0.03, -0.98, -0.20),
-                _os("RightUpLeg"): (-0.03, -0.98, -0.20),
-                _os("LeftLeg"): (+0.01, -0.74, +0.67),
-                _os("RightLeg"): (-0.01, -0.74, +0.67),
-                _os("LeftFoot"): (+0.00, +0.00, -1.00),
-                _os("RightFoot"): (+0.00, +0.00, -1.00),
-            }),
-            _pose({
-                _os("Spine"): (+0.00, +1.00, +0.06),
-                _os("Spine1"): (+0.00, +1.00, +0.06),
-                _os("Spine2"): (+0.00, +1.00, +0.06),
-                _os("Neck"): (+0.00, +1.00, +0.05),
-                _os("Head"): (+0.00, +1.00, +0.05),
-                _os("LeftArm"): (+0.00, +0.00, -1.00),
-                _os("RightArm"): (+0.00, +0.00, -1.00),
-                _os("LeftForeArm"): (+0.00, +0.00, -1.00),
-                _os("RightForeArm"): (+0.00, +0.00, -1.00),
-                _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("LeftUpLeg"): (-0.02, -0.98, -0.20),
-                _os("RightUpLeg"): (+0.02, -0.98, -0.20),
-                _os("LeftLeg"): (-0.08, -1.00, -0.03),
-                _os("RightLeg"): (+0.08, -1.00, -0.03),
-                _os("LeftFoot"): (+0.00, +0.00, -1.00),
-                _os("RightFoot"): (+0.00, +0.00, -1.00),
-            }),
-            _pose({
-                _os("Spine"): (+0.00, +1.00, +0.06),
-                _os("Spine1"): (+0.00, +1.00, +0.06),
-                _os("Spine2"): (+0.00, +1.00, +0.06),
-                _os("Neck"): (+0.00, +1.00, -0.03),
-                _os("Head"): (+0.00, +1.00, -0.03),
-                _os("LeftArm"): (+0.00, +0.00, -1.00),
-                _os("RightArm"): (+0.00, +0.00, -1.00),
-                _os("LeftForeArm"): (+0.00, +0.00, -1.00),
-                _os("RightForeArm"): (+0.00, +0.00, -1.00),
-                _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("LeftUpLeg"): (+0.00, -1.00, +0.08),
-                _os("RightUpLeg"): (+0.00, -0.87, -0.49),
-                _os("LeftLeg"): (+0.00, -1.00, +0.02),
-                _os("RightLeg"): (+0.00, -0.95, -0.31),
-                _os("LeftFoot"): (+0.00, -0.44, -0.90),
-                _os("RightFoot"): (+0.00, -0.38, -0.92),
-            }),
-            _pose({
-                _os("Spine"): (+0.00, +1.00, +0.06),
-                _os("Spine1"): (+0.00, +1.00, +0.06),
-                _os("Spine2"): (+0.00, +1.00, +0.06),
-                _os("Neck"): (+0.00, +1.00, +0.05),
-                _os("Head"): (+0.00, +1.00, +0.05),
-                _os("LeftArm"): (+0.00, +0.00, -1.00),
-                _os("RightArm"): (+0.00, +0.00, -1.00),
-                _os("LeftForeArm"): (+0.00, +0.00, -1.00),
-                _os("RightForeArm"): (+0.00, +0.00, -1.00),
-                _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("LeftUpLeg"): (-0.02, -0.98, -0.20),
-                _os("RightUpLeg"): (+0.02, -0.98, -0.20),
-                _os("LeftLeg"): (-0.08, -1.00, -0.03),
-                _os("RightLeg"): (+0.08, -1.00, -0.03),
-                _os("LeftFoot"): (+0.00, +0.00, -1.00),
-                _os("RightFoot"): (+0.00, +0.00, -1.00),
-            }),
-            _pose({
-                _os("Spine"): (+0.00, +1.00, +0.06),
-                _os("Spine1"): (+0.00, +1.00, +0.06),
-                _os("Spine2"): (+0.00, +1.00, +0.06),
-                _os("Neck"): (+0.00, +1.00, -0.03),
-                _os("Head"): (+0.00, +1.00, -0.03),
-                _os("RightArm"): (+0.00, +0.00, -1.00),
-                _os("LeftArm"): (+0.00, +0.00, -1.00),
-                _os("RightForeArm"): (+0.00, +0.00, -1.00),
-                _os("LeftForeArm"): (+0.00, +0.00, -1.00),
-                _os("RightHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("LeftHand"): APlat((+0.00, +1.00, +0.00)),
-                _os("RightUpLeg"): (+0.00, -1.00, +0.08),
-                _os("LeftUpLeg"): (+0.00, -0.87, -0.49),
-                _os("RightLeg"): (+0.00, -1.00, +0.02),
-                _os("LeftLeg"): (+0.00, -0.95, -0.31),
-                _os("RightFoot"): (+0.00, -0.44, -0.90),
-                _os("LeftFoot"): (+0.00, -0.38, -0.92),
-            }),
+            _pose(PLANCHE_BASSE_APPUI, JAMBE_LEVEE("Left")),
+            _pose(PLANCHE_BASSE_APPUI),
+            _pose(PLANCHE_BASSE_APPUI, JAMBE_LEVEE("Right")),
         ],
     },
 

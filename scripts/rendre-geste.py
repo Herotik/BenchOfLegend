@@ -448,6 +448,79 @@ def poser_le_tapis(mini, maxi):
     return tapis
 
 
+def poser_le_banc(hauteur, mini, maxi):
+    """Un banc sous le corps, qui part dans l'app.
+
+    ## Pourquoi il en faut un
+
+    Un développé couché se démontre allongé. Sans rien dessous, le personnage
+    flotte sur du vide et, pire, le moteur cherche à le poser : le point le
+    plus bas du maillage devient le **coude**, qui passe sous le dos à chaque
+    descente, et le corps entier remonte au rythme des bras. Une planche qui
+    monte et descend alors que seul le coude bouge.
+
+    Le geste déclare donc `ancrage: False` et sa hauteur de bassin ; il ne
+    reste qu'à dessiner ce sur quoi il repose, faute de quoi on montre un corps
+    en lévitation à cinquante centimètres du sol.
+
+    Le banc s'arrête aux épaules et sous le bassin, comme un vrai : ni les
+    bras ni les pieds ne portent dessus, et c'est ce qui fait comprendre
+    l'exercice.
+    """
+    # Le banc se place sur le **tronc**, et non sur l'encombrement du geste :
+    # celui-ci comprend les bras levés et les jambes qui descendent chercher le
+    # sol, si bien que son centre tombe vers les pieds et que la tête finit
+    # dans le vide, au bout du banc. Un banc dont la tête dépasse donne un
+    # corps qui glisse, ce qui est exactement la faute qu'on corrige ailleurs.
+    tete, bassin = None, None
+    for objet in bpy.data.objects:
+        if objet.type == "ARMATURE" and "mixamorig:Head" in objet.pose.bones:
+            tete = objet.matrix_world @ objet.pose.bones["mixamorig:Head"].tail
+            bassin = objet.matrix_world @ objet.pose.bones["mixamorig:Hips"].head
+            break
+
+    taille = maxi - mini
+    epaisseur = 0.08
+    if tete is not None:
+        # Du sommet du crâne au bassin, plus une marge : c'est la portion du
+        # corps qu'un banc porte.
+        longueur = abs(tete.y - bassin.y) * 2.0 + 0.20
+        milieu_y = (tete.y + bassin.y) / 2 + (bassin.y - tete.y) * 0.25
+        centre_x = bassin.x
+    else:
+        longueur = max(taille.y, 0.9) * 0.75
+        milieu_y = (mini.y + maxi.y) / 2
+        centre_x = (mini.x + maxi.x) / 2
+
+    bpy.ops.mesh.primitive_cube_add(
+        size=1, location=(centre_x, milieu_y, hauteur - epaisseur / 2)
+    )
+    banc = bpy.context.object
+    # Moins large que les bras écartés : c'est cette proportion-là qu'on
+    # reconnaît comme un banc plutôt que comme une table.
+    banc.scale = (max(taille.x, 0.6) * 0.45, longueur, epaisseur)
+
+    matiere = bpy.data.materials.new("Banc")
+    matiere.use_nodes = True
+    principe = matiere.node_tree.nodes["Principled BSDF"]
+    principe.inputs["Base Color"].default_value = (0.36, 0.37, 0.41, 1)
+    principe.inputs["Roughness"].default_value = 0.9
+    banc.data.materials.append(matiere)
+
+    # Les deux pieds du banc, qui le posent au sol : sans eux la dalle flotte
+    # et l'on ne sait plus à quelle hauteur le corps se trouve.
+    for cote in (-1, +1):
+        bpy.ops.mesh.primitive_cube_add(
+            size=1,
+            location=(centre.x, centre.y + cote * banc.scale.y * 0.35,
+                      (hauteur - epaisseur) / 2),
+        )
+        pied = bpy.context.object
+        pied.scale = (banc.scale.x * 0.30, 0.06, hauteur - epaisseur)
+        pied.data.materials.append(matiere)
+    return banc
+
+
 def poser_le_sol(mini, maxi):
     """Un plancher à hauteur zéro, pour vérifier ce qui touche vraiment.
 
@@ -571,6 +644,14 @@ def main():
     # doit pas entrer dans le cadrage, qui se règle sur le personnage seul.
     if o["tapis"]:
         poser_le_tapis(mini, maxi)
+    # Le banc se déclare dans le geste et non sur la ligne de commande : c'est
+    # une propriété de l'exercice — un développé couché se fait sur un banc —
+    # et non un choix de rendu, contrairement au sol de contrôle.
+    banc = (
+        gestes_generes.GESTES[o["geste"]].get("banc") if o["geste"] else None
+    )
+    if banc:
+        poser_le_banc(banc, mini, maxi)
     if o["sol"]:
         poser_le_sol(mini, maxi)
     placer_camera(

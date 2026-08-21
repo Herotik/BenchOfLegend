@@ -120,11 +120,14 @@ export const PLANCHES: Record<string, Planche> = {
     images: 32,
     colonnes: 4,
   },
-  // Curl biceps
+  // Curl biceps. Deux mille quatre cents millisecondes : à la cadence par
+  // défaut le geste passait en 1,4 s, ce qui est un lancer et non une flexion
+  // contrôlée — exactement ce qu'une démonstration ne doit pas montrer.
   curl: {
     source: require("../../assets/gestes/curl.png"),
     images: 20,
     colonnes: 4,
+    duree: 2400,
   },
   // Crunchs
   crunch: {
@@ -297,13 +300,13 @@ export const PLANCHES: Record<string, Planche> = {
   // paraît immobile. C'est la seule vue qui montre le mouvement.
   "montee-genoux": {
     source: require("../../assets/gestes/montee-genoux.png"),
-    images: 20,
+    images: 32,
     colonnes: 4,
     duree: 751,
   },
   "talons-fesses": {
     source: require("../../assets/gestes/talons-fesses.png"),
-    images: 20,
+    images: 32,
     colonnes: 4,
     duree: 792,
   },
@@ -334,6 +337,16 @@ export const PLANCHES: Record<string, Planche> = {
   // d'arrêt, retour en planche, autre genou. Cinq poses clés le disent, dont
   // la planche pleine qui manquait ; un quart du tour se passe immobile de
   // chaque côté. Joué en huit cents millisecondes, tout cela s'effaçait.
+  // Les croisés ont leur planche à eux : le genou y traverse l'axe du corps
+  // pour aller chercher le coude opposé, ce que la version droite ne montre
+  // pas. Ils partageaient jusqu'ici la même démonstration — deux exercices du
+  // catalogue, et celle qui montrait l'autre mouvement.
+  "mountain-climber-croise": {
+    source: require("../../assets/gestes/mountain-climber-croise.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 1400,
+  },
   "mountain-climber": {
     source: require("../../assets/gestes/mountain-climber.png"),
     images: 20,

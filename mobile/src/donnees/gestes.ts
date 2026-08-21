@@ -177,7 +177,7 @@ export const GESTE_PAR_EXERCICE: Record<string, string> = {
   "Gainage latéral": "gainage-lateral",
   "Gainage latéral avec élévation de hanche": "gainage-lateral",
   "Mountain climbers": "mountain-climber",
-  "Mountain climbers croisés": "mountain-climber",
+  "Mountain climbers croisés": "mountain-climber-croise",
   "Dead bug au sol": "dead-bug",
   "Tenue en creux": "tenue-creux",
   "Relevés en V": "releve-en-v",
