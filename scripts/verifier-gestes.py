@@ -291,6 +291,37 @@ def assise_utilisable(_pose, geste):
     return []
 
 
+def rythme_tenable(geste):
+    """Les temps d'arrêt déclarés doivent laisser de quoi se déplacer.
+
+    Un geste dont les arrêts font le tour entier ne bouge plus : la
+    démonstration montre une photo. Et un compte qui ne tombe pas juste — trois
+    arrêts pour quatre poses — n'est pas une erreur d'arrondi mais une pose
+    qu'on a ajoutée sans y penser, donc des arrêts décalés d'un cran.
+
+    Le compte se fait comme le moteur le fera : la première pose est le point
+    de bouclage et son arrêt se partage en deux, les poses intermédiaires sont
+    traversées deux fois par tour.
+    """
+    arrets = geste.get("pauses")
+    if arrets is None:
+        return []
+    cles = geste["cles"]
+    if len(arrets) != len(cles):
+        return [
+            f"{len(arrets)} temps d'arrêt déclarés pour {len(cles)} poses clés"
+        ]
+    if any(a < 0 for a in arrets):
+        return ["un temps d'arrêt négatif"]
+    total = sum(arrets) + sum(arrets[1:-1]) - arrets[0] / 2.0
+    if total >= 1.0:
+        return [
+            f"les temps d'arrêt occupent {total:.0%} du tour : il ne reste "
+            "rien pour se déplacer"
+        ]
+    return []
+
+
 CONTROLES = (
     directions_utilisables,
     genou_a_lendroit,
@@ -301,6 +332,9 @@ CONTROLES = (
     pole_a_lendroit,
 )
 
+#: Contrôles qui portent sur le geste entier et non sur une pose.
+CONTROLES_DU_GESTE = (rythme_tenable,)
+
 
 def main():
     total = 0
@@ -310,6 +344,10 @@ def main():
                 for faute in controle(pose, g.GESTES[nom]):
                     print(f"  ✗ {nom} · pose {rang + 1} — {faute}")
                     total += 1
+        for controle in CONTROLES_DU_GESTE:
+            for faute in controle(g.GESTES[nom]):
+                print(f"  ✗ {nom} — {faute}")
+                total += 1
 
     poses = sum(len(x["cles"]) for x in g.GESTES.values())
     if total:

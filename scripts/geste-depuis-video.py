@@ -52,6 +52,28 @@ gravité — de tous les axes de l'estimateur, le plus sûr, parce qu'il ne dép
 d'aucune estimation de profondeur. On mesure donc de combien le haut du corps
 et le regard s'écartent de cette verticale, et l'on **fait tourner l'assise**
 d'autant. Le corps garde sa forme, et retrouve sa pente.
+
+## Le rythme, qu'on perdait aussi — et qui se lit ailleurs
+
+Ce script prend les numéros d'images qu'on lui donne, en général les deux
+extrêmes du mouvement, et le moteur les parcourt ensuite en aller-retour à
+cadence régulière. Tout le reste de la vidéo est jeté : la durée d'une
+répétition, le fait qu'un genou **marque** un temps en haut, qu'une descente
+soit plus lente que la remontée. Or c'est souvent là qu'est l'exercice — un
+mountain climber sans temps d'arrêt n'est plus qu'un ciseau, et un mollet
+remonté aussi vite qu'il est descendu n'est plus le mouvement contrôlé que la
+consigne demande.
+
+Deux images ne peuvent pas dire ça, et en prendre davantage n'y suffirait pas
+non plus : ce qui manque n'est pas de la posture, c'est de la **durée**.
+
+    python3 scripts/rythme-video.py <relevé.npz> [--debut N] [--fin N]
+
+lit la cadence sur la vidéo entière — période d'une répétition, temps d'arrêt,
+et jusqu'à savoir dire quand l'aller et le retour n'ont pas la même durée, cas
+que le moteur ne sait pas rendre. Il sort les numéros d'images à passer ici, le
+`--duree` mesuré, et les `pauses` à recopier dans le geste. C'est là qu'il faut
+commencer, avant de relever la moindre pose.
 """
 import argparse
 import math
@@ -544,7 +566,13 @@ def main():
     a.add_argument("geste")
     a.add_argument("--images", required=True, help="numéros d'images, séparés par des virgules")
     a.add_argument("--assise", default="debout", choices=sorted(ASSISES))
-    a.add_argument("--duree", type=int, default=2400)
+    a.add_argument(
+        "--duree", type=int, default=2400,
+        help="durée d'une répétition en millisecondes. À **mesurer** avec "
+        "scripts/rythme-video.py plutôt qu'à estimer : les trois gestes de la "
+        "vidéo de cardio avaient été écrits à 700 et 900 ms alors qu'ils "
+        "tournent à 417, 751 et 792.",
+    )
     a.add_argument(
         "--vue", default="profil", choices=("profil", "face", "trois-quarts"),
         help="sous quel angle le geste se lit. Un mouvement de profil se rend "

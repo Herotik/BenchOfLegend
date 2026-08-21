@@ -1,0 +1,152 @@
+<title>Revue des démonstrations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --fond: #edeff2; --surface: #ffffff; --pad: #e4e7ec;
+  --encre: #14171c; --sourd: #5c6572; --ligne: #d9dde3;
+  --accent: #1e5f86; --garde: #2c7a57; --reprendre: #a25a16;
+  --ombre: 0 1px 2px rgb(20 23 28 / .06), 0 6px 16px rgb(20 23 28 / .06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fond: #131519; --surface: #1b1e24; --pad: #23272e;
+    --encre: #e7eaee; --sourd: #949ca8; --ligne: #2b3038;
+    --accent: #74aeda; --garde: #55b98b; --reprendre: #d28b45;
+    --ombre: 0 1px 2px rgb(0 0 0 / .4), 0 8px 20px rgb(0 0 0 / .3);
+  }
+}
+:root[data-theme="dark"] {
+  --fond: #131519; --surface: #1b1e24; --pad: #23272e;
+  --encre: #e7eaee; --sourd: #949ca8; --ligne: #2b3038;
+  --accent: #74aeda; --garde: #55b98b; --reprendre: #d28b45;
+  --ombre: 0 1px 2px rgb(0 0 0 / .4), 0 8px 20px rgb(0 0 0 / .3);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--fond); color: var(--encre);
+  font: 400 15px/1.55 Archivo, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.enveloppe { max-width: 1180px; margin: 0 auto; padding: 40px 24px 80px; }
+header.chapeau { margin-bottom: 28px; }
+h1 {
+  font-size: clamp(28px, 4vw, 40px); font-weight: 700; letter-spacing: -.02em;
+  margin: 0 0 10px; text-wrap: balance;
+}
+.chapeau p { margin: 0; max-width: 62ch; color: var(--sourd); }
+.chapeau strong { color: var(--encre); font-weight: 600; }
+
+.barre {
+  position: sticky; top: 0; z-index: 5; margin: 24px 0 34px;
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  padding: 12px 14px; background: var(--surface); border: 1px solid var(--ligne);
+  border-radius: 10px; box-shadow: var(--ombre);
+}
+.compteur {
+  font: 500 12px/1 "IBM Plex Mono", ui-monospace, monospace;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--sourd);
+  margin-right: auto;
+}
+.compteur b { color: var(--encre); font-weight: 500; }
+.barre button {
+  font: 500 13px/1 Archivo, sans-serif; color: var(--encre);
+  background: transparent; border: 1px solid var(--ligne);
+  padding: 8px 12px; border-radius: 999px; cursor: pointer;
+}
+.barre button[aria-pressed="true"] {
+  background: var(--accent); border-color: var(--accent); color: var(--surface);
+}
+.barre button:focus-visible, .verdict button:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+
+.groupe { margin-bottom: 44px; }
+.tete-groupe {
+  display: flex; align-items: baseline; gap: 12px;
+  border-bottom: 1px solid var(--ligne); padding-bottom: 8px; margin-bottom: 18px;
+}
+.tete-groupe h2 { font-size: 19px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+.tete-groupe p {
+  margin: 0; font: 400 12px/1 "IBM Plex Mono", monospace; color: var(--sourd);
+}
+.grille { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); }
+
+.carte {
+  display: flex; flex-direction: column; background: var(--surface);
+  border: 1px solid var(--ligne); border-radius: 12px; overflow: hidden;
+  box-shadow: var(--ombre);
+}
+.carte[data-verdict="garde"] { border-color: var(--garde); }
+.carte[data-verdict="reprendre"] { border-color: var(--reprendre); }
+.scene {
+  display: grid; place-items: center; height: 176px; background: var(--pad);
+  border-bottom: 1px solid var(--ligne);
+}
+.figure {
+  width: 128px; height: 128px; background-repeat: no-repeat;
+  background-position: 0 0;
+}
+@keyframes colonnes { to { background-position-x: var(--fx); } }
+@keyframes rangees { to { background-position-y: var(--fy); } }
+body.fige .figure { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) {
+  .figure { animation-play-state: paused !important; }
+}
+
+.corps { padding: 14px 15px 15px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.corps h3 {
+  margin: 0; font: 500 14px/1.2 "IBM Plex Mono", monospace;
+  letter-spacing: -.01em; color: var(--encre); word-break: break-word;
+}
+.faits { margin: 0; display: grid; gap: 3px; }
+.faits > div { display: flex; justify-content: space-between; gap: 10px; }
+.faits dt {
+  font: 400 11px/1.5 "IBM Plex Mono", monospace; color: var(--sourd);
+  letter-spacing: .03em;
+}
+.faits dd {
+  margin: 0; font: 400 11px/1.5 "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums; color: var(--encre);
+}
+.exos {
+  margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column;
+  gap: 2px; font-size: 13px; color: var(--sourd); border-top: 1px solid var(--ligne);
+  padding-top: 10px;
+}
+.exos .orphelin { color: var(--reprendre); }
+.verdict { display: flex; gap: 8px; margin-top: auto; }
+.verdict button {
+  flex: 1; font: 500 12px/1 Archivo, sans-serif; padding: 9px 6px;
+  border-radius: 8px; border: 1px solid var(--ligne); background: transparent;
+  color: var(--sourd); cursor: pointer;
+}
+.carte[data-verdict="garde"] .verdict button[data-choix="garde"] {
+  background: var(--garde); border-color: var(--garde); color: #fff;
+}
+.carte[data-verdict="reprendre"] .verdict button[data-choix="reprendre"] {
+  background: var(--reprendre); border-color: var(--reprendre); color: #fff;
+}
+.carte.masquee { display: none; }
+footer {
+  margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--ligne);
+  color: var(--sourd); font-size: 13px; max-width: 62ch;
+}
+</style><div class="enveloppe">
+  <header class="chapeau">
+    <h1>Revue des démonstrations</h1>
+    <p>Les <strong>{{PLANCHES}} animations</strong> livrées dans le dépôt, qui couvrent
+    <strong>{{EXERCICES}} exercices</strong>. Elles tournent ici à leur vitesse réelle et
+    au cadrage de l'app. <strong>Aucune n'est encore sur ton téléphone</strong> :
+    l'application ne les recevra qu'à la prochaine publication. Marque ce que tu gardes et
+    ce qui est à reprendre — le choix reste enregistré dans ce navigateur.</p>
+  </header>
+
+  <div class="barre">
+    <span class="compteur" id="compteur"></span>
+    <button type="button" id="filtre-tout" aria-pressed="true">Tout</button>
+    <button type="button" id="filtre-avoir" aria-pressed="false">À voir</button>
+    <button type="button" id="filtre-reprendre" aria-pressed="false">À reprendre</button>
+    <button type="button" id="pause" aria-pressed="false">Figer</button>
+  </div>

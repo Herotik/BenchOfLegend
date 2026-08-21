@@ -1,0 +1,74 @@
+<script>
+(function () {
+  var cartes = Array.prototype.slice.call(document.querySelectorAll(".carte"));
+  var cle = "revue-demonstrations";
+  var choix = {};
+  try { choix = JSON.parse(localStorage.getItem(cle) || "{}") || {}; } catch (e) { choix = {}; }
+
+  function garder() {
+    try { localStorage.setItem(cle, JSON.stringify(choix)); } catch (e) {}
+  }
+
+  function compter() {
+    var g = 0, r = 0;
+    cartes.forEach(function (c) {
+      var v = c.getAttribute("data-verdict");
+      if (v === "garde") g++; else if (v === "reprendre") r++;
+    });
+    document.getElementById("compteur").innerHTML =
+      "<b>" + g + "</b> gardées · <b>" + r + "</b> à reprendre · <b>" +
+      (cartes.length - g - r) + "</b> à voir";
+  }
+
+  cartes.forEach(function (carte) {
+    var slug = carte.getAttribute("data-slug");
+    if (choix[slug]) carte.setAttribute("data-verdict", choix[slug]);
+    carte.querySelectorAll(".verdict button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var vise = b.getAttribute("data-choix");
+        var actuel = carte.getAttribute("data-verdict");
+        var neuf = actuel === vise ? "" : vise;
+        carte.setAttribute("data-verdict", neuf);
+        if (neuf) choix[slug] = neuf; else delete choix[slug];
+        garder(); compter(); filtrer();
+      });
+    });
+  });
+
+  var filtre = "tout";
+  function filtrer() {
+    cartes.forEach(function (c) {
+      var v = c.getAttribute("data-verdict");
+      var visible = filtre === "tout"
+        || (filtre === "avoir" && !v)
+        || (filtre === "reprendre" && v === "reprendre");
+      c.classList.toggle("masquee", !visible);
+    });
+    document.querySelectorAll(".groupe").forEach(function (s) {
+      var reste = s.querySelectorAll(".carte:not(.masquee)").length;
+      s.style.display = reste ? "" : "none";
+    });
+  }
+
+  [["filtre-tout", "tout"], ["filtre-avoir", "avoir"], ["filtre-reprendre", "reprendre"]]
+    .forEach(function (paire) {
+      document.getElementById(paire[0]).addEventListener("click", function () {
+        filtre = paire[1];
+        ["filtre-tout", "filtre-avoir", "filtre-reprendre"].forEach(function (id) {
+          document.getElementById(id).setAttribute(
+            "aria-pressed", id === paire[0] ? "true" : "false");
+        });
+        filtrer();
+      });
+    });
+
+  var pause = document.getElementById("pause");
+  pause.addEventListener("click", function () {
+    var fige = document.body.classList.toggle("fige");
+    pause.setAttribute("aria-pressed", fige ? "true" : "false");
+    pause.textContent = fige ? "Relancer" : "Figer";
+  });
+
+  compter(); filtrer();
+})();
+</script>

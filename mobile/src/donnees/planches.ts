@@ -44,6 +44,13 @@ import type { ImageSourcePropType } from "react-native";
  *    sur la première sans saut.
  *  · **Cadrage constant** d'un geste à l'autre : le personnage ne doit pas
  *    changer de taille quand on passe d'un exercice au suivant.
+ *  · **Le même personnage partout** — le mannequin nu. Les captations Mixamo
+ *    arrivent chacune avec le sien, en l'occurrence un hoplite en robe rouge,
+ *    et l'app en venait à mélanger un chevalier pour les pompes et un
+ *    mannequin pour les planches dans la même séance. Rien n'oblige à
+ *    refaire les captations pour autant : les squelettes sont les mêmes d'un
+ *    personnage Mixamo à l'autre, et `rendre-geste.py --corps <fbx>` rejoue
+ *    l'animation sur le corps voulu sans toucher au mouvement.
  */
 
 export interface Planche {
@@ -52,7 +59,16 @@ export interface Planche {
   images: number;
   /** Images par ligne. `scripts/planche-geste.py` en pose quatre. */
   colonnes: number;
-  /** Millisecondes pour une répétition entière. Par défaut 1400. */
+  /**
+   * Millisecondes pour une répétition entière. Par défaut 1400.
+   *
+   * À **mesurer**, pas à estimer. Les gestes relevés en vidéo portent la
+   * cadence que `scripts/rythme-video.py` a lue sur la vidéo entière, et non
+   * un chiffre rond choisi à l'œil : les trois gestes de la vidéo de cardio
+   * avaient été livrés à 700 et 900 ms alors qu'ils tournent à 417, 751 et
+   * 792. Une corde à sauter démontrée à 60 % de sa vitesse n'est plus une
+   * corde à sauter.
+   */
   duree?: number;
 }
 
@@ -156,7 +172,7 @@ export const PLANCHES: Record<string, Planche> = {
     source: require("../../assets/gestes/fente.png"),
     images: 20,
     colonnes: 4,
-    duree: 3000,
+    duree: 3087,
   },
   // Burpee
   burpee: {
@@ -164,13 +180,6 @@ export const PLANCHES: Record<string, Planche> = {
     images: 20,
     colonnes: 4,
     duree: 2000,
-  },
-  // Saut vertical
-  saut: {
-    source: require("../../assets/gestes/saut.png"),
-    images: 20,
-    colonnes: 4,
-    duree: 1100,
   },
 
   // --- Gestes écrits plutôt que captés -----------------------------------
@@ -240,6 +249,26 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 1400,
   },
+  // La variante unipodale, qui est la progression du mollet debout : le même
+  // geste sur une seule cheville, l'autre jambe repliée en arrière. Elle a sa
+  // planche à elle plutôt que de partager celle du mollet à deux jambes, parce
+  // que c'est exactement ce qui change entre les deux exercices.
+  "mollets-une-jambe": {
+    source: require("../../assets/gestes/mollets-une-jambe.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 1600,
+  },
+  // Squat sauté. **Écrit** et non capté, contrairement à ce qui était livré
+  // ici sous le nom `saut` : la captation Mixamo était un saut de personnage
+  // de jeu vidéo — élan, genoux ramenés, réception souple — et non l'exercice,
+  // qui part du squat et n'ajoute que l'extension.
+  "squat-saute": {
+    source: require("../../assets/gestes/squat-saute.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 1400,
+  },
   // Deux gestes de cardio tirés d'une même vidéo, qui en contenait trois.
   //
   // Tous deux de **trois-quarts** : ce sont des alternances gauche-droite, et
@@ -249,13 +278,13 @@ export const PLANCHES: Record<string, Planche> = {
     source: require("../../assets/gestes/montee-genoux.png"),
     images: 20,
     colonnes: 4,
-    duree: 900,
+    duree: 751,
   },
   "talons-fesses": {
     source: require("../../assets/gestes/talons-fesses.png"),
     images: 20,
     colonnes: 4,
-    duree: 900,
+    duree: 792,
   },
   // Troisième geste de la même vidéo, et le seul qu'on croyait impossible : la
   // démonstratrice y **mime** le mouvement sans corde. Le personnage n'en tient
@@ -268,7 +297,7 @@ export const PLANCHES: Record<string, Planche> = {
     source: require("../../assets/gestes/corde-a-sauter.png"),
     images: 20,
     colonnes: 4,
-    duree: 700,
+    duree: 417,
   },
   // De trois-quarts, et c'est la seule du registre : de profil, un corps couché
   // sur le côté est regardé dans l'axe de son regard et l'on ne voit plus de
@@ -279,15 +308,16 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 2600,
   },
-  // Huit cents millisecondes : c'est un geste **rapide**, et la démonstration
-  // doit le dire. Deux poses seulement, genou droit puis genou gauche, ce qui
-  // fait un grand pas d'une image à l'autre — la boucle se referme donc moins
-  // finement que sur les gestes lents, et c'est le rythme qui le veut.
+  // Mille quatre cents millisecondes, et non huit cents. Le geste n'est pas un
+  // ciseau continu : la vidéo montre quatre temps — genou ramené, temps
+  // d'arrêt, retour en planche, autre genou. Cinq poses clés le disent, dont
+  // la planche pleine qui manquait ; un quart du tour se passe immobile de
+  // chaque côté. Joué en huit cents millisecondes, tout cela s'effaçait.
   "mountain-climber": {
     source: require("../../assets/gestes/mountain-climber.png"),
     images: 20,
     colonnes: 4,
-    duree: 800,
+    duree: 1400,
   },
 };
 /* eslint-enable @typescript-eslint/no-require-imports */

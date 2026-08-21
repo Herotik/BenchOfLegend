@@ -1,0 +1,20 @@
+<footer>
+    <p><strong>Amplitude</strong> — de combien l'image change au long du geste, en niveaux
+    de gris moyens. Elle se compare d'un geste à l'autre : une valeur basse signale une
+    démonstration qui ne bouge pas assez pour se lire.</p>
+    <p><strong>Saut de boucle</strong> — l'écart entre la dernière image et la première,
+    rapporté au pas moyen du geste. La question n'est pas si le retour au départ se voit,
+    mais s'il se voit <em>plus qu'un pas ordinaire</em> : sous 100 %, la jointure passe
+    inaperçue ; au-delà, le geste ressaute à chaque tour.</p>
+    <p><strong>Origine</strong> — « écrit ici » désigne les gestes posés sur le squelette par
+    <code>gestes_generes.py</code>, relevés sur vidéo ou décrits à la main ; « captation » les
+    animations Mixamo. Les unes comme les autres montrent désormais <strong>le même
+    mannequin nu</strong> : les captations sont rejouées sur lui par
+    <code>rendre-geste.py --corps</code>, ce qui retire le personnage habillé sans toucher
+    au mouvement.</p>
+    <p><strong>Durée</strong> — pour les gestes relevés en vidéo, c'est la cadence
+    <em>mesurée</em> sur la vidéo entière par <code>rythme-video.py</code>, et non un chiffre
+    rond choisi à l'œil. Les trois gestes de la vidéo de cardio étaient livrés à 700 et
+    900 ms alors qu'ils tournent à 417, 751 et 792.</p>
+  </footer>
+</div>

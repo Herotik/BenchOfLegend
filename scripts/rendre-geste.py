@@ -27,6 +27,11 @@ Options (après le `--`) :
                      pompes paraît plus petit qu'un corps debout.
   --essai            Rend une forme d'essai au lieu d'importer un FBX, pour
                      éprouver le cadrage et l'éclairage sans avoir de modèle.
+  --corps <fbx>      Rejoue l'animation du FBX sur **ce** personnage-ci. Les
+                     captations Mixamo arrivent chacune avec son propre
+                     modèle habillé ; l'app en mélangeait deux. Les squelettes
+                     étant identiques d'un personnage Mixamo à l'autre, une
+                     action se transfère sans rien perdre du mouvement.
 
 La sortie se passe ensuite dans `scripts/planche-geste.py`, qui en fait la
 planche que l'app lit.
@@ -67,6 +72,7 @@ transparent et que l'app l'affiche sur des teintes variables.
 import bpy
 import sys
 import os
+import re
 import math
 from mathutils import Vector
 
@@ -108,6 +114,9 @@ def arguments():
         "echelle": float(valeur("--echelle", 0)) or None,
         "geste": valeur("--geste", None),
         "essai": "--essai" in apres,
+        # Le corps sur lequel jouer l'animation, quand ce n'est pas celui du
+        # FBX importé. Voir `transferer_sur_le_corps`.
+        "corps": valeur("--corps", None),
         # Le sol ne part **pas** dans l'app : la vignette y est détourée et un
         # plancher la fermerait. Il sert à juger un geste au sol, où l'œil n'a
         # sinon aucun repère — une main posée et une main flottant à trois
@@ -120,6 +129,80 @@ def arguments():
         # de soixante centimètres semble faire du surplace.
         "tapis": "--tapis" in apres,
     }
+
+
+def os_anime(chemin_de_donnee):
+    """Le nom de l'os qu'une courbe d'animation fait bouger, s'il y en a un.
+
+    Une action range ses courbes sous `pose.bones["mixamorig:Hips"].rotation_quaternion`.
+    Les courbes qui ne visent pas un os — la position de l'objet, une forme
+    clé — n'ont pas de nom à rendre.
+    """
+    trouve = re.match(r'pose\.bones\["([^"]+)"\]', chemin_de_donnee)
+    return trouve.group(1) if trouve else None
+
+
+def transferer_sur_le_corps(chemin_corps):
+    """Rejoue l'animation du FBX importé sur **un autre** personnage.
+
+    ## Pourquoi
+
+    Les premières planches venaient de captations Mixamo, et chaque captation
+    arrive avec son propre personnage — en l'occurrence un hoplite en robe
+    rouge. Les gestes écrits, eux, se posent sur le mannequin nu. L'app en est
+    venue à mélanger les deux : un chevalier pour les pompes, un mannequin pour
+    les planches, côte à côte dans la même séance.
+
+    Refaire les captations à la main coûterait le mouvement, qui est bon. Or il
+    n'y a rien à refaire : **les squelettes sont les mêmes.** Mixamo nomme ses
+    os `mixamorig:` sur tous ses personnages, et une action ne stocke que des
+    rotations d'os nommés. L'assigner au mannequin la rejoue telle quelle.
+
+    On importe donc l'animation, on lui prend son action, on importe le corps
+    voulu, on lui donne l'action, et l'on jette le personnage d'origine.
+    """
+    animees = [o for o in bpy.data.objects if o.type == "ARMATURE"]
+    if not animees:
+        sys.exit("Aucun squelette animé à transférer.")
+    source = animees[0]
+    action = getattr(getattr(source, "animation_data", None), "action", None)
+    if action is None:
+        sys.exit("Le FBX importé ne porte aucune animation à transférer.")
+
+    avant = set(bpy.data.objects)
+    bpy.ops.import_scene.fbx(filepath=chemin_corps)
+    nouveaux = [o for o in bpy.data.objects if o not in avant]
+    corps = next((o for o in nouveaux if o.type == "ARMATURE"), None)
+    if corps is None:
+        sys.exit(f"Aucun squelette dans le corps demandé : {chemin_corps}")
+
+    # On compare les os **que l'action fait bouger**, et non tous ceux du
+    # squelette d'origine. Les personnages Mixamo ne portent pas exactement le
+    # même gréement — celui de la pompe a des os d'yeux que le mannequin n'a
+    # pas — et refuser le transfert pour un `RightEye` qui ne tourne jamais
+    # reviendrait à jeter une captation valable pour un détail que la
+    # démonstration ne montre pas.
+    manquants = sorted(
+        {
+            nom for nom in (os_anime(courbe.data_path) for courbe in action.fcurves)
+            if nom and nom not in corps.pose.bones
+        }
+    )
+    if manquants:
+        sys.exit(
+            f"{len(manquants)} os animés manquent au corps "
+            f"({', '.join(manquants[:3])}) : les deux squelettes diffèrent."
+        )
+
+    corps.animation_data_create()
+    corps.animation_data.action = action
+
+    # Le personnage d'origine s'en va — maillage compris, sans quoi il
+    # resterait planté au milieu du cadre, immobile.
+    for objet in list(bpy.data.objects):
+        if objet not in nouveaux and objet.type in {"ARMATURE", "MESH"}:
+            bpy.data.objects.remove(objet, do_unlink=True)
+    bpy.context.view_layer.update()
 
 
 def scene_vierge():
@@ -465,6 +548,8 @@ def main():
     o = arguments()
     scene_vierge()
     importer(o["fbx"], o["essai"])
+    if o["corps"]:
+        transferer_sur_le_corps(o["corps"])
 
     scene = bpy.context.scene
 

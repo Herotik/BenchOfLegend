@@ -259,6 +259,160 @@ PLANCHE_DROITE = {
 }
 
 
+# Mains tenues **devant**, à hauteur de hanche, paumes vers le sol.
+#
+# C'est la cible que la démonstratrice se donne dans la vidéo de montées de
+# genoux : les mains ne bougent pas, et c'est le genou qui vient les toucher.
+# Sans elles, le geste ne dit plus jusqu'où monter — or c'est justement toute
+# la consigne, le genou à hauteur de hanche.
+#
+# Le coude descend un peu en avant (l'épaule est à 1,42 m, le coude tombe à
+# 1,15 m) et l'avant-bras part vers l'avant en plongeant à peine : la paume
+# arrive à 1,08 m, trente centimètres devant. Le genou monté culmine à 1,09 m
+# et 41 cm devant — il passe donc sous la main, ce qui est le geste.
+MAINS_DEVANT = {
+    _os("LeftArm"): (+0.14, -0.20, -0.97),
+    _os("RightArm"): (-0.14, -0.20, -0.97),
+    _os("LeftForeArm"): (+0.02, -0.96, -0.28),
+    _os("RightForeArm"): (-0.02, -0.96, -0.28),
+    # Paume vers le sol : une main tenue en cible se présente à plat, pas sur
+    # le chant. `APlat` est le seul moyen de le dire — une direction seule
+    # laisse la main tourner autour de son propre axe.
+    _os("LeftHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+    _os("RightHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+}
+
+
+# Bras qui **pendent**, coude à peine fléchi, poignets dans le prolongement.
+#
+# À ne pas confondre avec `REPOS`, qui veut dire « comme le modèle se tient » —
+# et ce modèle-ci se tient en croix. Cinq poses de la fente le demandaient et
+# récoltaient donc cinq fois un personnage bras écartés, ce qu'aucun exercice
+# debout ne veut.
+BRAS_LE_LONG = {
+    _os("LeftArm"): (+0.13, +0.02, -0.99),
+    _os("RightArm"): (-0.13, +0.02, -0.99),
+    _os("LeftForeArm"): (+0.10, -0.16, -0.98),
+    _os("RightForeArm"): (-0.10, -0.16, -0.98),
+    _os("LeftHand"): SUIVRE,
+    _os("RightHand"): SUIVRE,
+}
+
+
+# Jambe gauche repliée en arrière, talon haut : la position d'appui unipodal.
+#
+# Le tibia part vers l'arrière **et légèrement vers le haut**, ce qui met la
+# cheville à cinquante-neuf centimètres du sol. C'est beaucoup, et c'est voulu :
+# une jambe à peine décollée ne se distingue pas d'une fente, de profil.
+JAMBE_REPLIEE = {
+    _os("LeftUpLeg"): (+0.02, +0.14, -0.99),
+    _os("LeftLeg"): (+0.02, +0.98, +0.20),
+    # Le pied pend, orteils vers le bas et l'arrière : c'est ce que fait un
+    # pied qu'aucun appui ne tient.
+    _os("LeftFoot"): (+0.00, +0.55, -0.84),
+}
+
+
+def bras_de_course(devant, amplitude=1.0):
+    """Bras de coureur : coude à angle droit, l'un devant, l'autre derrière.
+
+    `devant` dit quel côté balance vers l'avant — `"G"` ou `"D"`. En course,
+    le bras répond à la jambe **opposée** : quand le talon gauche remonte, la
+    jambe gauche est en arrière et c'est donc le bras gauche qui part devant.
+
+    Le coude reste à quatre-vingt-dix degrés des deux côtés, et seul le sens du
+    balancement change — c'est ce qui distingue une course d'un moulinet. La
+    main avant monte à hauteur de poitrine, la main arrière descend à la
+    hanche ; les poignets prolongent l'avant-bras, comme un poing fermé.
+
+    `amplitude` mélange vers `BRAS_LE_LONG` : 1 pour une course sur place, un
+    tiers pour le contre-balancement discret d'une fente, où les bras
+    accompagnent le pas sans le mimer.
+    """
+    avance = {"G": +1, "D": -1}[devant]
+    couche = {}
+    for cote, signe in (("Left", +1), ("Right", -1)):
+        # +1 pour le bras qui part devant, -1 pour celui qui part derrière.
+        sens = +1 if (signe == avance) else -1
+        courant = {
+            _os(f"{cote}Arm"): (signe * 0.12, -sens * 0.42, -0.90),
+            _os(f"{cote}ForeArm"): (signe * 0.10, -0.87, sens * 0.48),
+        }
+        for nom, vise in courant.items():
+            calme = BRAS_LE_LONG[nom]
+            couche[nom] = tuple(
+                c + (v - c) * amplitude for c, v in zip(calme, vise)
+            )
+        couche[_os(f"{cote}Hand")] = SUIVRE
+    return couche
+
+
+def grimpeur(genou):
+    """Une pose de mountain climber : quel genou est ramené, ou aucun.
+
+    `genou` vaut `"G"`, `"D"`, ou `None` pour la planche pleine — les deux
+    jambes tendues. C'est cette troisième pose qui manquait : sans elle, le
+    geste interpolait directement d'un genou à l'autre et le corps ciseillait
+    sans jamais repasser par la planche. Or c'est précisément ce que la vidéo
+    montre, et ce qu'un pratiquant doit voir : on **revient** en planche entre
+    deux montées.
+
+    Les pôles se lisent dans le repère du corps : à plat ventre, son avant est
+    le **sol**. Le genou mène donc vers le bas et le coude part vers le haut.
+    Écrits avec l'avant d'un corps debout, ils pliaient les genoux à l'envers.
+
+    Les x sont **négatifs à gauche** : à plat ventre, le demi-tour met la
+    gauche du personnage en -X. La version précédente attachait le x au rôle —
+    la jambe tendue toujours en +0,12, quelle qu'elle soit — et les jambes se
+    croisaient donc à chaque alternance. De profil cela ne se voyait pas ; ce
+    n'est pas une raison pour l'écrire.
+    """
+    couche = {
+        # Six centimètres, et non deux : un appui vise le **poignet**, et la
+        # paume est cinq centimètres plus bas. Viser le sol avec le poignet
+        # enfonce donc la main d'autant.
+        #
+        # Les mains ne bougent pas de tout l'exercice — elles sont posées.
+        # C'est exactement ce qu'un appui exprime, et ce qu'on n'arrivait pas
+        # à obtenir en cherchant les angles à la main.
+        _os("LeftArm"): Appui((-0.18, 0.47, 0.06), (0, 0.30, 0.95)),
+        _os("RightArm"): Appui((0.18, 0.47, 0.06), (0, 0.30, 0.95)),
+        # Les mains **posées**, paume au sol, doigts vers la tête. Un appui ne
+        # place que le poignet : laissée libre, la main gardait le roulis d'un
+        # corps debout et ses doigts traversaient le plancher de sept
+        # centimètres et demi. C'est un majeur qui a trahi la faute, une fois
+        # le sol dessiné.
+        _os("LeftHand"): APlat((0, 1, 0)),
+        _os("RightHand"): APlat((0, 1, 0)),
+        # Les pieds **posés**, orteils recourbés sous la cheville. Sans eux,
+        # laissés au repos, ils gardaient l'orientation d'un corps debout —
+        # donc pointés vers le bas une fois le corps à plat ventre — et
+        # traversaient le plancher de douze centimètres. Un appui vise la
+        # cheville, pas l'orteil : c'est pourquoi les cibles ci-dessous sont à
+        # vingt et un centimètres, soit la longueur du pied plus l'épaisseur
+        # des orteils. Les régler à l'œil sur la position du sol y enfonçait
+        # le pied.
+        _os("LeftFoot"): (0, 0, -1),
+        _os("RightFoot"): (0, 0, -1),
+    }
+    for cote, lettre, signe in (("Left", "G", -1), ("Right", "D", +1)):
+        if lettre == genou:
+            # Genou ramené sous la poitrine : la cheville se rapproche.
+            couche[_os(f"{cote}UpLeg")] = Appui(
+                (signe * 0.14, -0.20, 0.24), (0, 0.35, -0.94)
+            )
+        else:
+            # Jambe tendue en arrière, cheville juste au-dessus du sol. La
+            # hanche est à 50 cm et la jambe en fait 90 : le pied ne peut pas
+            # aller plus loin que √(0,90² − 0,42²) ≈ 0,80 m en arrière. Viser
+            # au-delà laissait la jambe pendre en diagonale, et le personnage
+            # paraissait accroupi.
+            couche[_os(f"{cote}UpLeg")] = Appui(
+                (signe * 0.12, -0.80, 0.21), (0, -0.20, -0.98)
+            )
+    return couche
+
+
 #: Recul du bassin qui accompagne `BUSTE_PENCHE`, en mètres, dans le monde.
 #: +Y est derrière le personnage, qui regarde vers -Y.
 RECUL_BASSIN = (0, 0.16, 0)
@@ -431,12 +585,20 @@ GESTES = {
     # debout pieds joints, le pas en avant, le point bas genou près du sol.
     # Remplace une version écrite à la main, jamais rendue faute d'y arriver.
     #
-    # Les bras sont rendus au modèle : la démonstratrice tient ses poings en
-    # garde, ce qui est son style et non l'exercice — et la même planche sert
-    # aussi les fentes haltères, bras le long du corps.
+    # Les bras ne viennent pas du relevé : la démonstratrice tient ses poings
+    # en garde, ce qui est son style et non l'exercice — et la même planche
+    # sert aussi les fentes haltères, bras le long du corps.
+    #
+    # Ils étaient donc laissés à `REPOS`, ce qui semblait dire « au repos » et
+    # veut dire « comme le modèle se tient » : en croix. Cinq clés, cinq fois
+    # un personnage bras écartés au milieu d'une fente. Ils pendent désormais
+    # le long du corps, avec le contre-balancement discret que le pas appelle —
+    # la jambe **gauche** part devant, c'est donc le bras **droit** qui
+    # avance —, et à un tiers de l'amplitude d'une course : une fente
+    # s'accompagne, elle ne se mime pas.
     "fente": {
         "vue": "profil",
-        "duree": 3000,
+        "duree": 3087,  # mesuré : 71 images à 23 i/s, sur 44 répétitions
         # Assise « debout », penchée des -0° mesurés sur la vidéo.
         "assise": ((+0.00, +0.01, +1.00), (+0.00, -1.00, +0.01)),
         "symetrique": False,
@@ -450,18 +612,12 @@ GESTES = {
         # bassin immobile — un grand écart, pas une fente.
         "plante": "RightFoot",
         "cles": [
-            _pose({
+            _pose(BRAS_LE_LONG, {
                 _os("Spine"): (+0.00, +0.01, +1.00),
                 _os("Spine1"): (+0.00, +0.01, +1.00),
                 _os("Spine2"): (+0.00, +0.01, +1.00),
                 _os("Neck"): (+0.00, -0.22, +0.98),
                 _os("Head"): (+0.00, -0.22, +0.98),
-                _os("LeftArm"): REPOS,
-                _os("RightArm"): REPOS,
-                _os("LeftForeArm"): REPOS,
-                _os("RightForeArm"): REPOS,
-                _os("LeftHand"): REPOS,
-                _os("RightHand"): REPOS,
                 _os("LeftUpLeg"): (+0.00, -0.02, -1.00),
                 _os("RightUpLeg"): (+0.00, -0.02, -1.00),
                 _os("LeftLeg"): (+0.00, -0.02, -1.00),
@@ -469,18 +625,12 @@ GESTES = {
                 _os("LeftFoot"): (+0.00, -0.90, -0.43),
                 _os("RightFoot"): (+0.00, -0.90, -0.43),
             }),
-            _pose({
+            _pose(BRAS_LE_LONG, {
                 _os("Spine"): (+0.00, +0.01, +1.00),
                 _os("Spine1"): (+0.00, +0.01, +1.00),
                 _os("Spine2"): (+0.00, +0.01, +1.00),
                 _os("Neck"): (+0.00, -0.22, +0.98),
                 _os("Head"): (+0.00, -0.22, +0.98),
-                _os("LeftArm"): REPOS,
-                _os("RightArm"): REPOS,
-                _os("LeftForeArm"): REPOS,
-                _os("RightForeArm"): REPOS,
-                _os("LeftHand"): REPOS,
-                _os("RightHand"): REPOS,
                 _os("LeftUpLeg"): (+0.00, -0.02, -1.00),
                 _os("RightUpLeg"): (+0.00, -0.02, -1.00),
                 _os("LeftLeg"): (+0.00, -0.02, -1.00),
@@ -488,18 +638,12 @@ GESTES = {
                 _os("LeftFoot"): (+0.00, -0.90, -0.43),
                 _os("RightFoot"): (+0.00, -0.90, -0.43),
             }),
-            _pose({
+            _pose(bras_de_course("D", 0.20), {
                 _os("Spine"): (+0.00, +0.01, +1.00),
                 _os("Spine1"): (+0.00, +0.01, +1.00),
                 _os("Spine2"): (+0.00, +0.01, +1.00),
                 _os("Neck"): (+0.00, -0.21, +0.98),
                 _os("Head"): (+0.00, -0.21, +0.98),
-                _os("LeftArm"): REPOS,
-                _os("RightArm"): REPOS,
-                _os("LeftForeArm"): REPOS,
-                _os("RightForeArm"): REPOS,
-                _os("LeftHand"): REPOS,
-                _os("RightHand"): REPOS,
                 _os("LeftUpLeg"): (+0.00, -0.51, -0.86),
                 _os("RightUpLeg"): (+0.00, +0.15, -0.99),
                 _os("LeftLeg"): (+0.00, -0.43, -0.90),
@@ -507,18 +651,12 @@ GESTES = {
                 _os("LeftFoot"): (+0.00, -1.00, -0.05),
                 _os("RightFoot"): (+0.00, -0.59, -0.81),
             }),
-            _pose({
+            _pose(bras_de_course("D", 0.35), {
                 _os("Spine"): (+0.00, +0.01, +1.00),
                 _os("Spine1"): (+0.00, +0.01, +1.00),
                 _os("Spine2"): (+0.00, +0.01, +1.00),
                 _os("Neck"): (+0.00, -0.08, +1.00),
                 _os("Head"): (+0.00, -0.08, +1.00),
-                _os("LeftArm"): REPOS,
-                _os("RightArm"): REPOS,
-                _os("LeftForeArm"): REPOS,
-                _os("RightForeArm"): REPOS,
-                _os("LeftHand"): REPOS,
-                _os("RightHand"): REPOS,
                 _os("LeftUpLeg"): (+0.00, -0.99, -0.13),
                 _os("RightUpLeg"): (+0.00, +0.25, -0.97),
                 _os("LeftLeg"): (+0.00, +0.25, -0.97),
@@ -533,18 +671,12 @@ GESTES = {
                 _os("LeftFoot"): (+0.00, -1.00, +0.00),
                 _os("RightFoot"): (+0.00, +0.00, -1.00),
             }),
-            _pose({
+            _pose(bras_de_course("D", 0.35), {
                 _os("Spine"): (+0.00, +0.01, +1.00),
                 _os("Spine1"): (+0.00, +0.01, +1.00),
                 _os("Spine2"): (+0.00, +0.01, +1.00),
                 _os("Neck"): (+0.00, -0.08, +1.00),
                 _os("Head"): (+0.00, -0.08, +1.00),
-                _os("LeftArm"): REPOS,
-                _os("RightArm"): REPOS,
-                _os("LeftForeArm"): REPOS,
-                _os("RightForeArm"): REPOS,
-                _os("LeftHand"): REPOS,
-                _os("RightHand"): REPOS,
                 _os("LeftUpLeg"): (+0.00, -0.99, -0.13),
                 _os("RightUpLeg"): (+0.00, +0.25, -0.97),
                 _os("LeftLeg"): (+0.00, +0.25, -0.97),
@@ -578,7 +710,7 @@ GESTES = {
         # images de suite s'y ressemblaient au point que le personnage
         # semblait immobile.
         "vue": "trois-quarts",
-        "duree": 900,
+        "duree": 751,  # mesuré : 18 images à 24 i/s
         # Assise « debout » canonique : voir --sans-pente.
         "assise": ((+0.00, +0.00, +1.00), (+0.00, -1.00, +0.00)),
         "symetrique": False,
@@ -586,18 +718,12 @@ GESTES = {
         # d'`aplomb` : mettre des appuis de niveau demande trois points.
         "ancrage": ("LeftFoot", "RightFoot"),
         "cles": [
-            _pose({
+            _pose(MAINS_DEVANT, {
                 _os("Spine"): (+0.00, -0.00, +1.00),
                 _os("Spine1"): (+0.00, -0.00, +1.00),
                 _os("Spine2"): (+0.00, -0.00, +1.00),
                 _os("Neck"): (+0.00, -0.28, +0.96),
                 _os("Head"): (+0.00, -0.28, +0.96),
-                _os("LeftArm"): (+0.12, +0.00, -0.99),
-                _os("RightArm"): (-0.12, -0.00, -0.99),
-                _os("LeftForeArm"): (+0.08, +0.10, -0.99),
-                _os("RightForeArm"): (-0.08, +0.10, -0.99),
-                _os("LeftHand"): (-0.00, +0.15, -0.99),
-                _os("RightHand"): (-0.00, +0.15, -0.99),
                 _os("LeftUpLeg"): (+0.00, -0.98, +0.21),
                 _os("RightUpLeg"): (+0.00, +0.00, -1.00),
                 _os("LeftLeg"): (+0.00, +0.36, -0.93),
@@ -605,18 +731,12 @@ GESTES = {
                 _os("LeftFoot"): (+0.00, -0.40, -0.92),
                 _os("RightFoot"): (+0.00, -0.66, -0.75),
             }),
-            _pose({
+            _pose(MAINS_DEVANT, {
                 _os("Spine"): (+0.00, -0.00, +1.00),
                 _os("Spine1"): (+0.00, -0.00, +1.00),
                 _os("Spine2"): (+0.00, -0.00, +1.00),
                 _os("Neck"): (+0.00, -0.28, +0.96),
                 _os("Head"): (+0.00, -0.28, +0.96),
-                _os("RightArm"): (-0.12, -0.00, -0.99),
-                _os("LeftArm"): (+0.12, +0.00, -0.99),
-                _os("RightForeArm"): (-0.08, +0.10, -0.99),
-                _os("LeftForeArm"): (+0.08, +0.10, -0.99),
-                _os("RightHand"): (-0.00, +0.15, -0.99),
-                _os("LeftHand"): (-0.00, +0.15, -0.99),
                 _os("RightUpLeg"): (+0.00, -0.98, +0.21),
                 _os("LeftUpLeg"): (+0.00, +0.00, -1.00),
                 _os("RightLeg"): (+0.00, +0.36, -0.93),
@@ -640,7 +760,7 @@ GESTES = {
         # images de suite s'y ressemblaient au point que le personnage
         # semblait immobile.
         "vue": "trois-quarts",
-        "duree": 900,
+        "duree": 792,  # mesuré : 19 images à 24 i/s
         # Assise « debout » canonique : voir --sans-pente.
         "assise": ((+0.00, +0.00, +1.00), (+0.00, -1.00, +0.00)),
         "symetrique": False,
@@ -648,18 +768,14 @@ GESTES = {
         # d'`aplomb` : mettre des appuis de niveau demande trois points.
         "ancrage": ("LeftFoot", "RightFoot"),
         "cles": [
-            _pose({
+            # Talon **gauche** qui remonte : la jambe gauche est donc en
+            # arrière, et c'est le bras gauche qui part devant.
+            _pose(bras_de_course("G"), {
                 _os("Spine"): (+0.00, +0.00, +1.00),
                 _os("Spine1"): (+0.00, +0.00, +1.00),
                 _os("Spine2"): (+0.00, +0.00, +1.00),
                 _os("Neck"): (+0.00, -0.31, +0.95),
                 _os("Head"): (+0.00, -0.31, +0.95),
-                _os("LeftArm"): (+0.12, +0.00, -0.99),
-                _os("RightArm"): (-0.12, -0.00, -0.99),
-                _os("LeftForeArm"): (+0.08, +0.10, -0.99),
-                _os("RightForeArm"): (-0.08, +0.10, -0.99),
-                _os("LeftHand"): (-0.00, +0.15, -0.99),
-                _os("RightHand"): (-0.00, +0.15, -0.99),
                 _os("LeftUpLeg"): (+0.00, -0.32, -0.95),
                 _os("RightUpLeg"): (+0.00, +0.15, -0.99),
                 _os("LeftLeg"): (+0.00, +1.00, +0.03),
@@ -667,18 +783,12 @@ GESTES = {
                 _os("LeftFoot"): (+0.00, +0.75, -0.66),
                 _os("RightFoot"): (+0.00, -0.63, -0.78),
             }),
-            _pose({
+            _pose(bras_de_course("D"), {
                 _os("Spine"): (+0.00, +0.00, +1.00),
                 _os("Spine1"): (+0.00, +0.00, +1.00),
                 _os("Spine2"): (+0.00, +0.00, +1.00),
                 _os("Neck"): (+0.00, -0.31, +0.95),
                 _os("Head"): (+0.00, -0.31, +0.95),
-                _os("RightArm"): (-0.12, -0.00, -0.99),
-                _os("LeftArm"): (+0.12, +0.00, -0.99),
-                _os("RightForeArm"): (-0.08, +0.10, -0.99),
-                _os("LeftForeArm"): (+0.08, +0.10, -0.99),
-                _os("RightHand"): (-0.00, +0.15, -0.99),
-                _os("LeftHand"): (-0.00, +0.15, -0.99),
                 _os("RightUpLeg"): (+0.00, -0.32, -0.95),
                 _os("LeftUpLeg"): (+0.00, +0.15, -0.99),
                 _os("RightLeg"): (+0.00, +1.00, +0.03),
@@ -698,9 +808,18 @@ GESTES = {
     # bassin quatorze centimètres plus haut, avant-bras qui tournent. De
     # **face**, parce que c'est là que la position des avant-bras se lit —
     # de profil ils se cachent l'un l'autre.
+    #
+    # Les mains **tiennent** la corde, même absente : coudes serrés contre les
+    # côtes et à peine en arrière, avant-bras qui partent vers l'avant et vers
+    # l'extérieur, poings à trente-huit centimètres de l'axe et à hauteur de
+    # hanche — la place exacte d'une poignée. Et le poignet **prolonge**
+    # l'avant-bras : le relevé le cassait de dix degrés, ce qui donnait une
+    # main ouverte, alors qu'un poing fermé sur une poignée fait une ligne
+    # droite du coude aux doigts. C'est le seul signe qui distingue ce geste
+    # d'un simple rebond sur place.
     "corde-a-sauter": {
         "vue": "face",
-        "duree": 700,
+        "duree": 417,  # mesuré : 10 images à 24 i/s
         # Assise « debout » canonique : voir --sans-pente.
         "assise": ((+0.00, +0.00, +1.00), (+0.00, -1.00, +0.00)),
         # `ancrage: False` et un décalage de bassin, comme pour un saut :
@@ -717,12 +836,12 @@ GESTES = {
                 _os("Spine2"): (+0.00, -0.00, +1.00),
                 _os("Neck"): (+0.00, -0.34, +0.94),
                 _os("Head"): (+0.00, -0.34, +0.94),
-                _os("LeftArm"): (+0.22, +0.01, -0.98),
-                _os("RightArm"): (-0.22, +0.01, -0.98),
-                _os("LeftForeArm"): (+0.59, -0.73, -0.34),
-                _os("RightForeArm"): (-0.59, -0.73, -0.34),
-                _os("LeftHand"): (+0.47, -0.85, -0.24),
-                _os("RightHand"): (-0.47, -0.85, -0.24),
+                _os("LeftArm"): (+0.16, +0.12, -0.98),
+                _os("RightArm"): (-0.16, +0.12, -0.98),
+                _os("LeftForeArm"): (+0.62, -0.72, -0.31),
+                _os("RightForeArm"): (-0.62, -0.72, -0.31),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
                 _os("LeftUpLeg"): (-0.14, +0.00, -0.99),
                 _os("RightUpLeg"): (+0.14, +0.00, -0.99),
                 _os("LeftLeg"): (-0.03, +0.46, -0.89),
@@ -736,12 +855,12 @@ GESTES = {
                 _os("Spine2"): (+0.00, +0.00, +1.00),
                 _os("Neck"): (+0.00, -0.45, +0.89),
                 _os("Head"): (+0.00, -0.45, +0.89),
-                _os("LeftArm"): (+0.23, +0.08, -0.97),
-                _os("RightArm"): (-0.23, +0.08, -0.97),
-                _os("LeftForeArm"): (+0.60, -0.80, -0.09),
-                _os("RightForeArm"): (-0.60, -0.80, -0.09),
-                _os("LeftHand"): (+0.51, -0.86, +0.02),
-                _os("RightHand"): (-0.51, -0.86, +0.02),
+                _os("LeftArm"): (+0.17, +0.15, -0.97),
+                _os("RightArm"): (-0.17, +0.15, -0.97),
+                _os("LeftForeArm"): (+0.66, -0.70, -0.27),
+                _os("RightForeArm"): (-0.66, -0.70, -0.27),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
                 _os("LeftUpLeg"): (-0.14, +0.08, -0.99),
                 _os("RightUpLeg"): (+0.14, +0.08, -0.99),
                 _os("LeftLeg"): (-0.04, +0.42, -0.91),
@@ -760,10 +879,141 @@ GESTES = {
         # même image mais pour de mauvaises raisons, et le moindre changement de
         # pose la fausserait.
         "cles": [
-            _pose(),
-            _pose({
+            _pose(BRAS_LE_LONG),
+            _pose(BRAS_LE_LONG, {
                 _os("LeftFoot"): (0.05, -0.55, -0.83),
                 _os("RightFoot"): (-0.05, -0.55, -0.83),
+            }),
+        ],
+    },
+    # Squat sauté, **écrit** et non capté.
+    #
+    # La captation Mixamo qui servait jusqu'ici s'appelait « Jump » et c'en
+    # était un : élan, ramené de genoux, réception souple — le saut d'un
+    # personnage de jeu vidéo, pas celui d'un exercice. Or la consigne du
+    # catalogue tient en une phrase : « descendre en squat puis pousser
+    # explosivement pour décoller, réceptionner en amortissant genoux
+    # fléchis ». Le geste part donc du squat, et le saut n'en est que
+    # l'extension.
+    #
+    # Quatre poses, parcourues en aller-retour : debout, squat, extension,
+    # envol — puis le chemin inverse, qui est exactement la réception, genoux
+    # fléchis, jusqu'au squat avant de se relever. Une seule série de clés dit
+    # donc la montée et la descente, et la boucle se referme sans saut.
+    #
+    # Le genou descend à quatre-vingt-trois degrés au point bas : c'est un
+    # squat sous la parallèle, et non le demi-squat qu'on voit partout. Le dos
+    # reste **plat** et penche de vingt-cinq degrés à la hanche — l'arrondir
+    # serait montrer la faute qu'on passe son temps à corriger.
+    "squat-saute": {
+        "vue": "profil",
+        "duree": 1400,
+        # Le corps quitte vraiment le sol, et c'est `envol` qui le dit : le
+        # contact est calculé normalement à chaque pose, sur le maillage, puis
+        # le corps est soulevé de la hauteur déclarée. Trois centimètres à
+        # l'extension — le talon vient de décoller —, vingt-deux en l'air.
+        "envol": [0.0, 0.0, 0.03, 0.22],
+        "cles": [
+            # Debout, bras le long du corps.
+            _pose(BRAS_LE_LONG),
+            # Le point bas. Les bras partent **en arrière** : c'est l'armé du
+            # saut, et sans lui l'extension qui suit n'a pas d'élan à montrer.
+            _pose({
+                _os("Spine"): (+0.00, -0.42, +0.91),
+                _os("Spine1"): (+0.00, -0.40, +0.92),
+                _os("Spine2"): (+0.00, -0.38, +0.93),
+                _os("Neck"): (+0.00, -0.20, +0.98),
+                _os("Head"): (+0.00, -0.10, +0.99),
+                _os("LeftArm"): (+0.16, +0.55, -0.82),
+                _os("RightArm"): (-0.16, +0.55, -0.82),
+                _os("LeftForeArm"): (+0.12, +0.30, -0.95),
+                _os("RightForeArm"): (-0.12, +0.30, -0.95),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+                _os("LeftUpLeg"): (+0.08, -0.95, -0.31),
+                _os("RightUpLeg"): (-0.08, -0.95, -0.31),
+                _os("LeftLeg"): (+0.05, +0.42, -0.91),
+                _os("RightLeg"): (-0.05, +0.42, -0.91),
+                # Pied **à plat** : c'est là que le squat prend appui, et un
+                # talon décollé au point bas serait la faute même.
+                _os("LeftFoot"): (+0.03, -0.90, -0.44),
+                _os("RightFoot"): (-0.03, -0.90, -0.44),
+            }),
+            # L'extension : corps aligné de la cheville à la tête, talons
+            # décollés, bras lancés vers l'avant et le haut.
+            _pose({
+                _os("Spine"): (+0.00, -0.05, +1.00),
+                _os("Spine1"): (+0.00, -0.05, +1.00),
+                _os("Spine2"): (+0.00, -0.05, +1.00),
+                _os("Neck"): (+0.00, -0.05, +1.00),
+                _os("Head"): (+0.00, -0.03, +1.00),
+                _os("LeftArm"): (+0.20, -0.70, +0.68),
+                _os("RightArm"): (-0.20, -0.70, +0.68),
+                _os("LeftForeArm"): (+0.15, -0.55, +0.82),
+                _os("RightForeArm"): (-0.15, -0.55, +0.82),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+                _os("LeftUpLeg"): (+0.02, -0.03, -1.00),
+                _os("RightUpLeg"): (-0.02, -0.03, -1.00),
+                _os("LeftLeg"): (+0.02, -0.02, -1.00),
+                _os("RightLeg"): (-0.02, -0.02, -1.00),
+                _os("LeftFoot"): (+0.03, -0.55, -0.83),
+                _os("RightFoot"): (-0.03, -0.55, -0.83),
+            }),
+            # En l'air : pointes tendues, bras au-dessus de la tête.
+            _pose({
+                _os("Spine"): (+0.00, -0.02, +1.00),
+                _os("Spine1"): (+0.00, -0.02, +1.00),
+                _os("Spine2"): (+0.00, -0.02, +1.00),
+                _os("Neck"): (+0.00, -0.02, +1.00),
+                _os("Head"): (+0.00, -0.02, +1.00),
+                _os("LeftArm"): (+0.25, -0.25, +0.94),
+                _os("RightArm"): (-0.25, -0.25, +0.94),
+                _os("LeftForeArm"): (+0.18, -0.15, +0.97),
+                _os("RightForeArm"): (-0.18, -0.15, +0.97),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+                _os("LeftUpLeg"): (+0.02, -0.02, -1.00),
+                _os("RightUpLeg"): (-0.02, -0.02, -1.00),
+                _os("LeftLeg"): (+0.02, -0.01, -1.00),
+                _os("RightLeg"): (-0.02, -0.01, -1.00),
+                _os("LeftFoot"): (+0.02, -0.25, -0.97),
+                _os("RightFoot"): (-0.02, -0.25, -0.97),
+            }),
+        ],
+    },
+    # Mollets sur une jambe. Même geste, une seule cheville : le mollet porte
+    # tout le poids du corps au lieu de la moitié, ce qui est exactement la
+    # progression que le catalogue décrit.
+    #
+    # La jambe libre se replie **en arrière**, genou à quatre-vingt-six degrés,
+    # cheville cinquante-neuf centimètres au-dessus du sol. La replier devant
+    # aurait donné un flamant rose : ce n'est pas la position de l'exercice, où
+    # la jambe libre pend ou se croise derrière sans gêner la cheville qui
+    # travaille.
+    #
+    # Le genou est plié **franchement**, et c'est une correction : un premier
+    # jet le laissait à cent vingt-sept degrés, pied à vingt centimètres du
+    # sol, et de profil on ne voyait plus qu'une position en fente. Rien ne
+    # disait que le corps ne portait que sur une jambe, ce qui est pourtant le
+    # seul point de l'exercice.
+    #
+    # `ancrage` ne nomme que le pied **droit**, et c'est tout le sujet : laissé
+    # au défaut, le moteur pose le point le plus bas du maillage, qui serait
+    # ici le pied levé une fois le corps monté sur la pointe. Le corps se
+    # serait alors enfoncé pour aller le chercher.
+    "mollets-une-jambe": {
+        "vue": "profil",
+        "duree": 1600,
+        "symetrique": False,
+        "ancrage": ("RightFoot",),
+        "cles": [
+            _pose(BRAS_LE_LONG, JAMBE_REPLIEE),
+            _pose(BRAS_LE_LONG, JAMBE_REPLIEE, {
+                # Plus vertical que sur le mollet à deux jambes : tout le poids
+                # passe sur une cheville, et l'amplitude complète que la
+                # consigne demande se voit ou ne se voit pas.
+                _os("RightFoot"): (-0.05, -0.45, -0.89),
             }),
         ],
     },
@@ -941,13 +1191,27 @@ GESTES = {
         "bassin": [(0, 0, -0.06), (0, 0, 0.02)],
     },
     "mountain-climber": {
-        # De profil, comme toutes les photos de l'exercice : le corps à plat
-        # ventre s'y lit d'un trait, de la main posée au talon tendu. Le
-        # trois-quarts avait été essayé pour lever une ambiguïté qui venait en
-        # réalité d'ailleurs — le personnage regardait le ciel — et il ne
-        # montrait plus que le dos et la cape.
-        "vue": "profil",
-        "duree": 800,
+        # De **trois-quarts**, et c'est un retour en arrière assumé.
+        #
+        # Le profil avait été choisi parce que le corps à plat ventre s'y lit
+        # d'un trait, de la main posée au talon tendu, et que le trois-quarts
+        # « ne montrait plus que le dos et la cape ». La cape a disparu avec le
+        # personnage habillé, et l'objection avec elle.
+        #
+        # Restait l'argument décisif dans l'autre sens : le geste est une
+        # **alternance** gauche-droite, et de profil les deux jambes se
+        # superposent. Genou droit ramené et genou gauche ramené y donnent deux
+        # images en miroir, donc indiscernables — on venait d'ajouter des temps
+        # d'arrêt pour rendre le rythme lisible, et la moitié du rythme restait
+        # invisible. C'est le même raisonnement qui avait fait passer les
+        # montées de genoux et les talons-fesses au trois-quarts.
+        "vue": "trois-quarts",
+        # Mille quatre cents millisecondes et non huit cents. Le geste n'est pas
+        # un ciseau continu : la vidéo montre quatre temps — genou ramené, temps
+        # d'arrêt, retour en planche, autre genou —, et un tour joué en huit
+        # cents millisecondes les efface tous. Rallonger ne ralentit pas le
+        # mouvement, il rend les arrêts lisibles.
+        "duree": 1400,
         "assise": SUR_LE_VENTRE,
         "symetrique": False,
         # Bassin à cinquante centimètres. Ce n'est pas la hauteur des épaules :
@@ -962,73 +1226,25 @@ GESTES = {
         # d'autant sous le plancher. Personne ne l'avait vu : rien ne regardait
         # le sol avant `auditer-gestes.py`.
         "hauteur": 0.50,
+        # Trois poses et deux temps d'arrêt, et c'est le rythme même du geste :
+        # genou droit ramené, **marque**, retour en planche, genou gauche,
+        # marque. Vingt-deux pour cent du tour immobile de chaque côté.
+        #
+        # La pose du milieu — la planche pleine, les deux jambes tendues —
+        # manquait, et c'est ce qui rendait le mouvement illisible : le geste
+        # interpolait directement d'un genou à l'autre, et le corps ciseillait
+        # sans jamais repasser par la position d'appui. Or c'est justement ce
+        # qu'un pratiquant doit voir.
+        #
+        # Le rythme est ici **écrit**, et non relevé : aucune vidéo de mountain
+        # climber n'a été fournie. `scripts/rythme-video.py` le lirait sur une
+        # vidéo, comme il l'a fait pour les montées de genoux, les
+        # talons-fesses et la corde à sauter.
+        "pauses": [0.22, 0.00, 0.22],
         "cles": [
-            # Les mains ne bougent pas de tout l'exercice — elles sont posées.
-            # C'est exactement ce qu'un appui exprime, et ce qu'on n'arrivait
-            # pas à obtenir en cherchant les angles à la main.
-            # Les pôles se lisent dans le repère du corps : à plat ventre,
-            # son avant est le **sol**. Le genou mène donc vers le bas et le
-            # coude part vers le haut. Écrits avec l'avant d'un corps debout,
-            # ils pliaient les genoux à l'envers.
-            #
-            # Les x sont **négatifs à gauche** : à plat ventre, le demi-tour
-            # met la gauche du personnage en -X. Écrits avec les signes du corps
-            # debout, les appuis faisaient traverser chaque membre de l'autre
-            # côté et les bras se croisaient.
-            _pose(PLANCHE_DROITE, {
-                # Six centimètres, et non deux : un appui vise le **poignet**,
-                # et la paume est cinq centimètres plus bas. Viser le sol avec
-                # le poignet enfonce donc la main d'autant.
-                _os("LeftArm"): Appui((-0.18, 0.47, 0.06), (0, 0.30, 0.95)),
-                _os("RightArm"): Appui((0.18, 0.47, 0.06), (0, 0.30, 0.95)),
-                # Jambe tendue en arrière, cheville juste au-dessus du sol.
-                # La hanche est à 50 cm et la jambe en fait 90 : le pied ne peut
-                # pas aller plus loin que √(0,90² − 0,42²) ≈ 0,80 m en arrière.
-                # Viser au-delà laissait la jambe pendre en diagonale, et le
-                # personnage paraissait accroupi.
-                # Les mains **posées**, paume au sol, doigts vers la tête. Un
-                # appui ne place que le poignet : laissée libre, la main gardait
-                # le roulis d'un corps debout et ses doigts traversaient le
-                # plancher de sept centimètres et demi. C'est un majeur qui a
-                # trahi la faute, une fois le sol dessiné.
-                _os("LeftHand"): APlat((0, 1, 0)),
-                _os("RightHand"): APlat((0, 1, 0)),
-                _os("RightUpLeg"): Appui((0.12, -0.80, 0.21), (0, -0.20, -0.98)),
-                # Genou ramené sous la poitrine : la cheville se rapproche.
-                _os("LeftUpLeg"): Appui((-0.14, -0.20, 0.24), (0, 0.35, -0.94)),
-                # Les pieds **posés**, orteils recourbés sous la cheville. Sans
-                # eux, laissés au repos, ils gardaient l'orientation d'un corps
-                # debout — donc pointés vers le bas une fois le corps à plat
-                # ventre — et traversaient le plancher de douze centimètres. Un
-                # appui vise la cheville, pas l'orteil : c'est pourquoi les
-                # cibles ci-dessus sont à vingt et un centimètres, soit la
-                # longueur du pied plus l'épaisseur des orteils. Les régler à
-                # l'œil sur la position du sol y enfonçait le pied.
-                _os("LeftFoot"): (0, 0, -1),
-                _os("RightFoot"): (0, 0, -1),
-            }),
-            # Les pôles se lisent dans le repère du corps : à plat ventre,
-            # son avant est le **sol**. Le genou mène donc vers le bas et le
-            # coude part vers le haut. Écrits avec l'avant d'un corps debout,
-            # ils pliaient les genoux à l'envers.
-            #
-            # Les x sont **négatifs à gauche** : à plat ventre, le demi-tour
-            # met la gauche du personnage en -X. Écrits avec les signes du corps
-            # debout, les appuis faisaient traverser chaque membre de l'autre
-            # côté et les bras se croisaient.
-            _pose(PLANCHE_DROITE, {
-                # Six centimètres, et non deux : un appui vise le **poignet**,
-                # et la paume est cinq centimètres plus bas. Viser le sol avec
-                # le poignet enfonce donc la main d'autant.
-                _os("LeftArm"): Appui((-0.18, 0.47, 0.06), (0, 0.30, 0.95)),
-                _os("RightArm"): Appui((0.18, 0.47, 0.06), (0, 0.30, 0.95)),
-                _os("LeftHand"): APlat((0, 1, 0)),
-                _os("RightHand"): APlat((0, 1, 0)),
-                _os("LeftUpLeg"): Appui((0.12, -0.80, 0.21), (0, -0.20, -0.98)),
-                _os("RightUpLeg"): Appui((-0.14, -0.20, 0.24), (0, 0.35, -0.94)),
-                _os("LeftFoot"): (0, 0, -1),
-                _os("RightFoot"): (0, 0, -1),
-            }),
+            _pose(PLANCHE_DROITE, grimpeur("D")),
+            _pose(PLANCHE_DROITE, grimpeur(None)),
+            _pose(PLANCHE_DROITE, grimpeur("G")),
         ],
     },
     # Planche basse, relevée sur une vidéo de démonstration. Trois temps :
@@ -1364,16 +1580,17 @@ def _adoucir(t):
     return (1 - cos(pi * t)) / 2
 
 
-def _parcours(cles, images, repos):
-    """Suite de poses interpolées, en aller-retour et **sans doublon**.
+def _boucle_resolue(cles, repos):
+    """Les poses clés en directions du monde, aller-retour compris.
 
-    La dernière image est celle qui précède le retour au départ : la planche
-    boucle, la répéter marquerait un temps mort à chaque tour.
-
-    `repos` fournit la direction des os laissés à `REPOS`, mesurée sur le modèle.
+    Deux clés se parcourent 0→1→0 ; trois, 0→1→2→1→0. Les extrémités ne sont
+    pas doublées : la planche boucle, et les répéter marquerait un temps mort à
+    chaque tour — un temps mort qui, lui, se déclare avec `pauses`.
     """
     from mathutils import Vector
-    def resolue(pose):
+
+    boucle = []
+    for pose in cles:
         sortie = {}
         for nom, valeur in pose.items():
             if nom not in repos:
@@ -1387,7 +1604,163 @@ def _parcours(cles, images, repos):
                 sortie[nom] = Vector(
                     repos[nom] if valeur is REPOS else valeur
                 ).normalized()
-        return sortie
+        boucle.append(sortie)
+    return boucle + list(reversed(boucle))[1:]
+
+
+def _ecart(a, b):
+    """Combien de chemin sépare deux poses, en radians cumulés.
+
+    Sert à donner à chaque déplacement la durée qu'il mérite : un genou qui
+    monte à hauteur de hanche met plus longtemps qu'un poignet qui pivote, et
+    leur accorder le même nombre d'images fait un mouvement qui accélère et
+    ralentit sans raison. C'est une somme d'angles et non une moyenne : une
+    pose qui bouge tout le corps est bien plus longue qu'une qui bouge un bras.
+    """
+    from mathutils import Vector
+
+    total = 0.0
+    for nom, x in a.items():
+        y = b.get(nom)
+        if y is None or x is SUIVRE or y is SUIVRE:
+            continue
+        if isinstance(x, Appui) and isinstance(y, Appui):
+            # Un appui se dit en mètres ; le ramener en radians de façon
+            # exacte demanderait la longueur du membre. Dix centimètres pour
+            # un radian est l'ordre de grandeur d'un bras, et il ne s'agit ici
+            # que de répartir des durées entre elles.
+            total += sum(
+                (u - v) ** 2 for u, v in zip(x.cible, y.cible)
+            ) ** 0.5 / 0.10
+            continue
+        u = Vector(x.direction if isinstance(x, APlat) else x)
+        v = Vector(y.direction if isinstance(y, APlat) else y)
+        if u.length > 1e-6 and v.length > 1e-6:
+            total += u.angle(v)
+    return total
+
+
+def _calendrier(taille, images, arrets, trajets):
+    """Où en est le geste à chaque image : (rang du segment, avancement).
+
+    ## Pourquoi un calendrier plutôt qu'une division
+
+    Le partage d'origine était le plus simple possible : autant d'images par
+    segment, quel que soit le segment. C'est faux de deux façons, et la vidéo
+    le dit à chaque fois qu'on la regarde.
+
+    Faux sur les **déplacements** d'abord : deux poses éloignées et deux poses
+    voisines recevaient le même nombre d'images, donc le corps traversait
+    lentement un grand mouvement puis se précipitait sur un petit.
+
+    Faux sur les **arrêts** surtout : un geste ne se déplace pas sans cesse. Le
+    mountain climber marque un temps genou ramené, la corde à sauter marque la
+    réception. Un aller-retour continu efface tout cela, et l'exercice se
+    démontre à un rythme que personne n'exécute. Faute de pouvoir le dire, on
+    dupliquait la pose clé — deux clés identiques faisant une pause. Ça marche
+    et ça se lit mal : la durée de l'arrêt y dépend du nombre de clés, et
+    dépendre du voisinage est la meilleure façon de casser un réglage en en
+    changeant un autre.
+
+    `arrets` donne, par élément de la boucle, la part du tour passée immobile
+    sur cette pose. `trajets` donne la part de chaque déplacement. Le reste est
+    de l'arithmétique.
+    """
+    etapes = []
+    for k in range(taille):
+        if arrets[k] > 0:
+            # Un arrêt n'est pas un segment : c'est un segment figé. Sur la
+            # dernière pose de la boucle il n'y a pas de segment suivant, on
+            # tient donc la **fin** du précédent — les deux disent le même
+            # endroit, la boucle se refermant sur sa première pose.
+            if k < taille - 1:
+                etapes.append((arrets[k], k, 0.0))
+            else:
+                etapes.append((arrets[k], taille - 2, 1.0))
+        if k < taille - 1:
+            etapes.append((trajets[k], k, None))
+
+    total = sum(duree for duree, _, _ in etapes) or 1.0
+    plan = []
+    for i in range(images):
+        t = (i / images) * total
+        cumul = 0.0
+        for rang_etape, (duree, rang, fige) in enumerate(etapes):
+            derniere = rang_etape == len(etapes) - 1
+            if t < cumul + duree or derniere:
+                if fige is not None:
+                    plan.append((rang, fige))
+                else:
+                    u = 0.0 if duree <= 0 else (t - cumul) / duree
+                    plan.append((rang, _adoucir(min(1.0, max(0.0, u)))))
+                break
+            cumul += duree
+    return plan
+
+
+def _horaire(cles, images, arrets_declares, poses_resolues):
+    """Le calendrier d'un geste, arrêts compris — ou le partage d'autrefois.
+
+    Sans `pauses` déclarées, on rend **exactement** le découpage d'origine :
+    autant d'images par segment. Vingt et un gestes ont été contrôlés à l'œil
+    sous ce partage-là, et les retimer tous au passage reviendrait à les
+    remettre en cause sans que personne l'ait demandé.
+    """
+    taille = 2 * len(cles) - 1
+    segments = max(1, taille - 1)
+
+    if arrets_declares is None:
+        return [
+            (min(int((i / images) * segments), segments - 1),
+             _adoucir((i / images) * segments - min(int((i / images) * segments), segments - 1)))
+            for i in range(images)
+        ]
+
+    if len(arrets_declares) != len(cles):
+        raise SystemExit(
+            f"Le geste déclare {len(arrets_declares)} temps d'arrêt pour "
+            f"{len(cles)} poses clés."
+        )
+    arrets = list(arrets_declares) + list(reversed(arrets_declares))[1:]
+    # La **première** pose est le point de bouclage : le tour s'y termine et y
+    # recommence, si bien que son temps d'arrêt est à cheval sur la jointure.
+    # Le compter en entier des deux côtés le doublerait, et le geste marquerait
+    # deux fois plus longtemps à un bout qu'à l'autre — ce qui se voit
+    # immédiatement sur une alternance gauche-droite.
+    #
+    # Les poses **intermédiaires**, elles, sont traversées deux fois par tour,
+    # à l'aller et au retour : ce qu'on déclare y vaut par passage.
+    arrets[0] = arrets_declares[0] / 2.0
+    arrets[-1] = arrets_declares[0] / 2.0
+    part_arret = sum(arrets)
+    if part_arret >= 1.0:
+        raise SystemExit(
+            f"Les temps d'arrêt déclarés font {part_arret:.2f} du tour : il ne "
+            "resterait rien pour se déplacer."
+        )
+
+    chemins = [
+        _ecart(poses_resolues[k], poses_resolues[k + 1]) for k in range(segments)
+    ]
+    somme = sum(chemins)
+    if somme <= 1e-6:
+        chemins = [1.0] * segments
+        somme = float(segments)
+    trajets = [(1.0 - part_arret) * c / somme for c in chemins]
+    return _calendrier(taille, images, arrets, trajets)
+
+
+def _parcours(cles, images, repos, arrets=None):
+    """Suite de poses interpolées, en aller-retour et **sans doublon**.
+
+    La dernière image est celle qui précède le retour au départ : la planche
+    boucle, la répéter marquerait un temps mort à chaque tour.
+
+    `repos` fournit la direction des os laissés à `REPOS`, mesurée sur le modèle.
+    `arrets` donne, quand le geste en déclare, la part du tour passée immobile
+    sur chaque pose clé. Voir `_calendrier`.
+    """
+    from mathutils import Vector
 
     def entre(a, b, e):
         if a is SUIVRE and b is SUIVRE:
@@ -1423,16 +1796,10 @@ def _parcours(cles, images, repos):
             )
         return a.lerp(b, e).normalized()
 
-    # Deux clés se parcourent 0→1→0 ; trois, 0→1→2→1→0.
-    boucle = [resolue(c) for c in cles]
-    boucle += list(reversed(boucle))[1:]
-    segments = max(1, len(boucle) - 1)
+    boucle = _boucle_resolue(cles, repos)
 
     poses = []
-    for i in range(images):
-        u = (i / images) * segments
-        rang = min(int(u), segments - 1)
-        e = _adoucir(u - rang)
+    for rang, e in _horaire(cles, images, arrets, boucle):
         depart, arrivee = boucle[rang], boucle[rang + 1]
         poses.append(
             {nom: entre(depart[nom], arrivee[nom], e) for nom in depart}
@@ -1515,12 +1882,18 @@ def viser(armature, os_pose, direction, repos, contexte, face=None):
     contexte.view_layer.update()
 
 
-def _decalages(declare, cles, images):
+def _decalages(declare, cles, images, horaire=None):
     """Décalage du bassin à chaque image, ou `None` partout s'il n'y en a pas.
 
     Accepte un seul triplet — le bassin ne bouge alors pas du geste — ou un
     triplet par pose clé, ce qui le fait monter et descendre. C'est ce dont un
     mollet debout a besoin : rien ne tourne, tout le corps se translate.
+
+    `horaire` est le calendrier des poses, quand le geste en a un. Il **faut**
+    le passer : calculer le sien reviendrait à faire monter le bassin selon un
+    découpage régulier pendant que le corps, lui, marque des temps d'arrêt — et
+    un bassin qui monte pendant que les jambes ne bougent pas, c'est un
+    personnage qui lévite.
     """
     if declare is None:
         return [None] * images
@@ -1532,12 +1905,16 @@ def _decalages(declare, cles, images):
         )
 
     boucle = list(declare) + list(reversed(declare))[1:]
-    segments = max(1, len(boucle) - 1)
+    if horaire is None:
+        segments = max(1, len(boucle) - 1)
+        horaire = [
+            (min(int((i / images) * segments), segments - 1),
+             _adoucir((i / images) * segments
+                      - min(int((i / images) * segments), segments - 1)))
+            for i in range(images)
+        ]
     suite = []
-    for i in range(images):
-        u = (i / images) * segments
-        rang = min(int(u), segments - 1)
-        e = _adoucir(u - rang)
+    for rang, e in horaire:
         a, b = boucle[rang], boucle[rang + 1]
         suite.append(tuple(x + (y - x) * e for x, y in zip(a, b)))
     return suite
@@ -2208,10 +2585,42 @@ def appliquer(armature, nom, images, contexte):
     # même le placement : sans ce zéro, la hauteur était calculée puis jamais
     # posée, et le corps restait à sa hauteur debout — mains à cinquante
     # centimètres du sol pour une planche.
+    # Le calendrier **une fois**, et partagé : les poses, le bassin et l'envol
+    # doivent avancer ensemble. Chacun recalculant le sien, il suffisait qu'un
+    # geste déclare des temps d'arrêt pour que le bassin continue de monter
+    # pendant que le corps tient la pose.
+    arrets = geste.get("pauses")
+    poses_du_tour = _parcours(geste["cles"], images, repos, arrets)
+    horaire = _horaire(
+        geste["cles"], images, arrets,
+        # `_horaire` ne lit la boucle que pour mesurer les distances, et il ne
+        # la lit pas du tout sans temps d'arrêt déclarés.
+        _boucle_resolue(geste["cles"], repos) if arrets else None,
+    )
+
     declare = geste.get("bassin")
     if declare is None and geste.get("hauteur") is not None:
         declare = (0, 0, 0)
-    decalages = _decalages(declare, len(geste["cles"]), images)
+    decalages = _decalages(declare, len(geste["cles"]), images, horaire)
+
+    # Combien le corps **décolle**, en mètres, une fois posé au sol. À ne pas
+    # confondre avec `bassin`, qui déplace le bassin dans la pose et se fait
+    # donc rattraper par l'ancrage : ici, on pose le corps normalement — le
+    # contact des pieds reste calculé sur le maillage — puis on le soulève.
+    #
+    # C'est le seul moyen d'écrire un saut sans mentir. `ancrage: False`
+    # laisserait le corps à la hauteur où sa pose le met, et il faudrait alors
+    # calculer à la main la hauteur de hanche de chaque accroupissement pour
+    # que les pieds retombent à zéro — un chiffre faux à la moindre retouche
+    # du genou. Un envol se déclare en une valeur qui veut dire ce qu'elle
+    # dit : zéro au sol, trente centimètres en l'air.
+    envols = _decalages(
+        None if geste.get("envol") is None
+        else [(0, 0, h) for h in geste["envol"]],
+        len(geste["cles"]),
+        images,
+        horaire,
+    )
 
     # Hauteur du bassin au-dessus du sol, en mètres. À donner pour les gestes
     # qui plantent des appuis — « le bassin d'une planche est à soixante
@@ -2233,8 +2642,8 @@ def appliquer(armature, nom, images, contexte):
     # tout seul : c'est le corps qu'on déplacera pour qu'il y reste.
     repere_plante = None
 
-    for numero, (pose, decalage) in enumerate(
-        zip(_parcours(geste["cles"], images, repos), decalages), start=1
+    for numero, (pose, decalage, envol) in enumerate(
+        zip(poses_du_tour, decalages, envols), start=1
     ):
         bassin = armature.pose.bones[BASSIN]
         if decalage is not None:
@@ -2350,6 +2759,13 @@ def appliquer(armature, nom, images, contexte):
                 repere_plante = planter(
                     contexte, armature, geste["plante"], repere_plante
                 )
+            bassin.keyframe_insert("location", frame=numero)
+
+        # **Après** avoir posé le corps, et c'est tout l'intérêt : le contact
+        # a été calculé sur le maillage à cette pose-ci, et l'on sait donc de
+        # combien on soulève au-dessus du sol, et non au-dessus de rien.
+        if envol is not None and abs(envol[2]) > 1e-5:
+            _translater(contexte, armature, envol[2])
             bassin.keyframe_insert("location", frame=numero)
 
     return list(range(1, images + 1))
