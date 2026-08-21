@@ -353,13 +353,20 @@ JAMBE_REPLIEE = {
 # continuerait vers l'avant plierait le genou à l'envers, ce que
 # `verifier-gestes.py` a refusé au premier essai. Sur un banc, le pied est sous
 # le genou et non devant lui.
+#
+# Les deux jambes ne sont **pas** symétriques. À x = ±0,08 elles se
+# superposaient derrière le banc, vu de profil, et l'on ne comprenait plus si
+# le personnage était assis dessus ou couché derrière. La droite passe donc
+# nettement **devant** — c'est elle qu'on voit — et la gauche reste derrière :
+# le corps enjambe le banc, ce qui est la position de l'exercice et ce qui
+# donne au banc sa profondeur.
 SUR_LE_BANC = {
-    _os("LeftUpLeg"): (+0.08, -0.96, -0.24),
-    _os("RightUpLeg"): (-0.08, -0.96, -0.24),
-    _os("LeftLeg"): (+0.04, +0.55, -0.83),
-    _os("RightLeg"): (-0.04, +0.55, -0.83),
-    _os("LeftFoot"): (+0.02, -0.99, -0.10),
-    _os("RightFoot"): (-0.02, -0.99, -0.10),
+    _os("LeftUpLeg"): (+0.30, -0.92, -0.24),
+    _os("RightUpLeg"): (-0.34, -0.90, -0.24),
+    _os("LeftLeg"): (+0.16, +0.53, -0.83),
+    _os("RightLeg"): (-0.18, +0.52, -0.83),
+    _os("LeftFoot"): (+0.10, -0.99, -0.10),
+    _os("RightFoot"): (-0.12, -0.98, -0.10),
 }
 
 
@@ -442,6 +449,47 @@ def JAMBE_LEVEE(cote):
         _os(f"{cote}Leg"): (signe * 0.02, -0.92, +0.39),
         _os(f"{cote}Foot"): (+0.00, -0.72, +0.69),
     }
+
+
+def grimpeur_croise(genou):
+    """Une pose de mountain climber **croisé** : le genou traverse le corps.
+
+    Écrite en directions et non en appuis, contrairement au grimpeur droit, et
+    c'est ce qui la corrige. Un appui vise la **cheville** : déplacer sa cible
+    de l'autre côté du corps y amenait le pied sans y amener le genou, et la
+    cinématique inverse résolvait le reste comme elle pouvait — tibia tordu,
+    genou resté du mauvais côté. Or ce qui croise, dans cet exercice, c'est le
+    genou.
+
+    On décrit donc les deux os : la cuisse part de la hanche vers le coude
+    **opposé** — en avant, en travers, et vers le sol — et le tibia se replie
+    naturellement derrière elle. Genou gauche vers coude droit, genou droit
+    vers coude gauche.
+
+    Repère du corps à plat ventre : +Y vers la tête, -Z vers le sol, -X à
+    gauche du personnage. Les coudes sont posés à x = ∓0,18.
+    """
+    couche = {
+        _os("LeftArm"): Appui((-0.18, 0.47, 0.06), (0, 0.30, 0.95)),
+        _os("RightArm"): Appui((0.18, 0.47, 0.06), (0, 0.30, 0.95)),
+        _os("LeftHand"): APlat((0, 1, 0)),
+        _os("RightHand"): APlat((0, 1, 0)),
+        _os("LeftFoot"): (0, 0, -1),
+        _os("RightFoot"): (0, 0, -1),
+    }
+    for cote, lettre, signe in (("Left", "G", -1), ("Right", "D", +1)):
+        if lettre == genou:
+            # La cuisse traverse : elle part vers l'avant et vers **l'autre
+            # côté**. Le signe est inversé, c'est tout le geste.
+            couche[_os(f"{cote}UpLeg")] = (-signe * 0.39, +0.69, -0.61)
+            # Le tibia suit, replié vers les pieds et le sol : il ne cherche
+            # rien, il accompagne.
+            couche[_os(f"{cote}Leg")] = (-signe * 0.02, -0.89, -0.46)
+        else:
+            # Jambe tendue en arrière, presque dans l'axe du corps.
+            couche[_os(f"{cote}UpLeg")] = (signe * 0.04, -0.94, -0.34)
+            couche[_os(f"{cote}Leg")] = (signe * 0.02, -0.96, -0.28)
+    return couche
 
 
 def grimpeur(genou, croise=False):
@@ -698,6 +746,12 @@ GESTES = {
         "ancrage": False,
         "hauteur": 0.54,
         "banc": 0.45,
+        # Poings fermés : on tient une barre ou deux haltères, jamais les
+        # doigts ouverts.
+        "poings": 1.0,
+        # Les jambes ne sont **pas** symétriques, et c'est voulu : voir
+        # `SUR_LE_BANC`.
+        "symetrique": False,
         "cles": [
             # Couché sur le dos : le haut du corps suit le bassin sans qu'on ait
             # à le dire, les membres se décrivent dans le monde. +Z est donc le
@@ -823,9 +877,22 @@ GESTES = {
         # Assise « debout » canonique : voir --sans-pente.
         "assise": ((+0.00, +0.00, +1.00), (+0.00, -1.00, +0.00)),
         "symetrique": False,
-        # Le pied au sol décide de la hauteur ; l'autre est en l'air. Pas
-        # d'`aplomb` : mettre des appuis de niveau demande trois points.
-        "ancrage": ("LeftFoot", "RightFoot"),
+        # Hauteur de bassin **déclarée**, et pas d'ancrage — c'est ce qui a
+        # corrigé le hachage.
+        #
+        # Ancré, le moteur posait à chaque image le plus bas des deux pieds.
+        # Aux poses clés c'est juste : un pied porte, l'autre est en l'air. Mais
+        # à mi-alternance les deux jambes sont à demi levées, **aucune** ne
+        # porte, et le corps plongeait de quatorze centimètres pour aller
+        # chercher le sol — mesuré : le bassin tombait de 104 à 90 cm sur cinq
+        # images, puis remontait. Un plongeon de squat au milieu d'une foulée.
+        #
+        # Cent quatre centimètres et demi : la hauteur à laquelle l'ancrage
+        # posait lui-même le corps aux poses clés. Le pied porteur touche donc
+        # toujours, et l'entre-deux est une phase de vol — ce qu'une montée de
+        # genoux comporte vraiment.
+        "ancrage": False,
+        "hauteur": 1.045,
         "cles": [
             _pose(MAINS_DEVANT, {
                 _os("Spine"): (+0.00, -0.00, +1.00),
@@ -873,9 +940,14 @@ GESTES = {
         # Assise « debout » canonique : voir --sans-pente.
         "assise": ((+0.00, +0.00, +1.00), (+0.00, -1.00, +0.00)),
         "symetrique": False,
-        # Le pied au sol décide de la hauteur ; l'autre est en l'air. Pas
-        # d'`aplomb` : mettre des appuis de niveau demande trois points.
-        "ancrage": ("LeftFoot", "RightFoot"),
+        # Hauteur de bassin **déclarée**, comme pour les montées de genoux et
+        # pour la même raison. Ancré, le moteur posait le plus bas des deux
+        # pieds : juste aux poses clés, désastreux entre les deux, où les deux
+        # talons sont à mi-hauteur et où **aucun** pied ne porte. Mesuré, le
+        # bassin tombait de 105 à 77 cm sur cinq images — vingt-huit
+        # centimètres, un plongeon au milieu d'une foulée.
+        "ancrage": False,
+        "hauteur": 1.054,
         # Poings fermés : on court les mains fermées, pas les doigts
         # écartés. Le mannequin les a ouverts au repos.
         "poings": 0.75,
@@ -1041,14 +1113,27 @@ GESTES = {
     # accroupi, extension, envol, retour.
     "squat-saute": {
         "vue": "profil",
-        "duree": 1400,
+        # Mille huit cents millisecondes : à mille quatre cents le saut passait
+        # trop vite pour se lire. Un squat sauté enchaîné tourne autour de deux
+        # secondes par répétition, dont l'essentiel au sol — on descend, on
+        # arme, on pousse, et le vol lui-même est bref.
+        "duree": 1800,
         # Le corps quitte vraiment le sol : le contact est calculé normalement
         # sur le maillage à chaque pose, puis le corps est soulevé de la
-        # hauteur déclarée. Trois centimètres à l'extension — le talon vient de
-        # décoller —, vingt-deux en l'air.
-        "envol": [0.0, 0.03, 0.22],
-        # Un temps au point bas : c'est là qu'on amortit et qu'on réarme.
-        "pauses": [0.16, 0.00, 0.00],
+        # hauteur déclarée. Cinq centimètres à l'extension — le talon vient de
+        # décoller —, **quarante** au sommet.
+        #
+        # Vingt-deux ne suffisaient pas : à l'échelle du cadre, un saut de
+        # vingt centimètres se confond avec un simple redressement sur la
+        # pointe des pieds. La place a été prise sur les bras, qui restent
+        # à la hauteur de l'extension au lieu de monter à la verticale —
+        # voir la dernière clé.
+        "envol": [0.0, 0.05, 0.58],
+        # Un temps au point bas — c'est là qu'on amortit et qu'on réarme — et
+        # un souffle au sommet, où un corps qui monte s'arrête avant de
+        # redescendre. Sans lui le sommet est un simple rebroussement, et le
+        # saut paraît sec.
+        "pauses": [0.18, 0.00, 0.05],
         "cles": [
             # Le point bas, relevé sur la captation du squat.
             _pose({
@@ -1094,17 +1179,25 @@ GESTES = {
                 _os("LeftFoot"): (+0.03, -0.55, -0.83),
                 _os("RightFoot"): (-0.03, -0.55, -0.83),
             }),
-            # En l'air : pointes tendues, bras au-dessus de la tête.
+            # En l'air : pointes tendues, bras **tenus** dans l'élan.
+            #
+            # Ils ne montent pas plus haut qu'à l'extension, et c'est ce qui
+            # permet au saut d'être haut. Le cadrage est commun à toutes les
+            # planches — 2,6 m — et le personnage l'occupait déjà presque
+            # entièrement : bras tendus au-dessus de la tête, il ne restait que
+            # onze pixels de marge sur deux cent cinquante-six, donc plus de
+            # place pour monter. Le lancer des bras se fait au décollage ; en
+            # l'air ils accompagnent, ils ne poussent plus.
             _pose({
                 _os("Spine"): (+0.00, -0.02, +1.00),
                 _os("Spine1"): (+0.00, -0.02, +1.00),
                 _os("Spine2"): (+0.00, -0.02, +1.00),
                 _os("Neck"): (+0.00, -0.02, +1.00),
                 _os("Head"): (+0.00, -0.02, +1.00),
-                _os("LeftArm"): (+0.25, -0.25, +0.94),
-                _os("RightArm"): (-0.25, -0.25, +0.94),
-                _os("LeftForeArm"): (+0.18, -0.15, +0.97),
-                _os("RightForeArm"): (-0.18, -0.15, +0.97),
+                _os("LeftArm"): (+0.20, -0.70, +0.68),
+                _os("RightArm"): (-0.20, -0.70, +0.68),
+                _os("LeftForeArm"): (+0.15, -0.55, +0.82),
+                _os("RightForeArm"): (-0.15, -0.55, +0.82),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
                 _os("LeftUpLeg"): (+0.02, -0.02, -1.00),
@@ -1368,9 +1461,9 @@ GESTES = {
         "hauteur": 0.50,
         "pauses": [0.22, 0.00, 0.22],
         "cles": [
-            _pose(PLANCHE_DROITE, grimpeur("D", croise=True)),
-            _pose(PLANCHE_DROITE, grimpeur(None)),
-            _pose(PLANCHE_DROITE, grimpeur("G", croise=True)),
+            _pose(PLANCHE_DROITE, grimpeur_croise("D")),
+            _pose(PLANCHE_DROITE, grimpeur_croise(None)),
+            _pose(PLANCHE_DROITE, grimpeur_croise("G")),
         ],
     },
     # Planche basse, relevée sur une vidéo de démonstration. Trois temps :
@@ -1750,8 +1843,25 @@ def _calendrier(taille, images, arrets, trajets):
     changeant un autre.
 
     `arrets` donne, par élément de la boucle, la part du tour passée immobile
-    sur cette pose. `trajets` donne la part de chaque déplacement. Le reste est
-    de l'arithmétique.
+    sur cette pose. `trajets` donne la part de chaque déplacement.
+
+    ## L'amortissement porte sur la **phase**, pas sur le segment
+
+    C'est le point délicat, et il a coûté une livraison. Amortir chaque segment
+    séparément fait décélérer le corps jusqu'à l'arrêt complet à **chaque pose
+    clé traversée**, y compris celles où l'on ne veut pas s'arrêter. Une fente
+    en trois clés marquait donc un temps au milieu de la descente, là où la
+    pose intermédiaire ne dit qu'un passage. Mesuré sur la planche livrée : le
+    sommet du crâne stagnait trois images à mi-parcours.
+
+    Sur deux clés, le défaut ne se voyait pas — deux segments amortis se
+    recomposent exactement en un cosinus, donc en un mouvement harmonique
+    propre. Il n'apparaît qu'à partir de trois.
+
+    Les déplacements consécutifs sont donc regroupés en **phases** : on part
+    d'un arrêt, on accélère, on traverse les poses intermédiaires à pleine
+    vitesse, on décélère jusqu'à l'arrêt suivant. L'amortissement s'applique à
+    la phase entière et la position s'y répartit au prorata des durées.
     """
     etapes = []
     for k in range(taille):
@@ -1767,21 +1877,51 @@ def _calendrier(taille, images, arrets, trajets):
         if k < taille - 1:
             etapes.append((trajets[k], k, None))
 
+    # Regroupement en phases : une suite de déplacements sans arrêt entre eux
+    # n'est qu'un seul mouvement, et se lit comme tel.
+    phases, courante = [], []
+    for etape in etapes:
+        if etape[2] is None:
+            courante.append(etape)
+        else:
+            if courante:
+                phases.append(courante)
+                courante = []
+            phases.append([etape])
+    if courante:
+        phases.append(courante)
+
     total = sum(duree for duree, _, _ in etapes) or 1.0
     plan = []
     for i in range(images):
         t = (i / images) * total
         cumul = 0.0
-        for rang_etape, (duree, rang, fige) in enumerate(etapes):
-            derniere = rang_etape == len(etapes) - 1
-            if t < cumul + duree or derniere:
-                if fige is not None:
-                    plan.append((rang, fige))
-                else:
-                    u = 0.0 if duree <= 0 else (t - cumul) / duree
-                    plan.append((rang, _adoucir(min(1.0, max(0.0, u)))))
+        for rang_phase, phase in enumerate(phases):
+            duree_phase = sum(d for d, _, _ in phase)
+            derniere = rang_phase == len(phases) - 1
+            if not (t < cumul + duree_phase or derniere):
+                cumul += duree_phase
+                continue
+
+            if phase[0][2] is not None:
+                plan.append((phase[0][1], phase[0][2]))
                 break
-            cumul += duree
+
+            # Où en est-on de la phase, une fois amortie ? La valeur obtenue
+            # se relit ensuite comme une durée, ce qui la ramène sur le bon
+            # segment et à la bonne fraction de celui-ci.
+            avance = 0.0 if duree_phase <= 0 else (t - cumul) / duree_phase
+            atteint = _adoucir(min(1.0, max(0.0, avance))) * duree_phase
+            parcouru = 0.0
+            for duree, rang, _ in phase:
+                if atteint <= parcouru + duree or duree <= 0:
+                    reste = 0.0 if duree <= 0 else (atteint - parcouru) / duree
+                    plan.append((rang, min(1.0, max(0.0, reste))))
+                    break
+                parcouru += duree
+            else:
+                plan.append((phase[-1][1], 1.0))
+            break
     return plan
 
 

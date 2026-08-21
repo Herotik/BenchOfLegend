@@ -500,24 +500,35 @@ def poser_le_banc(hauteur, mini, maxi):
     # reconnaît comme un banc plutôt que comme une table.
     banc.scale = (max(taille.x, 0.6) * 0.45, longueur, epaisseur)
 
+    # Un **bleu sombre**, et non le gris de la première version. Le gris moyen
+    # avait la même valeur que la chair du mannequin : ses deux pieds verticaux
+    # se lisaient comme deux jambes de plus, et l'on ne savait plus qui était
+    # le corps et qui était le meuble. Une teinte franchement froide et sombre
+    # tranche sur la chair dans les deux thèmes.
     matiere = bpy.data.materials.new("Banc")
     matiere.use_nodes = True
     principe = matiere.node_tree.nodes["Principled BSDF"]
-    principe.inputs["Base Color"].default_value = (0.36, 0.37, 0.41, 1)
-    principe.inputs["Roughness"].default_value = 0.9
+    principe.inputs["Base Color"].default_value = (0.13, 0.17, 0.26, 1)
+    principe.inputs["Roughness"].default_value = 0.85
     banc.data.materials.append(matiere)
 
-    # Les deux pieds du banc, qui le posent au sol : sans eux la dalle flotte
-    # et l'on ne sait plus à quelle hauteur le corps se trouve.
-    for cote in (-1, +1):
-        bpy.ops.mesh.primitive_cube_add(
-            size=1,
-            location=(centre_x, milieu_y + cote * banc.scale.y * 0.35,
-                      (hauteur - epaisseur) / 2),
-        )
-        pied = bpy.context.object
-        pied.scale = (banc.scale.x * 0.30, 0.06, hauteur - epaisseur)
-        pied.data.materials.append(matiere)
+    # Un **pied central** large, et non deux montants fins. Deux montants
+    # verticaux et écartés font exactement la silhouette d'une paire de jambes ;
+    # un socle unique et trapu ne ressemble qu'à un pied de banc.
+    bpy.ops.mesh.primitive_cube_add(
+        size=1, location=(centre_x, milieu_y, (hauteur - epaisseur) / 2)
+    )
+    pied = bpy.context.object
+    pied.scale = (banc.scale.x * 0.55, longueur * 0.22, hauteur - epaisseur)
+    pied.data.materials.append(matiere)
+
+    # Et la semelle au sol, qui dit que le banc est posé et non planté.
+    bpy.ops.mesh.primitive_cube_add(
+        size=1, location=(centre_x, milieu_y, 0.02)
+    )
+    semelle = bpy.context.object
+    semelle.scale = (banc.scale.x * 0.85, longueur * 0.34, 0.04)
+    semelle.data.materials.append(matiere)
     return banc
 
 
