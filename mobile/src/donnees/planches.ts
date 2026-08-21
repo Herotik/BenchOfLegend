@@ -240,6 +240,23 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 1400,
   },
+  // Deux gestes de cardio tirés d'une même vidéo, qui en contenait trois.
+  //
+  // Tous deux de **trois-quarts** : ce sont des alternances gauche-droite, et
+  // de profil les deux jambes se superposent au point que le personnage
+  // paraît immobile. C'est la seule vue qui montre le mouvement.
+  "montee-genoux": {
+    source: require("../../assets/gestes/montee-genoux.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 900,
+  },
+  "talons-fesses": {
+    source: require("../../assets/gestes/talons-fesses.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 900,
+  },
   // De trois-quarts, et c'est la seule du registre : de profil, un corps couché
   // sur le côté est regardé dans l'axe de son regard et l'on ne voit plus de
   // quel côté il est tourné.
