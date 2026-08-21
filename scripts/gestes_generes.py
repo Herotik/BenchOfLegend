@@ -1201,64 +1201,66 @@ GESTES = {
 
     # Russian twist, relevé sur trois vidéos de démonstration.
     #
-    # ## Ce qui fait l'exercice, et que trois versions ont manqué
+    # ## Ce qui fait l'exercice
     #
-    # La **rotation**, et rien d'autre. Le tronc garde son inclinaison du début
-    # à la fin, les jambes ne bougent pas, les mains restent jointes devant le
-    # sternum : ce qui travaille, ce sont les obliques qui font pivoter les
-    # épaules d'un côté puis de l'autre.
+    # Le torse pivote de gauche à droite, les bras avec, et **le coude touche
+    # le sol** au bout de la course de chaque côté. C'est ce contact-là qui
+    # borne le mouvement et le rend lisible : sans lui, on ne sait pas jusqu'où
+    # tourner, et cinq versions ont balancé les bras à mi-chemin sans que rien
+    # ne dise que c'était fini.
     #
-    # Et l'amplitude est **grande**. Sur la vidéo, à caméra fixe, on voit
-    # alternativement le dos de la démonstratrice et sa poitrine : elle tourne
-    # donc d'environ soixante-dix degrés de chaque côté, pas de quarante. Les
-    # trois premières versions balançaient les bras devant un buste immobile,
-    # ce qui n'est pas le même exercice.
+    # Un coude qui descend au tapis à côté de la hanche demande plus qu'une
+    # rotation : il faut que le buste **penche** du même côté. Les deux vont
+    # ensemble, et c'est pourquoi les clés extrêmes inclinent la colonne en
+    # plus de la faire rouler.
     #
     # ## Les mesures
     #
-    # Tronc à 65° du tapis, cuisse à 35° au-dessus de l'horizontale, tibia qui
-    # redescend de 33° — genou fléchi à 112°, cheville à vingt centimètres du
-    # sol. Les talons ne touchent jamais.
+    # Moyenne des **vecteurs** unitaires du relevé sur trente-huit images —
+    # jamais moyenne des angles, qui explose quand le segment passe près de la
+    # verticale de l'image :
+    #
+    #     bassin → épaule    (-0,436 ; +0,900)   64° au-dessus de l'horizontale
+    #     bassin → genou     (+0,452 ; +0,892)   63°
+    #     genou  → cheville  (+0,690 ; -0,724)  -46°
+    #
+    # Dispersion : 1,0°, 2,2° et 3,6°. Genou fléchi à 109°, cheville au-dessus
+    # du bassin d'un quart de longueur de tronc — assise, genoux hauts, talons
+    # décollés.
     "russian-twist": {
         "vue": "trois-quarts",
-        # Mille sept cent cinquante millisecondes pour un aller-retour complet.
-        # Relevé sur le va-et-vient du poignet : 1877 ms à vide, 1609 ms lesté.
         "duree": 1750,
-        # Le bassin est basculé en arrière, on est posé sur le sacrum, et l'on
-        # n'a que ce contact-là : la hauteur se déclare.
         "assise": ((+0.00, +0.423, +0.906), (+0.00, -0.906, +0.423)),
         "ancrage": False,
         "hauteur": 0.19,
         "symetrique": False,
-        # Les mains se **joignent**, ou tiennent un poids.
         "poings": 1.0,
-        # Un temps de chaque côté, rien au centre — on y passe, on ne s'y
-        # arrête pas.
-        "pauses": [0.10, 0.00, 0.10],
+        # Un temps au contact de chaque côté — c'est là qu'on marque —, rien au
+        # centre, qu'on traverse.
+        "pauses": [0.16, 0.00, 0.16],
         "cles": [
-            # Tourné à **gauche**, soixante-dix degrés. Debout comme assis, la
-            # gauche du personnage est en +X.
+            # Coude **gauche au sol**, à côté de la hanche gauche. Debout comme
+            # assis, la gauche du personnage est en +X.
             _pose(ASSIS_EN_ARRIERE, {
-                # La poitrine pivote autour de l'axe de la colonne. `APlat` ne
-                # sert d'ordinaire qu'à poser une paume au sol, mais son
-                # mécanisme est le **roulis** d'un os quelconque : appliqué au
-                # buste, il le fait tourner sur lui-même, ce qu'aucune direction
-                # ne sait dire.
-                _os("Spine1"): APlat((+0.00, +0.423, +0.906),
-                                     paume=(+0.94, -0.31, +0.145)),
-                _os("Spine2"): APlat((+0.00, +0.423, +0.906),
-                                     paume=(+0.94, -0.31, +0.145)),
-                _os("Neck"): (+0.20, +0.14, +0.97),
-                _os("Head"): (+0.40, -0.50, +0.77),
-                # Les mains se tiennent à trente centimètres devant le sternum
-                # et suivent la poitrine : la cible se calcule sur la normale du
-                # buste, qui tourne avec lui.
-                _os("LeftArm"): Appui((+0.28, 0.00, 0.43), (+1, 0, -0.3)),
-                _os("RightArm"): Appui((+0.28, 0.00, 0.43), (+1, 0, -0.3)),
+                # La colonne penche à gauche **et** roule à gauche : les deux
+                # ensemble descendent l'épaule assez bas pour que le coude
+                # atteigne le tapis.
+                _os("Spine"): (+0.645, +0.665, +0.375),
+                _os("Spine1"): APlat((+0.645, +0.665, +0.375),
+                                     paume=(+0.90, -0.36, +0.24)),
+                _os("Spine2"): APlat((+0.685, +0.635, +0.355),
+                                     paume=(+0.90, -0.36, +0.24)),
+                _os("Neck"): (+0.52, +0.42, +0.74),
+                _os("Head"): (+0.44, -0.30, +0.84),
+                # Les mains jointes se posent près du sol, contre la hanche, et
+                # le pôle pousse le coude vers le bas — c'est lui qui décide où
+                # sort la pointe du bras.
+                _os("LeftArm"): Appui((+0.42, -0.06, 0.09), (+0.45, 0, -0.89)),
+                _os("RightArm"): Appui((+0.42, -0.06, 0.09), (+0.45, 0, -0.89)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
             }),
-            # De face, mains devant le sternum.
+            # De face, mains jointes devant le sternum.
             _pose(ASSIS_EN_ARRIERE, {
                 _os("Spine1"): APlat((+0.00, +0.423, +0.906),
                                      paume=(+0.00, -0.906, +0.423)),
@@ -1269,16 +1271,17 @@ GESTES = {
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
             }),
-            # Tourné à **droite**, miroir exact.
+            # Coude **droit au sol**, miroir exact.
             _pose(ASSIS_EN_ARRIERE, {
-                _os("Spine1"): APlat((+0.00, +0.423, +0.906),
-                                     paume=(-0.94, -0.31, +0.145)),
-                _os("Spine2"): APlat((+0.00, +0.423, +0.906),
-                                     paume=(-0.94, -0.31, +0.145)),
-                _os("Neck"): (-0.20, +0.14, +0.97),
-                _os("Head"): (-0.40, -0.50, +0.77),
-                _os("LeftArm"): Appui((-0.28, 0.00, 0.43), (-1, 0, -0.3)),
-                _os("RightArm"): Appui((-0.28, 0.00, 0.43), (-1, 0, -0.3)),
+                _os("Spine"): (-0.645, +0.665, +0.375),
+                _os("Spine1"): APlat((-0.645, +0.665, +0.375),
+                                     paume=(-0.90, -0.36, +0.24)),
+                _os("Spine2"): APlat((-0.685, +0.635, +0.355),
+                                     paume=(-0.90, -0.36, +0.24)),
+                _os("Neck"): (-0.52, +0.42, +0.74),
+                _os("Head"): (-0.44, -0.30, +0.84),
+                _os("LeftArm"): Appui((-0.42, -0.06, 0.09), (-0.45, 0, -0.89)),
+                _os("RightArm"): Appui((-0.42, -0.06, 0.09), (-0.45, 0, -0.89)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
             }),
