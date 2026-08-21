@@ -74,15 +74,32 @@ function PlancheAnimee({ planche, taille }: { planche: Planche; taille: number }
     if (reduit) return;
 
     debut.current = Date.now();
-    // Un battement par image de planche, sans dépasser le plafond : c'est la
-    // planche qui décide de son rythme, pas une constante.
-    const intervalle = Math.max(1000 / CADENCE_MAX, duree / planche.images);
+
+    // Combien d'images le plafond laisse passer sur un tour, et de combien il
+    // faut donc avancer à chaque battement.
+    //
+    // Plafonner le **battement** en lisant quand même l'image dans l'horloge ne
+    // suffisait pas, et donnait sa propre saccade. Une montée de genoux fait
+    // trente-deux images en 751 ms, soit une image toutes les 23 ms ; le
+    // plafond bat toutes les 42 ms et n'en prélève donc que dix-huit. Lesquelles
+    // dépend de la gigue du minuteur, et change d'un tour à l'autre : le geste
+    // avance de une image, puis de deux, puis de une.
+    //
+    // On choisit donc un pas **entier** — une image sur deux, sur quatre — et
+    // l'on montre toujours les mêmes, régulièrement espacées. Le tour garde sa
+    // durée vraie, la cadence reste sous le plafond, et le geste ne bronche
+    // plus.
+    const tenables = Math.max(1, Math.floor(duree / (1000 / CADENCE_MAX)));
+    const pas = Math.max(1, Math.ceil(planche.images / tenables));
+    const montrees = Math.ceil(planche.images / pas);
+
     const battement = setInterval(() => {
       // Depuis un instant absolu, jamais en incrémentant : un intervalle dérive,
       // et la répétition finirait plus lente que la durée annoncée.
       const ecoule = (Date.now() - debut.current) % duree;
-      setIndex(Math.floor((ecoule / duree) * planche.images) % planche.images);
-    }, intervalle);
+      const rang = Math.floor((ecoule / duree) * montrees) % montrees;
+      setIndex((rang * pas) % planche.images);
+    }, duree / montrees);
 
     return () => clearInterval(battement);
   }, [planche.images, duree, reduit]);

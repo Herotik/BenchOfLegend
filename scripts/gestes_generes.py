@@ -486,59 +486,6 @@ def JAMBE_LEVEE(cote):
     }
 
 
-def grimpeur_croise(genou):
-    """Une pose de mountain climber **croisé** : le genou traverse le corps.
-
-    Écrite en directions et non en appuis, contrairement au grimpeur droit, et
-    c'est ce qui la corrige. Un appui vise la **cheville** : déplacer sa cible
-    de l'autre côté du corps y amenait le pied sans y amener le genou, et la
-    cinématique inverse résolvait le reste comme elle pouvait — tibia tordu,
-    genou resté du mauvais côté. Or ce qui croise, dans cet exercice, c'est le
-    genou.
-
-    On décrit donc les deux os : la cuisse part de la hanche vers le coude
-    **opposé** — en avant, en travers, et vers le sol — et le tibia se replie
-    naturellement derrière elle. Genou gauche vers coude droit, genou droit
-    vers coude gauche.
-
-    Repère du corps à plat ventre : +Y vers la tête, -Z vers le sol, -X à
-    gauche du personnage. Les coudes sont posés à x = ∓0,18.
-    """
-    couche = {
-        _os("LeftArm"): Appui((-0.18, 0.42, 0.06), (0, 0.30, 0.95)),
-        _os("RightArm"): Appui((0.18, 0.42, 0.06), (0, 0.30, 0.95)),
-        _os("LeftHand"): APlat((0, 1, 0)),
-        _os("RightHand"): APlat((0, 1, 0)),
-        _os("LeftFoot"): (0, 0, -1),
-        _os("RightFoot"): (0, 0, -1),
-    }
-    for cote, lettre, signe in (("Left", "G", -1), ("Right", "D", +1)):
-        if lettre == genou:
-            # La cuisse traverse : elle part vers l'avant et vers **l'autre
-            # côté**. Le signe est inversé, c'est tout le geste.
-            couche[_os(f"{cote}UpLeg")] = (-signe * 0.42, +0.80, -0.43)
-            # Le tibia part vers l'arrière en **remontant**, et le pied est en
-            # l'air. C'est ce que montre la vidéo : la jambe qui travaille ne
-            # touche rien pendant qu'elle est ramenée, le talon passe plus haut
-            # que le genou.
-            #
-            # Le faire redescendre était une faute franche et mesurable : tibia
-            # plongeant de vingt-sept degrés, le pied traversait le plancher de
-            # dix-huit centimètres. `auditer-gestes.py` l'a refusé.
-            couche[_os(f"{cote}Leg")] = (-signe * 0.05, -0.58, +0.81)
-            # Le pied de la jambe levée ne pousse sur rien : il pend dans le
-            # prolongement du tibia au lieu de garder les orteils recourbés de
-            # l'appui.
-            couche[_os(f"{cote}Foot")] = (0, -0.55, -0.84)
-        else:
-            # Jambe tendue en arrière, vingt degrés sous l'horizontale. C'est
-            # la mesure de la vidéo — le segment bassin→cheville y fait 22°
-            # avec la ligne du sol — et non plus l'estimation à vingt.
-            couche[_os(f"{cote}UpLeg")] = (signe * 0.04, -0.938, -0.344)
-            couche[_os(f"{cote}Leg")] = (signe * 0.02, -0.947, -0.320)
-    return couche
-
-
 def grimpeur(genou, croise=False):
     """Une pose de mountain climber : quel genou est ramené, ou aucun.
 
@@ -594,10 +541,19 @@ def grimpeur(genou, croise=False):
             # Croisé, il traverse l'axe du corps pour aller chercher le coude
             # opposé — d'où le signe inversé. C'est ce qui distingue les deux
             # exercices du catalogue, et de trois-quarts ça se voit.
-            x = (-signe * 0.16) if croise else (signe * 0.14)
-            couche[_os(f"{cote}UpLeg")] = Appui(
-                (x, -0.22, 0.20), (0, 0.35, -0.94)
-            )
+            # Croisé, la cheville passe de l'autre côté de l'axe — mais de peu.
+            # Ce n'est pas un autre exercice, c'est le même avec quelques
+            # degrés de plus : quatorze centimètres du côté du genou pour le
+            # droit, dix de l'autre côté pour le croisé.
+            #
+            # Le **pôle** compte autant que la cible, et c'est ce qui manquait
+            # à la première version. Un appui ne place que la cheville ; c'est
+            # le pôle qui décide de quel côté le genou ressort. Laissé dans
+            # l'axe, on obtenait un pied passé de l'autre côté et un genou resté
+            # du sien — un tibia tordu, pas un mouvement croisé.
+            x = (-signe * 0.10) if croise else (signe * 0.14)
+            pole = (-signe * 0.45, 0.30, -0.84) if croise else (0, 0.35, -0.94)
+            couche[_os(f"{cote}UpLeg")] = Appui((x, -0.22, 0.20), pole)
         else:
             # Jambe tendue en arrière, cheville juste au-dessus du sol. La
             # hanche est à 53 cm et la jambe en fait 96 : la cheville, posée à
@@ -1582,10 +1538,26 @@ GESTES = {
         "symetrique": False,
         "hauteur": HAUTEUR_PLANCHE,
         "pauses": [0.22, 0.00, 0.22],
+        # Une torsion du bassin, dix degrés de chaque côté.
+        #
+        # Sans elle, la jambe partait de travers d'une hanche restée carrée, et
+        # l'on voyait une jambe tordue plutôt qu'un corps qui tourne. Personne
+        # ne ramène le genou vers le coude opposé sans que le bassin
+        # accompagne. Dix degrés suffisent : c'est un mouvement croisé, pas un
+        # russian twist.
+        "torsion": [+10.0, 0.0, -10.0],
+        # Le **même** grimpeur que l'exercice droit, avec quelques degrés de
+        # plus. Il avait droit à une pose écrite à part, en directions, et
+        # c'était une erreur d'analyse : on avait conclu qu'un appui ne pouvait
+        # pas croiser parce qu'il vise la cheville. Il le peut très bien — il
+        # faut simplement dire au **pôle** de quel côté sortir le genou.
+        # Écrite à part, la pose divergeait de celle du grimpeur droit à chaque
+        # correction de celui-ci, et c'est ainsi qu'elle a fini par ne plus
+        # ressembler à l'exercice.
         "cles": [
-            _pose(PLANCHE_DROITE, grimpeur_croise("D")),
-            _pose(PLANCHE_DROITE, grimpeur_croise(None)),
-            _pose(PLANCHE_DROITE, grimpeur_croise("G")),
+            _pose(PLANCHE_DROITE, grimpeur("D", croise=True)),
+            _pose(PLANCHE_DROITE, grimpeur(None, croise=True)),
+            _pose(PLANCHE_DROITE, grimpeur("G", croise=True)),
         ],
     },
     # Planche basse, relevée sur une vidéo de démonstration. Trois temps :
@@ -2898,6 +2870,46 @@ def _vecteur(triplet):
     return Vector(triplet)
 
 
+def _tordre(armature, assiette, axe_du_corps, degres, contexte):
+    """Fait pivoter le bassin autour de l'axe long du corps.
+
+    C'est ce qui manque à un mouvement croisé pour être naturel. Personne ne
+    ramène le genou vers le coude opposé en gardant les hanches carrées : le
+    bassin accompagne, et sans lui la jambe part de travers d'une hanche qui,
+    elle, ne bouge pas — on voit une jambe tordue plutôt qu'un corps qui tourne.
+
+    L'axe est celui de l'assise, c'est-à-dire la direction bassin→tête : à plat
+    ventre elle vaut +Y, et tourner autour d'elle est exactement une torsion.
+
+    Le bassin **seul** tourne, et c'est voulu. Le tronc est visé par des
+    directions du monde et les bras par des appuis, eux aussi dans le monde :
+    les uns comme les autres retrouvent leur place après la rotation. Seules
+    les racines des jambes suivent, ce qui est la définition d'une torsion de
+    hanches.
+
+    On repart de `assiette` — l'orientation que l'assise a donnée — et jamais de
+    l'orientation courante : composer une rotation sur la précédente à chaque
+    image ferait visser le corps d'un bout à l'autre du tour.
+    """
+    import math
+
+    from mathutils import Matrix, Vector
+
+    if not degres:
+        return
+    bassin = armature.pose.bones[BASSIN]
+    # L'axe se dit dans le monde et la matrice du bassin vit dans l'armature :
+    # Mixamo importe le squelette tourné d'un quart de tour, et tourner autour
+    # de l'axe du monde sans le convertir vrillerait le corps de travers.
+    axe = (
+        armature.matrix_world.inverted().to_3x3() @ Vector(axe_du_corps)
+    ).normalized()
+    remise = (Matrix.Rotation(math.radians(degres), 3, axe) @ assiette).to_4x4()
+    remise.translation = bassin.matrix.translation
+    bassin.matrix = remise
+    contexte.view_layer.update()
+
+
 def _poser_bassin(armature, ancre, decalage, contexte):
     """Place le bassin à sa position de repos, décalée de `decalage` (monde)."""
     from mathutils import Vector
@@ -3116,6 +3128,19 @@ def appliquer(armature, nom, images, contexte):
         monte = Vector((0, 0, hauteur - (monde @ ancre).z))
         ancre = ancre + monde.inverted().to_3x3() @ monte
 
+    # La torsion du bassin, pose par pose, en degrés autour de l'axe long du
+    # corps. On la fait passer par `_decalages` — le seul intéressant des trois
+    # nombres est le premier — pour qu'elle suive exactement le même calendrier
+    # que les poses : une torsion qui avancerait à son propre rythme tournerait
+    # les hanches pendant que les jambes tiennent leur position.
+    torsions = _decalages(
+        None if geste.get("torsion") is None
+        else [(angle, 0.0, 0.0) for angle in geste["torsion"]],
+        len(geste["cles"]),
+        images,
+        horaire,
+    )
+
     # Où l'appui planté a touché à la première image. Il n'y retournera pas
     # tout seul : c'est le corps qu'on déplacera pour qu'il y reste.
     repere_plante = None
@@ -3132,6 +3157,10 @@ def appliquer(armature, nom, images, contexte):
             remise.translation = bassin.matrix.translation
             bassin.matrix = remise
             contexte.view_layer.update()
+        if assise and torsions[numero - 1] is not None:
+            _tordre(
+                armature, assiette, assise[0], torsions[numero - 1][0], contexte
+            )
         if assise:
             bassin.rotation_mode = "QUATERNION"
             bassin.keyframe_insert("rotation_quaternion", frame=numero)

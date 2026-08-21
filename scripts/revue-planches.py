@@ -203,7 +203,27 @@ def carte(slug, planche, exos, vue, origine, mesure, orphelin):
     # `duree × colonnes / images` — et non `duree / colonnes`, qui est la même
     # chose seulement quand la planche est carrée. Sur une grille de quatre
     # colonnes et vingt images, l'écart est de 25 %.
-    pas_colonne = round(planche["duree"] * colonnes / images)
+    pas_colonne = max(1, round(planche["duree"] * colonnes / images))
+    # Le tour se déduit du pas, et **jamais l'inverse**.
+    #
+    # Une durée CSS s'écrit en millisecondes entières : `round` est donc
+    # inévitable sur le pas des colonnes, et dès qu'il arrondit, `pas × lignes`
+    # ne retombe plus sur la durée déclarée. Les deux animations ont alors des
+    # périodes légèrement différentes — 94 ms contre 93,875 pour une montée de
+    # genoux — et rien ne les remet en phase : elles dérivent d'un tour à
+    # l'autre jusqu'à ce que la fenêtre change de colonne au milieu d'une
+    # rangée. La planche joue alors ses images dans le désordre.
+    #
+    # C'est exactement ce qui se voyait : « la montée de genoux fonctionne bien
+    # au début, mais finit par saccader ». Sur les vingt-huit planches, quatre
+    # seulement ne tombaient pas juste — la fente (+1 ms par tour), le saut
+    # squaté (-4), la montée de genoux (+1) et la corde à sauter (-1) — et ce
+    # sont précisément celles qu'on a signalées.
+    #
+    # En prenant le pas comme référence, les deux animations sont en phase par
+    # construction et le restent indéfiniment. Le tour s'écarte au pire de
+    # quelques millisecondes de la durée déclarée, ce qui ne se voit pas.
+    tour = pas_colonne * lignes
     cote = 128
     liste = "".join(f"<li>{nom}</li>" for nom in sorted(exos)) or (
         '<li class="orphelin">aucun exercice ne l\'utilise</li>'
@@ -228,7 +248,7 @@ def carte(slug, planche, exos, vue, origine, mesure, orphelin):
               background-size:{cote * colonnes}px {cote * lignes}px;
               --fx:-{cote * colonnes}px; --fy:-{cote * lignes}px;
               animation:colonnes {pas_colonne}ms steps({colonnes}) infinite,
-                        rangees {planche['duree']}ms steps({lignes}) infinite;"></div>
+                        rangees {tour}ms steps({lignes}) infinite;"></div>
         </div>
         <div class="corps">
           <h3>{slug}</h3>
