@@ -416,16 +416,30 @@ ASSIS_EN_ARRIERE = {
     # La tête regarde ses mains, donc vers l'avant et le bas.
     _os("Neck"): (+0.00, +0.15, +0.99),
     _os("Head"): (+0.00, -0.55, +0.84),
-    # Les **talons sont décollés** et le restent : c'est ce qui distingue le
-    # russian twist du crunch assis, et c'est visible sur toute la vidéo. La
-    # cheville tient à vingt centimètres du tapis, genou fléchi à cent douze
-    # degrés.
-    _os("LeftUpLeg"): (+0.06, -0.766, +0.643),
-    _os("RightUpLeg"): (-0.06, -0.766, +0.643),
-    _os("LeftLeg"): (+0.04, -0.88, -0.47),
-    _os("RightLeg"): (-0.04, -0.88, -0.47),
-    _os("LeftFoot"): (+0.00, -0.94, -0.34),
-    _os("RightFoot"): (+0.00, -0.94, -0.34),
+    # Genoux **hauts** et talons décollés : la cuisse monte de soixante-trois
+    # degrés au-dessus de l'horizontale, le tibia redescend de quarante-six,
+    # genou fléchi à cent neuf degrés. La cheville se retrouve **au-dessus** du
+    # bassin, d'un quart de longueur de tronc.
+    #
+    # Ces trois nombres sont les moyennes des **vecteurs** unitaires du relevé,
+    # sur trente-huit images, avec une dispersion de 1,0°, 2,2° et 3,6°. C'est
+    # la mesure la plus sûre de tout ce geste, et elle a été écartée deux fois
+    # au profit d'une impression : le premier jet la respectait, on a trouvé
+    # que ça faisait « une boule » et l'on a descendu la cuisse à quarante
+    # degrés, puis à trente-cinq. Le personnage s'est alors allongé au lieu de
+    # rester assis, et c'est exactement ce qu'on cherchait à corriger ailleurs.
+    #
+    # La leçon vaut d'être écrite : une moyenne de vecteurs unitaires à trois
+    # degrés de dispersion ne se corrige pas à l'œil sur un mannequin nu. La
+    # première version des angles moyennait des `arctan2(dy, |dx|)`, ce qui
+    # explose quand dx passe près de zéro — c'est **cette** mesure-là qui était
+    # fausse, pas celle-ci.
+    _os("LeftUpLeg"): (+0.06, -0.451, +0.890),
+    _os("RightUpLeg"): (-0.06, -0.451, +0.890),
+    _os("LeftLeg"): (+0.04, -0.690, -0.724),
+    _os("RightLeg"): (-0.04, -0.690, -0.724),
+    _os("LeftFoot"): (+0.00, -0.80, -0.60),
+    _os("RightFoot"): (+0.00, -0.80, -0.60),
 }
 
 
