@@ -481,12 +481,15 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 2400,
   },
-  // Pompes piquées : le V renversé, crâne au sol entre les mains.
+  // Pompes piquées : le V renversé, crâne au sol entre les mains. Cadence
+  // relevée sur la vidéo — 3 294 ms par répétition, avec un temps marqué en
+  // haut —, et non estimée : les trois quarts de seconde d'écart avec le
+  // chiffre rond qu'on aurait choisi changent la lecture du geste.
   "pompe-piquee": {
     source: require("../../assets/gestes/pompe-piquee.png"),
     images: 32,
     colonnes: 4,
-    duree: 2600,
+    duree: 3300,
   },
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
