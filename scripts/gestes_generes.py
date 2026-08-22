@@ -1269,14 +1269,25 @@ GESTES = {
                 # à +0,12 pour une épaule à +0,26 : quatorze centimètres devant
                 # elle.
                 #
-                # Le pôle, lui, reste dirigé vers le **bas**. Le pointer vers
-                # l'avant amenait bien le coude devant, mais le contrôle des
-                # postures le refuse — et il a raison, un coude ne se plie pas
-                # de ce côté-là. Il n'en avait pas besoin : le bras est presque
-                # tendu à cette distance, et un bras tendu suit la droite
-                # épaule-main, laquelle passe devant.
-                _os("LeftArm"): Appui((+0.42, -0.12, 0.09), (+0.10, +0.30, -0.95)),
-                _os("RightArm"): Appui((+0.42, -0.12, 0.09), (+0.10, +0.30, -0.95)),
+                # Le pôle, lui, est **latéral et fixe**, et les deux le sont
+                # pour toute la durée du geste : le gauche vers +X, le droit
+                # vers -X, quelle que soit la clé.
+                #
+                # Les deux moitiés de cette phrase ont été payées. Un pôle
+                # dirigé vers l'arrière — le +0,30 en y qu'on avait mis pour
+                # contenter le contrôle des postures — plantait les deux coudes
+                # onze à douze centimètres **derrière** le plan de la poitrine :
+                # c'est le bras qui passait derrière. Et un pôle qui change de
+                # signe d'une clé à l'autre traverse zéro au passage, où la
+                # chaîne n'a plus d'orientation définie et le coude bascule d'un
+                # coup. Fixe et latéral, le coude reste devant sur les seize
+                # images — mesuré entre +0,0 et +6,9 cm en avant du sternum.
+                #
+                # La main, elle, se pose à dix centimètres du tapis et non neuf :
+                # à neuf, l'avant-bras s'enfonçait de sept millimètres dedans.
+                # À dix, le coude affleure — quatre millimètres au-dessus.
+                _os("LeftArm"): Appui((+0.42, -0.12, 0.10), (+0.99, +0.11, -0.05)),
+                _os("RightArm"): Appui((+0.42, -0.12, 0.10), (-0.99, +0.11, -0.05)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
                 # Les jambes **contrebalancent** : quand les bras descendent à
@@ -1321,8 +1332,8 @@ GESTES = {
                 # au-dessus du tapis. La cuisse n'y est qu'à vingt-trois
                 # centimètres du sol à cette profondeur, et la main passe donc
                 # dix-huit centimètres au-dessus d'elle, sans la toucher.
-                _os("LeftArm"): Appui((+0.00, -0.06, 0.38), (+0.60, +0.30, -0.75)),
-                _os("RightArm"): Appui((+0.00, -0.06, 0.38), (-0.60, +0.30, -0.75)),
+                _os("LeftArm"): Appui((+0.00, -0.06, 0.38), (+0.99, +0.11, -0.05)),
+                _os("RightArm"): Appui((+0.00, -0.06, 0.38), (-0.99, +0.11, -0.05)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
             }),
@@ -1335,8 +1346,8 @@ GESTES = {
                                      paume=(-0.72, -0.70, +0.00)),
                 _os("Neck"): (-0.52, +0.42, +0.74),
                 _os("Head"): (-0.44, -0.30, +0.84),
-                _os("LeftArm"): Appui((-0.42, -0.12, 0.09), (-0.10, +0.30, -0.95)),
-                _os("RightArm"): Appui((-0.42, -0.12, 0.09), (-0.10, +0.30, -0.95)),
+                _os("LeftArm"): Appui((-0.42, -0.12, 0.10), (+0.99, +0.11, -0.05)),
+                _os("RightArm"): Appui((-0.42, -0.12, 0.10), (-0.99, +0.11, -0.05)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
                 # Les jambes **contrebalancent** : quand les bras descendent à
