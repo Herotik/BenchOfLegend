@@ -37,10 +37,16 @@ function planchesDeclarees(): { slugs: Set<string>; fichiers: string[] } {
   const slugs = new Set<string>();
   const fichiers: string[] = [];
 
-  for (const [, slug = "", fichier = ""] of source.matchAll(
-    /^ {2}"?([\w-]+)"?: \{\n\s*source: require\("\.\.\/\.\.\/assets\/gestes\/([\w-]+)\.png"\)/gm,
+  for (const [, slug = "", fichier = "", partage] of source.matchAll(
+    /^ {2}"?([\w-]+)"?: \{\n\s*source: require\("\.\.\/\.\.\/assets\/gestes\/([\w-]+)\.png"\),(?:\n\s*partage: "([\w-]+)",)?/gm,
   )) {
-    expect(fichier, `la planche « ${slug} » pointe vers ${fichier}.png`).toBe(slug);
+    // Une planche pointe vers le fichier de son propre nom, sauf à déclarer
+    // explicitement `partage` — le cas d'un exercice qui ne diffère que par le
+    // tempo, et dont l'image serait identique au pixel près.
+    expect(
+      fichier,
+      `la planche « ${slug} » pointe vers ${fichier}.png`,
+    ).toBe(partage ?? slug);
     slugs.add(slug);
     fichiers.push(join(ICI, "..", "..", "assets", "gestes", `${fichier}.png`));
   }

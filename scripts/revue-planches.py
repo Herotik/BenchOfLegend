@@ -75,10 +75,16 @@ def planches():
         def champ(nom, defaut):
             trouve = re.search(rf"{nom}: (\d+)", corps)
             return int(trouve.group(1)) if trouve else defaut
+        # `partage` : le fichier n'est pas toujours celui du slug. Deux
+        # exercices qui ne diffèrent que par le tempo se rendraient en deux
+        # images identiques au pixel près, et la seconde pointe donc la
+        # première.
+        partage = re.search(r'partage: "([a-z0-9-]+)"', corps)
         sortie[slug] = {
             "images": champ("images", 20),
             "colonnes": champ("colonnes", 4),
             "duree": champ("duree", 1400),
+            "fichier": partage.group(1) if partage else slug,
         }
     return sortie
 
@@ -188,7 +194,7 @@ def allegee(chemin):
 
 def carte(slug, planche, exos, vue, origine, mesure, orphelin):
     amplitude, saut, pas = mesure
-    source = os.path.join(ASSETS, f"{slug}.png")
+    source = os.path.join(ASSETS, f"{planche['fichier']}.png")
     donnee = base64.b64encode(allegee(source)).decode("ascii")
 
     colonnes, images = planche["colonnes"], planche["images"]
@@ -284,7 +290,8 @@ def main():
     ecrits = gestes_ecrits()
 
     manquantes = [
-        s for s in registre if not os.path.isfile(os.path.join(ASSETS, f"{s}.png"))
+        s for s, p in registre.items()
+        if not os.path.isfile(os.path.join(ASSETS, f"{p['fichier']}.png"))
     ]
     if manquantes:
         sys.exit(
@@ -316,7 +323,7 @@ def main():
                 slug, registre[slug], par_geste.get(slug, []),
                 ecrits.get(slug, "—"),
                 "écrit ici" if slug in ecrits else "captation",
-                mesures(os.path.join(ASSETS, f"{slug}.png"),
+                mesures(os.path.join(ASSETS, f"{registre[slug]['fichier']}.png"),
                         registre[slug]["images"], registre[slug]["colonnes"]),
                 not par_geste.get(slug),
             )

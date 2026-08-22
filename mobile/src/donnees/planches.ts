@@ -84,6 +84,21 @@ export interface Planche {
    * corde à sauter.
    */
   duree?: number;
+  /**
+   * Nom de la planche dont celle-ci **réutilise l'image**, quand c'est le cas.
+   *
+   * Un exercice peut ne différer d'un autre que par le tempo : une traction
+   * négative est une traction dont on ralentit la descente, et le moteur
+   * rejoue ses clés en miroir, donc les deux planches sortiraient identiques
+   * au pixel près. Plutôt que de livrer deux fois sept cents kilo-octets, on
+   * pointe la même image et l'on change `duree`.
+   *
+   * Le champ n'est pas décoratif : `gestes.test.ts` exige qu'une planche
+   * pointe vers le fichier de son propre nom — c'est ce qui attrape les
+   * copier-coller —, et `partage` est la seule façon déclarée d'y déroger.
+   * Sans lui, la réutilisation serait indistinguable d'une faute de frappe.
+   */
+  partage?: string;
 }
 
 /**
@@ -415,6 +430,39 @@ export const PLANCHES: Record<string, Planche> = {
     images: 32,
     colonnes: 4,
     duree: 2600,
+  },
+  "traction-prise-large": {
+    source: require("../../assets/gestes/traction-prise-large.png"),
+    images: 32,
+    colonnes: 4,
+    duree: 2800,
+  },
+  "traction-supination": {
+    source: require("../../assets/gestes/traction-supination.png"),
+    images: 32,
+    colonnes: 4,
+    duree: 2600,
+  },
+  "traction-supination-serree": {
+    source: require("../../assets/gestes/traction-supination-serree.png"),
+    images: 32,
+    colonnes: 4,
+    duree: 2600,
+  },
+  // Les négatives rejouent **la planche de la traction**, au ralenti.
+  //
+  // C'est la même trajectoire : ce qui fait l'exercice est la descente, tenue
+  // trois à quatre secondes. Le moteur rejoue ses clés en miroir et ne sait
+  // donc pas rendre une montée rapide suivie d'une descente lente ; il reste
+  // que le tour entier soit lent, ce qui est le plus près qu'on puisse en
+  // dire — et cela évite de livrer une cinquième planche identique à la
+  // première au pixel près.
+  "traction-negative": {
+    source: require("../../assets/gestes/traction.png"),
+    partage: "traction",
+    images: 32,
+    colonnes: 4,
+    duree: 5200,
   },
   // De trois-quarts : de profil, les deux montants de la barre tombent pile
   // sur le corps et lui plantent un poteau du crâne aux pieds.

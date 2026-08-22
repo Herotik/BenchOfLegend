@@ -66,7 +66,16 @@ ROUGE_MAXIMAL = 0.02
 
 
 def registre():
-    """Ce que `planches.ts` déclare : slug → images, colonnes, durée."""
+    """Ce que `planches.ts` déclare : slug → images, colonnes, durée, fichier.
+
+    Le fichier n'est pas toujours celui du slug. Une planche peut en
+    **partager** une autre quand deux exercices ne diffèrent que par le tempo —
+    une traction négative est une traction dont on ralentit la descente, et le
+    moteur rejouant ses clés en miroir, les deux images sortiraient identiques
+    au pixel près. `planches.ts` le déclare alors par `partage`, et c'est la
+    seule dérogation admise : sans elle, une image manquante et une image
+    réutilisée se ressembleraient.
+    """
     texte = open(
         os.path.join(RACINE, "mobile", "src", "donnees", "planches.ts"),
         encoding="utf-8",
@@ -79,15 +88,19 @@ def registre():
             trouve = re.search(rf"{nom}: (\d+)", corps)
             return int(trouve.group(1)) if trouve else defaut
 
-        sortie[slug] = (champ("images", 20), champ("colonnes", 4), champ("duree", 1400))
+        partage = re.search(r'partage: "([a-z0-9-]+)"', corps)
+        sortie[slug] = (
+            champ("images", 20), champ("colonnes", 4), champ("duree", 1400),
+            partage.group(1) if partage else slug,
+        )
     return sortie
 
 
-def controler(slug, images, colonnes, duree):
+def controler(slug, images, colonnes, duree, fichier=None):
     import numpy as np
     from PIL import Image
 
-    chemin = os.path.join(ASSETS, f"{slug}.png")
+    chemin = os.path.join(ASSETS, f"{fichier or slug}.png")
     if not os.path.isfile(chemin):
         return [f"aucune image : {chemin}"], (None, None)
 
@@ -141,15 +154,31 @@ def controler(slug, images, colonnes, duree):
     # alignait vingt-trois à 255, et les doigts coupés au sommet, cinq.
     #
     # On compte donc les pixels franchement opaques, et non les pixels visibles.
+    #
+    # Et l'on ne compte que la **chair**. Un agrès a le droit de sortir du
+    # cadre : une barre de traction est à 2,25 m, ses montants descendent au
+    # sol, et le champ de 2,60 m que toutes les démonstrations partagent ne
+    # peut pas contenir à la fois ces montants et un corps qui monte jusqu'au
+    # menton. Couper le pied d'un portique est un cadrage, couper le pied d'un
+    # personnage est une faute — et c'est celle-ci qu'on cherche.
+    #
+    # Les deux se distinguent à la couleur : les accessoires sont peints d'un
+    # bleu sombre unique, `(0.13, 0.17, 0.26)`, choisi précisément pour qu'un
+    # agrès ne se confonde avec aucune peau.
     alpha = rgba[:, :, 3]
+    bleu = (
+        (rgba[:, :, 2].astype(int) > rgba[:, :, 0].astype(int) + 15)
+        & (rgba[:, :, 2].astype(int) > rgba[:, :, 1].astype(int) + 10)
+    )
+    chair = (alpha > 200) & ~bleu
     for k in range(images):
         c, l = k % colonnes, k // colonnes
-        v = alpha[l * hauteur:(l + 1) * hauteur, c * largeur:(c + 1) * largeur]
+        v = chair[l * hauteur:(l + 1) * hauteur, c * largeur:(c + 1) * largeur]
         bords = {
-            "haut": int((v[0, :] > 200).sum()),
-            "bas": int((v[-1, :] > 200).sum()),
-            "gauche": int((v[:, 0] > 200).sum()),
-            "droite": int((v[:, -1] > 200).sum()),
+            "haut": int(v[0, :].sum()),
+            "bas": int(v[-1, :].sum()),
+            "gauche": int(v[:, 0].sum()),
+            "droite": int(v[:, -1].sum()),
         }
         touches = {nom: n for nom, n in bords.items() if n}
         if touches:
@@ -204,8 +233,8 @@ def main():
     planches = registre()
     total = 0
     print(f"\n=== {len(planches)} planches ===")
-    for slug, (images, colonnes, duree) in sorted(planches.items()):
-        fautes, (moyen, pire) = controler(slug, images, colonnes, duree)
+    for slug, (images, colonnes, duree, fichier) in sorted(planches.items()):
+        fautes, (moyen, pire) = controler(slug, images, colonnes, duree, fichier)
         pas = "  —      —  " if moyen is None else f"{moyen:5.2f}  {pire:5.2f}"
         etat = "ok" if not fautes else "; ".join(fautes)
         print(f"  {slug:28s} {images:2d} img  saut {pas}   {etat}")
