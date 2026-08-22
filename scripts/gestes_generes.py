@@ -1275,8 +1275,8 @@ GESTES = {
                 # de ce côté-là. Il n'en avait pas besoin : le bras est presque
                 # tendu à cette distance, et un bras tendu suit la droite
                 # épaule-main, laquelle passe devant.
-                _os("LeftArm"): Appui((+0.42, -0.16, 0.09), (+0.10, +0.30, -0.95)),
-                _os("RightArm"): Appui((+0.42, -0.16, 0.09), (+0.10, +0.30, -0.95)),
+                _os("LeftArm"): Appui((+0.42, -0.12, 0.09), (+0.10, +0.30, -0.95)),
+                _os("RightArm"): Appui((+0.42, -0.12, 0.09), (+0.10, +0.30, -0.95)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
                 # Les jambes **contrebalancent** : quand les bras descendent à
@@ -1306,8 +1306,23 @@ GESTES = {
                                      paume=(+0.00, -0.906, +0.423)),
                 _os("Spine2"): APlat((+0.00, +0.423, +0.906),
                                      paume=(+0.00, -0.906, +0.423)),
-                _os("LeftArm"): Appui((+0.00, -0.18, 0.51), (+1, 0, -0.3)),
-                _os("RightArm"): Appui((+0.00, -0.18, 0.51), (-1, 0, -0.3)),
+                # Les mains traversent par la **poche** que laissent le ventre
+                # et les cuisses, et non par-dessus les genoux ni par-dessous.
+                #
+                # Les trois trajets ont été essayés et mesurés. À cinquante et
+                # un centimètres, elles passaient pile à la hauteur des genoux
+                # — 0,51 et 0,52 — et entre eux : au travers des jambes. À
+                # vingt-deux, elles filaient **sous** les cuisses, ce qui n'est
+                # pas davantage le geste et laissait l'avant-bras à moins de
+                # cinq centimètres de la cuisse, donc chair contre chair.
+                #
+                # Les genoux étant hauts, il reste entre eux et le buste un
+                # creux : six centimètres devant le bassin, trente-huit
+                # au-dessus du tapis. La cuisse n'y est qu'à vingt-trois
+                # centimètres du sol à cette profondeur, et la main passe donc
+                # dix-huit centimètres au-dessus d'elle, sans la toucher.
+                _os("LeftArm"): Appui((+0.00, -0.06, 0.38), (+0.60, +0.30, -0.75)),
+                _os("RightArm"): Appui((+0.00, -0.06, 0.38), (-0.60, +0.30, -0.75)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
             }),
@@ -1320,8 +1335,8 @@ GESTES = {
                                      paume=(-0.72, -0.70, +0.00)),
                 _os("Neck"): (-0.52, +0.42, +0.74),
                 _os("Head"): (-0.44, -0.30, +0.84),
-                _os("LeftArm"): Appui((-0.42, -0.16, 0.09), (-0.10, +0.30, -0.95)),
-                _os("RightArm"): Appui((-0.42, -0.16, 0.09), (-0.10, +0.30, -0.95)),
+                _os("LeftArm"): Appui((-0.42, -0.12, 0.09), (-0.10, +0.30, -0.95)),
+                _os("RightArm"): Appui((-0.42, -0.12, 0.09), (-0.10, +0.30, -0.95)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
                 # Les jambes **contrebalancent** : quand les bras descendent à
