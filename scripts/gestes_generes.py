@@ -2175,15 +2175,21 @@ GESTES = {
         "ancrage": False,
         "hauteur": 0.626,
         # Deux chaises, une de chaque côté, plus étroites qu'un banc.
+        # Deux **chaises**, dossier vers l'extérieur, et le dossier n'est pas
+        # décoratif : deux assises nues posées de part et d'autre d'un corps se
+        # lisent comme un seul banc que le personnage traverse — l'une passe
+        # devant lui, l'autre derrière, et l'œil les raccorde. C'est ce qu'a
+        # donné la première version, où rien ne se croisait pourtant : mesuré,
+        # le corps s'arrête à |x| = 0,37 et l'assise commence à 0,26.
+        #
+        # Assise de trente-six centimètres carrés, à quarante-quatre de l'axe :
+        # la main s'y pose à trente-deux, soit six centimètres à l'intérieur du
+        # bord, et le dossier ferme la silhouette de chaque côté.
         "banc": [
-            {"hauteur": 0.45, "bord": -0.32, "longueur": 0.50, "x": +0.38,
-             "largeur": 0.30},
-            {"hauteur": 0.45, "bord": -0.32, "longueur": 0.50, "x": -0.38,
-             "largeur": 0.30},
-            # Trente-huit centimètres d'axe, pour trente de large : le bord
-            # intérieur tombe à 0,23 et la cuisse s'arrête à 0,19. Quatre
-            # centimètres de jeu. À trente-quatre, l'assise et la cuisse se
-            # touchaient.
+            {"hauteur": 0.45, "bord": -0.24, "longueur": 0.36, "x": +0.44,
+             "largeur": 0.36, "dossier": +1},
+            {"hauteur": 0.45, "bord": -0.24, "longueur": 0.36, "x": -0.44,
+             "largeur": 0.36, "dossier": -1},
         ],
         "bassin": [(0, -0.100, 0.00), (0, +0.007, -0.173)],
         "pauses": [0.16, 0.04],

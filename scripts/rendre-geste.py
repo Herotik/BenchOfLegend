@@ -522,7 +522,7 @@ def poser_le_banc(banc, mini, maxi):
         longueur = banc.get("longueur", 0.55)
         milieu_y = banc["bord"] + longueur / 2
         return _dessiner_le_banc(banc.get("x", 0.0), milieu_y, longueur, hauteur,
-                                 banc.get("largeur", 0.34))
+                                 banc.get("largeur", 0.34), banc.get("dossier"))
 
     hauteur = banc
     tete, bassin = None, None
@@ -548,8 +548,19 @@ def poser_le_banc(banc, mini, maxi):
     return _dessiner_le_banc(centre_x, milieu_y, longueur, hauteur)
 
 
-def _dessiner_le_banc(centre_x, milieu_y, longueur, hauteur, largeur=0.34):
-    """Le meuble lui-même, une fois sa place connue."""
+def _dessiner_le_banc(centre_x, milieu_y, longueur, hauteur, largeur=0.34,
+                      dossier=None):
+    """Le meuble lui-même, une fois sa place connue.
+
+    `dossier` vaut `+1` ou `-1` et ajoute un **dossier** de ce côté-là, ce qui
+    fait d'un banc une chaise.
+
+    Ce n'est pas de la décoration. Deux assises nues posées de part et d'autre
+    d'un corps se lisent comme **un seul banc que le personnage traverse** :
+    l'une passe devant lui, l'autre derrière, et l'œil les raccorde. Un dossier
+    de chaque côté ferme la silhouette et dit qu'il y a deux meubles, entre
+    lesquels le corps est suspendu — ce qui est le nom même de l'exercice.
+    """
     epaisseur = 0.08
     bpy.ops.mesh.primitive_cube_add(
         size=1, location=(centre_x, milieu_y, hauteur - epaisseur / 2)
@@ -595,6 +606,20 @@ def _dessiner_le_banc(centre_x, milieu_y, longueur, hauteur, largeur=0.34):
     semelle = bpy.context.object
     semelle.scale = (banc.scale.x * 0.85, longueur * 0.34, 0.04)
     semelle.data.materials.append(matiere)
+
+    if dossier:
+        # Un panneau vertical au bord extérieur de l'assise, quarante
+        # centimètres au-dessus d'elle : la hauteur d'un dossier de chaise.
+        haut_dossier = 0.40
+        bpy.ops.mesh.primitive_cube_add(
+            size=1,
+            location=(centre_x + dossier * largeur / 2,
+                      milieu_y, hauteur + haut_dossier / 2),
+        )
+        panneau = bpy.context.object
+        panneau.scale = (0.05, longueur, haut_dossier)
+        panneau.data.materials.append(matiere)
+
     return banc
 
 
