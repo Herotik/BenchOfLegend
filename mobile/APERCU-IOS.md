@@ -107,6 +107,35 @@ le reste — écrans, logique, styles, appels d'API — passe par `eas update`.
 Si une mise à jour semble ne pas arriver, c'est en général que l'empreinte a
 changé : le canal la sert toujours, mais plus au binaire installé.
 
+## L'empreinte peut changer sans que le dépôt bouge
+
+C'est arrivé, et ça a coûté quinze jours de corrections publiées dans le vide.
+
+Le 14 août, une build iPhone est sortie avec l'empreinte `f676bc3d…`. Le 20,
+eas-cli est passé de 21.8 à 22.2 — le workflow demandait `latest` — et toutes
+les mises à jour publiées depuis portent `57e54335…`. Même dépôt, même verrou,
+aucun fichier natif touché : **c'est l'outil qui a changé sa façon de calculer
+l'empreinte**. Les deux plateformes ont basculé le même jour, ce qui est la
+signature d'un changement d'outil et non de projet.
+
+Le téléphone a alors cessé de recevoir quoi que ce soit, sans message ni erreur.
+
+Deux conséquences pratiques :
+
+- **La version d'eas-cli est figée** — `eas-version: 22.2.0` dans le workflow,
+  `"version": "~22.2.0"` dans `eas.json`. La monter devient une décision, et
+  elle s'accompagne d'une build.
+- **Quand elle change quand même, il faut reconstruire.** Aucune mise à jour ne
+  rattrape un binaire dont l'empreinte n'existe plus.
+
+Le diagnostic tient en deux commandes, et elles se comparent :
+
+    npx eas-cli build:list --platform ios --limit 1     # Runtime Version
+    npx eas-cli update:list --branch preview --limit 3  # Runtime Version
+
+Les réglages de l'app affichent la même valeur, sous le nom : si elle diffère
+de celle des mises à jour, le téléphone est isolé.
+
 ## Le reste du temps
 
 Pour le travail courant, l'aperçu navigateur reste le plus rapide — il rend le

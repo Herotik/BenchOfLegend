@@ -62,10 +62,26 @@ jobs:
             package-lock.json
             mobile/package-lock.json
 
+      # La version d'eas-cli est **figée**, et c'est la leçon la plus chère de
+      # ce workflow.
+      #
+      # `latest` a silencieusement changé la version d'exécution des mises à
+      # jour. Le 14 août, une build iPhone est sortie avec l'empreinte
+      # `f676bc3d…` ; le 20, eas-cli est passé de 21.8 à 22.2, et les mises à
+      # jour publiées depuis portent `57e54335…`. Même dépôt, même verrou,
+      # aucun fichier natif touché — c'est l'outil qui a changé sa façon de
+      # calculer l'empreinte.
+      #
+      # Conséquence : le téléphone a cessé de recevoir quoi que ce soit, sans
+      # message ni erreur. Le canal servait toujours les mises à jour, mais
+      # plus à ce binaire-là. Quinze jours de corrections publiées dans le vide.
+      #
+      # Une version figée fait échouer bruyamment ce qui échouait en silence.
+      # La monter est alors une décision, et elle s'accompagne d'une build.
       - name: Installer eas-cli
         uses: expo/expo-github-action@v8
         with:
-          eas-version: latest
+          eas-version: 22.2.0
           token: ${{ secrets.EXPO_TOKEN }}
 
       # `npm ci` et non `npm install` : on veut exactement les versions du
