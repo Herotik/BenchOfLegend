@@ -1778,6 +1778,199 @@ GESTES = {
         ],
     },
 
+    # Pont fessier. Sur le dos, genoux pliés, pieds à plat : on décolle le
+    # bassin jusqu'à aligner épaules, hanches et genoux.
+    #
+    # ## Les critères, avant d'écrire quoi que ce soit
+    #
+    # Les descriptions concordantes disent trois choses mesurables, et une
+    # quatrième qui est une **limite** :
+    #
+    # - talons à quinze ou vingt centimètres des fesses — plus loin, ce sont
+    #   les ischio-jambiers qui travaillent, plus près, les quadriceps ;
+    # - pieds à plat, largeur de hanches, orteils droit devant ;
+    # - en haut, **ligne droite épaule-hanche-genou** ;
+    # - et surtout : ne pas aller au-delà. Monter plus haut que cette ligne
+    #   n'ajoute rien et bascule la charge sur les lombaires. C'est la faute la
+    #   plus citée de l'exercice, donc celle qu'une démonstration ne doit pas
+    #   commettre.
+    #
+    # Le haut du dos et la tête, eux, ne quittent jamais le sol : seul le
+    # bassin monte. D'où une colonne qui s'incline par étages — les lombaires
+    # beaucoup, le thorax un peu, la nuque pas du tout.
+    #
+    # ## Ce qui se déduit
+    #
+    # Les pieds sont **plantés** : c'est un appui, pas une direction, et la
+    # même cible sert aux deux clés. Le bassin monte de 21 cm entre elles, ce
+    # qui amène l'articulation de la hanche de 0,105 à 0,315 — la hauteur où la
+    # ligne épaule-hanche-genou est droite, l'épaule restant au sol et le genou
+    # à 0,48.
+    "pont-fessier": {
+        "vue": "profil",
+        "duree": 2400,
+        "assise": SUR_LE_DOS,
+        "ancrage": False,
+        "hauteur": 0.165,
+        "bassin": [(0, 0, 0.00), (0, 0, 0.148)],
+        # Un temps en haut, où l'on serre les fessiers ; rien en bas, qu'on
+        # traverse sans se reposer.
+        "pauses": [0.06, 0.20],
+        "cles": [
+            _pose({
+                # Colonne, nuque et tête sur **une seule ligne**, huit degrés
+                # sous l'horizontale. Ce n'est pas un choix esthétique : le
+                # bassin est plus épais que le dos — seize centimètres et demi
+                # de chair sous l'articulation de la hanche contre neuf sous
+                # celle de l'épaule —, si bien qu'un tronc horizontal partant
+                # d'une hanche posée tient la tête à quatorze centimètres du
+                # sol. Huit degrés de pente ramènent l'occiput au tapis.
+                _os("Spine"): (0, +0.990, -0.140),
+                _os("Spine1"): (0, +0.990, -0.140),
+                _os("Spine2"): (0, +0.990, -0.140),
+                _os("Neck"): (0, +0.990, -0.140),
+                _os("Head"): (0, +0.990, -0.140),
+                # Les bras le long du corps, paumes au sol : c'est ainsi qu'on
+                # se stabilise. Leur pente suit l'épaule, qui n'est pas à la
+                # même hauteur aux deux clés — 9 cm en bas, 16 en haut —, et
+                # une pente unique enfonçait donc les mains de cinq centimètres
+                # dans le tapis au point bas.
+                _os("LeftArm"): (+0.20, -0.976, -0.045),
+                _os("RightArm"): (-0.20, -0.976, -0.045),
+                _os("LeftForeArm"): (+0.13, -0.987, -0.045),
+                _os("RightForeArm"): (-0.13, -0.987, -0.045),
+                _os("LeftHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                _os("RightHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                # Chevilles plantées à quarante centimètres devant les
+                # hanches : les talons tombent alors à une quinzaine de
+                # centimètres des fesses, ce que demandent les descriptions.
+                # Sur le dos, l'avant du corps est le **ciel**, donc le genou
+                # mène vers +Z.
+                _os("LeftUpLeg"): Appui((+0.10, -0.40, 0.089), (0, +0.15, +0.99)),
+                _os("RightUpLeg"): Appui((-0.10, -0.40, 0.089), (0, +0.15, +0.99)),
+                _os("LeftFoot"): (0, -0.85, -0.52),
+                _os("RightFoot"): (0, -0.85, -0.52),
+            }),
+            _pose({
+                # La colonne s'incline **d'un bloc**, et c'est tout l'exercice :
+                # la ligne épaule-hanche-genou doit être droite, donc le tronc
+                # aussi. Une première version l'inclinait par étages pour
+                # garder la tête au sol ; le contrôle des postures l'a refusée
+                # comme un dos enroulé, et il avait raison — un pont fessier
+                # n'enroule rien, il **ouvre la hanche**. Ce sont la nuque et la
+                # tête qui rattrapent, pas la colonne.
+                #
+                # 25° d'inclinaison, et ce n'est pas un chiffre choisi : c'est
+                # le seul qui satisfasse les deux contraintes à la fois —
+                # l'épaule redescend à 0,13, donc au sol, et la hanche tombe
+                # pile sur la droite qui la joint au genou. Un degré de plus et
+                # le bassin dépasse la ligne, ce que toutes les descriptions
+                # interdisent nommément.
+                _os("Spine"): (0, +0.906, -0.423),
+                _os("Spine1"): (0, +0.906, -0.423),
+                _os("Spine2"): (0, +0.906, -0.423),
+                _os("Neck"): (0, +0.906, -0.423),
+                _os("Head"): (0, +0.906, -0.423),
+                _os("LeftArm"): (+0.20, -0.958, -0.158),
+                _os("RightArm"): (-0.20, -0.958, -0.158),
+                _os("LeftForeArm"): (+0.13, -0.972, -0.158),
+                _os("RightForeArm"): (-0.13, -0.972, -0.158),
+                _os("LeftHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                _os("RightHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                _os("LeftUpLeg"): Appui((+0.10, -0.40, 0.089), (0, +0.15, +0.99)),
+                _os("RightUpLeg"): Appui((-0.10, -0.40, 0.089), (0, +0.15, +0.99)),
+                _os("LeftFoot"): (0, -0.85, -0.52),
+                _os("RightFoot"): (0, -0.85, -0.52),
+            }),
+        ],
+    },
+
+    # Pompes piquées. Un V renversé, mains et pieds au sol, bassin au sommet :
+    # on descend le **crâne** vers le sol entre les mains, et non la poitrine.
+    #
+    # ## Les critères
+    #
+    # - hanches hautes, corps en V renversé — « downward dog » ;
+    # - mains largeur d'épaules, tête neutre **entre** les bras ;
+    # - on descend le sommet du crâne au sol entre les mains ;
+    # - coudes à 45° du tronc, pas écartés en croix ;
+    # - les hanches restent hautes pendant toute la descente.
+    #
+    # ## Ce que la géométrie impose
+    #
+    # Les deux segments ne peuvent pas avoir la même pente : du bassin au
+    # poignet il y a 0,994 m — tronc plus bras —, du bassin à la cheville
+    # seulement 0,888. Les jambes sont donc **plus redressées** que la ligne
+    # tronc-bras, et non l'inverse comme on l'imagine. C'est ce que montrent
+    # les photos, et c'est arithmétique : à bassin égal, le segment le plus
+    # court est le plus raide.
+    #
+    # D'où le V : tronc-bras à 50° du sol, jambes à 63°, bassin à 0,81 m.
+    #
+    # ## La descente
+    #
+    # Le crâne arrive au sol à y = +0,57, c'est-à-dire un centimètre en arrière
+    # des mains posées à +0,55 : **entre** elles, comme demandé. Pour cela le
+    # bassin descend de dix-neuf centimètres et avance de dix, le tronc passe de
+    # 50 à 53° et le coude se plie à 80°. Ces quatre nombres ne sont pas
+    # indépendants — le crâne est au bout du tronc, et c'est lui qui les fixe.
+    "pompe-piquee": {
+        "vue": "profil",
+        "duree": 2600,
+        # L'axe du corps pointe vers la tête, donc vers +Y et **vers le bas** :
+        # dans un V renversé, la tête est le point bas.
+        "assise": ((+0.00, +0.643, -0.766), (+0.00, -0.766, -0.643)),
+        "ancrage": False,
+        "hauteur": 0.81,
+        "bassin": [(0, 0, 0.00), (0, +0.10, -0.13)],
+        "pauses": [0.10, 0.08],
+        "cles": [
+            _pose({
+                _os("Spine"): (0, +0.643, -0.766),
+                _os("Spine1"): (0, +0.643, -0.766),
+                _os("Spine2"): (0, +0.643, -0.766),
+                # « Tête neutre, oreilles dans l'axe des bras » : la nuque
+                # prolonge le tronc, elle ne se relève pas pour regarder devant.
+                _os("Neck"): (0, +0.643, -0.766),
+                _os("Head"): (0, +0.643, -0.766),
+                # Mains plantées largeur d'épaules. **Les x sont négatifs à
+                # gauche** : dans cette assise, la tête vers +Y, le demi-tour
+                # met la gauche du personnage en -X. Écrits à l'endroit d'un
+                # corps debout, les appuis croisaient les bras et se
+                # retrouvaient hors de portée de six centimètres — le poignet
+                # s'arrêtait alors onze centimètres au-dessus du sol. Le coude part vers
+                # l'arrière du corps, qui dans cette assise est le ciel : il
+                # s'ouvre vers le haut et un peu de côté, à 45° du tronc.
+                _os("LeftArm"): Appui((-0.18, +0.55, 0.065), (-0.45, +0.55, +0.70)),
+                _os("RightArm"): Appui((+0.18, +0.55, 0.065), (+0.45, +0.55, +0.70)),
+                _os("LeftHand"): APlat((0, +1, 0), paume=(0, 0, -1)),
+                _os("RightHand"): APlat((0, +1, 0), paume=(0, 0, -1)),
+                # Pieds plantés, talons décollés : les hanches trop hautes ne
+                # laissent pas le talon toucher, et toutes les photos montrent
+                # l'appui sur la plante.
+                _os("LeftUpLeg"): Appui((-0.09, -0.40, 0.205), (0, -0.70, -0.71)),
+                _os("RightUpLeg"): Appui((+0.09, -0.40, 0.205), (0, -0.70, -0.71)),
+                _os("LeftFoot"): (0, -0.60, -0.80),
+                _os("RightFoot"): (0, -0.60, -0.80),
+            }),
+            _pose({
+                _os("Spine"): (0, +0.600, -0.800),
+                _os("Spine1"): (0, +0.600, -0.800),
+                _os("Spine2"): (0, +0.600, -0.800),
+                _os("Neck"): (0, +0.600, -0.800),
+                _os("Head"): (0, +0.600, -0.800),
+                _os("LeftArm"): Appui((-0.18, +0.55, 0.065), (-0.45, +0.55, +0.70)),
+                _os("RightArm"): Appui((+0.18, +0.55, 0.065), (+0.45, +0.55, +0.70)),
+                _os("LeftHand"): APlat((0, +1, 0), paume=(0, 0, -1)),
+                _os("RightHand"): APlat((0, +1, 0), paume=(0, 0, -1)),
+                _os("LeftUpLeg"): Appui((-0.09, -0.40, 0.205), (0, -0.70, -0.71)),
+                _os("RightUpLeg"): Appui((+0.09, -0.40, 0.205), (0, -0.70, -0.71)),
+                _os("LeftFoot"): (0, -0.60, -0.80),
+                _os("RightFoot"): (0, -0.60, -0.80),
+            }),
+        ],
+    },
+
     # Talons-fesses, relevés sur le plan **de profil** de la même vidéo. C'est
     # ce qui explique que la cuisse y reste verticale de bout en bout : en
     # talon-fesse, seul le genou plie. Le tibia part droit vers l'arrière, à

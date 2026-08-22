@@ -472,6 +472,22 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 2800,
   },
+
+  // Pont fessier : sur le dos, genoux pliés, on ouvre la hanche jusqu'à
+  // aligner épaules, hanches et genoux — sans dépasser cette ligne.
+  "pont-fessier": {
+    source: require("../../assets/gestes/pont-fessier.png"),
+    images: 32,
+    colonnes: 4,
+    duree: 2400,
+  },
+  // Pompes piquées : le V renversé, crâne au sol entre les mains.
+  "pompe-piquee": {
+    source: require("../../assets/gestes/pompe-piquee.png"),
+    images: 32,
+    colonnes: 4,
+    duree: 2600,
+  },
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
 
