@@ -179,8 +179,22 @@ def pole_a_lendroit(pose, geste):
     sous la peau du thorax**. Mieux vaut lever la règle là où elle ne dit rien
     de vrai et confier la question à `auditer-gestes.py`, qui mesure la
     pénétration sur le maillage au lieu de la deviner sur un repère.
+
+    ## Ni quand la main est au-dessus de l'épaule
+
+    Même cause, deuxième exemple. Un bras tendu **au-dessus** de la tête a
+    l'humérus tourné vers l'extérieur, et son coude mène alors vers l'avant :
+    au haut d'une traction, les coudes sont devant les côtes, ce que toutes les
+    descriptions demandent explicitement. Le pôle arrière donnait, lui, un
+    coude à l'horizontale, bras en croix — le défaut classique de l'exercice
+    plutôt que sa forme.
+
+    La condition se lit sur la cible : si elle est plus haute que l'épaule le
+    long de l'axe du corps, le bras est en position haute et la règle se tait.
     """
     avant = _normalise(geste.get("assise", (None, (0, -1, 0)))[1])
+    haut = _normalise(geste.get("assise", ((0, 0, 1), None))[0])
+    hauteur = geste.get("hauteur")
     fautes = []
     mains = [v.cible for n, v in pose.items()
              if isinstance(v, g.Appui) and n.removeprefix("mixamorig:") in
@@ -189,13 +203,21 @@ def pole_a_lendroit(pose, geste):
         len(mains) == 2
         and sum((a - b) ** 2 for a, b in zip(*mains)) ** 0.5 < 0.10
     )
+
+    def au_dessus_de_lepaule(cible):
+        """La cible est-elle plus haute que l'épaule, le long de l'axe du corps ?"""
+        if hauteur is None:
+            return False
+        epaule = [a * TRONC for a in haut]
+        epaule[2] += hauteur
+        return sum((c - e) * h for c, e, h in zip(cible, epaule, haut)) > 0.0
     for nom, valeur in pose.items():
         if not isinstance(valeur, g.Appui):
             continue
         court = nom.removeprefix("mixamorig:")
         pole = _normalise(valeur.pole)
         vers_avant = sum(a * b for a, b in zip(pole, avant))
-        if court.endswith("Arm") and jointes:
+        if court.endswith("Arm") and (jointes or au_dessus_de_lepaule(valeur.cible)):
             continue
         if court.endswith("UpLeg") and vers_avant < 0.1:
             fautes.append(

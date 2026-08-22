@@ -637,6 +637,45 @@ RECUL_BASSIN = (0, 0.16, 0)
 # La tête part vers **+Y**, c'est-à-dire la gauche de l'image en vue de profil.
 # C'est la convention des motifs vectoriels, et un exercice ne doit pas changer
 # de sens selon qu'il est dessiné ou rendu.
+#: Debout, mais **suspendu** : l'axe du corps reste la verticale et l'avant
+#: reste -Y. Rien à changer à l'assise ; ce qui change est que rien ne pose le
+#: personnage au sol.
+PENDU_ASSISE = ((0, 0, 1), (0, -1, 0))
+
+#: La barre des trois gestes de suspension, et la prise.
+#:
+#: 2,20 m est un compromis mesuré, pas un chiffre rond : plus bas, les pieds
+#: du personnage frôlent le sol ; plus haut, les montants sortent du champ de
+#: 2,60 m que toutes les démonstrations partagent. Les mains à 22 cm de l'axe,
+#: soit sept centimètres en dehors de l'articulation de l'épaule — la « largeur
+#: d'épaules » des descriptions, qui se prend aux mains et non aux moignons.
+BARRE_TRACTION = (0.00, 2.20)
+PRISE_TRACTION = 0.22
+
+#: Bassin bras tendus. Se **déduit** : la barre moins l'allonge épaule-poignet
+#: (0,562 m, dont il reste 0,558 en vertical une fois les 7 cm d'écartement
+#: latéral retirés), moins la montée bassin-épaule (0,398 m). Les pieds
+#: pendent alors à une vingtaine de centimètres du sol.
+BASSIN_PENDU = 1.244
+
+#: Le corps qui pend, sans les bras : c'est ce que les trois gestes partagent.
+#: Jambes tendues et jointes, pointes basses, tête dans l'axe. Le genou garde
+#: trois degrés de flexion — une jambe strictement droite est une
+#: hyperextension, et le contrôle des postures le refuse à juste titre.
+PENDU = {
+    _os("Spine"): (0, 0, 1),
+    _os("Spine1"): (0, 0, 1),
+    _os("Spine2"): (0, 0, 1),
+    _os("Neck"): (0, 0.05, 1),
+    _os("Head"): (0, 0.02, 1),
+    _os("LeftUpLeg"): (+0.03, -0.05, -0.998),
+    _os("RightUpLeg"): (-0.03, -0.05, -0.998),
+    _os("LeftLeg"): (+0.01, +0.05, -0.998),
+    _os("RightLeg"): (-0.01, +0.05, -0.998),
+    _os("LeftFoot"): (0, -0.42, -0.91),
+    _os("RightFoot"): (0, -0.42, -0.91),
+}
+
 SUR_LE_DOS = ((0, 1, 0), (0, 0, 1))
 SUR_LE_VENTRE = ((0, 1, 0), (0, 0, -1))
 #: Sur le côté droit : c'est donc le bras droit qui porte.
@@ -1465,6 +1504,179 @@ GESTES = {
                 _os("RightLeg"): (-0.02, -0.879, -0.476),
                 _os("LeftFoot"): (+0.00, -0.45, +0.89),
                 _os("RightFoot"): (+0.00, -0.45, +0.89),
+            }),
+        ],
+    },
+
+    # ---- Suspension ------------------------------------------------------
+    # Trois gestes pendus à la même barre, et un obstacle qui n'existait pas.
+    #
+    # Ces sept exercices sont restés au bonhomme vectoriel des mois durant,
+    # rangés sous « suspension : rien ne tient un corps qui pend, le moteur
+    # pose toujours le personnage au sol ». C'était faux de deux façons :
+    # `ancrage: False` laisse le corps quitter le sol depuis toujours — c'est
+    # ce dont vit le saut squaté — et `bassin` le fait monter d'une clé à
+    # l'autre. La barre, elle, existait déjà pour le rowing inversé. La leçon
+    # va à côté de celle du tronc, qui était la même : une limite supposée,
+    # jamais essayée, et onze exercices derrière.
+    #
+    # ## Tenue à la barre
+    #
+    # Bras tendus, épaules basses, corps immobile. C'est la position de départ
+    # des deux autres, et c'est un exercice en soi — on la tient.
+    #
+    # Deux clés identiques : sans elles le parcours n'a rien à interpoler.
+    "suspension": {
+        "vue": "face",
+        "duree": 3000,
+        "assise": PENDU_ASSISE,
+        "ancrage": False,
+        "hauteur": BASSIN_PENDU,
+        "barre": BARRE_TRACTION,
+        "poings": 1.0,
+        "cles": [
+            _pose(PENDU, {
+                _os("LeftArm"): Appui((+PRISE_TRACTION, 0.00, 2.20),
+                                      (+0.42, -0.20, -0.88)),
+                _os("RightArm"): Appui((-PRISE_TRACTION, 0.00, 2.20),
+                                       (-0.42, -0.20, -0.88)),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+            }),
+            _pose(PENDU, {
+                _os("LeftArm"): Appui((+PRISE_TRACTION, 0.00, 2.20),
+                                      (+0.42, -0.20, -0.88)),
+                _os("RightArm"): Appui((-PRISE_TRACTION, 0.00, 2.20),
+                                       (-0.42, -0.20, -0.88)),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+            }),
+        ],
+    },
+
+    # ## Traction
+    #
+    # Du dead hang bras tendus jusqu'au menton au-dessus de la barre. Une seule
+    # planche pour les cinq variantes du catalogue — pronation, supination,
+    # prise large, prise serrée, négatives : ce qui les distingue est la prise
+    # et le sens de la descente, pas la trajectoire du corps, et le poing fermé
+    # ne dit de toute façon pas de quel côté la paume regarde.
+    #
+    # ## Ce qui monte, et de combien
+    #
+    # Le corps entier, de **quarante centimètres**, par `bassin` : aucune
+    # articulation ne tourne dans une translation, et c'est exactement ce que
+    # `_horaire` sait maintenant compter dans le rythme depuis le saut squaté.
+    #
+    # Quarante centimètres se déduisent du menton. La base du crâne est à
+    # 0,556 m du bassin ; pour qu'elle atteigne la barre à 2,20 il faut le
+    # bassin à 1,64, soit 0,40 de plus que les 1,244 du départ. Le buste
+    # s'incline en même temps de dix-huit degrés vers l'arrière — c'est ce que
+    # font toutes les descriptions quand elles disent d'amener la poitrine vers
+    # la barre, et c'est aussi ce qui laisse au coude la place de descendre.
+    #
+    # Le coude, justement : « vers les côtes, pas écarté ». Le pôle le pousse
+    # donc vers le **bas** et à peine vers l'extérieur. Un pôle latéral donnait
+    # le coude à l'horizontale, bras en croix, ce qui est le défaut classique
+    # de l'exercice et non sa forme.
+    "traction": {
+        "vue": "face",
+        "duree": 2600,
+        "assise": PENDU_ASSISE,
+        "ancrage": False,
+        "hauteur": BASSIN_PENDU,
+        "barre": BARRE_TRACTION,
+        "poings": 1.0,
+        "bassin": [(0, 0, 0.00), (0, 0, 0.40)],
+        # Un temps en bas — le dead hang fait partie du mouvement, toutes les
+        # sources insistent —, un temps plus court en haut.
+        "pauses": [0.14, 0.08],
+        "cles": [
+            _pose(PENDU, {
+                _os("LeftArm"): Appui((+PRISE_TRACTION, 0.00, 2.20),
+                                      (+0.42, -0.20, -0.88)),
+                _os("RightArm"): Appui((-PRISE_TRACTION, 0.00, 2.20),
+                                       (-0.42, -0.20, -0.88)),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+            }),
+            _pose(PENDU, {
+                _os("Spine"): (0, +0.31, +0.95),
+                _os("Spine1"): (0, +0.31, +0.95),
+                _os("Spine2"): (0, +0.26, +0.97),
+                _os("Neck"): (0, +0.18, +0.98),
+                _os("Head"): (0, +0.10, +0.99),
+                _os("LeftArm"): Appui((+PRISE_TRACTION, 0.00, 2.20),
+                                      (+0.35, -0.85, -0.40)),
+                _os("RightArm"): Appui((-PRISE_TRACTION, 0.00, 2.20),
+                                       (-0.35, -0.85, -0.40)),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+                # Les jambes avancent un peu : le bassin passe devant la barre
+                # quand la poitrine s'en approche, et les pieds suivent.
+                _os("LeftUpLeg"): (+0.03, -0.22, -0.975),
+                _os("RightUpLeg"): (-0.03, -0.22, -0.975),
+                _os("LeftLeg"): (+0.01, -0.10, -0.995),
+                _os("RightLeg"): (-0.01, -0.10, -0.995),
+            }),
+        ],
+    },
+
+    # ## Relevé de jambes suspendu
+    #
+    # Même départ, mais c'est le bassin qui ne bouge pas et les jambes qui
+    # montent — jusqu'à 90° de flexion de hanche, cuisses à l'horizontale,
+    # jambes tendues. Les sources s'accordent sur deux choses : les talons
+    # arrivent parallèles au sol, et le corps ne doit pas **balancer**. D'où un
+    # tronc rigoureusement vertical aux deux clés, et un bassin à hauteur
+    # constante : tout mouvement du buste ici serait la faute de l'exercice.
+    #
+    # Les jambes gardent trois degrés de flexion au genou. Une jambe strictement
+    # droite est une hyperextension, et le contrôle des postures la refuse ;
+    # les descriptions disent d'ailleurs « as straight as possible », en
+    # ajoutant qu'un peu de genou est normal.
+    "releve-jambes-suspendu": {
+        # Trois-quarts, et pour une raison de décor : **de profil, les deux
+        # montants tombent sur le corps**. Leur position à l'écran ne dépend
+        # que de leur profondeur, et ils sont dans le plan de la barre, donc
+        # dans celui du personnage — la première planche rendue lui plantait
+        # un poteau bleu du crâne aux pieds. De trois-quarts ils s'écartent, et
+        # la montée des jambes, qui se fait vers l'avant, s'y lit encore aux
+        # sept dixièmes.
+        "vue": "trois-quarts",
+        "duree": 2800,
+        "assise": PENDU_ASSISE,
+        "ancrage": False,
+        "hauteur": BASSIN_PENDU,
+        "barre": BARRE_TRACTION,
+        "poings": 1.0,
+        "pauses": [0.12, 0.14],
+        "cles": [
+            _pose(PENDU, {
+                _os("LeftArm"): Appui((+PRISE_TRACTION, 0.00, 2.20),
+                                      (+0.42, -0.20, -0.88)),
+                _os("RightArm"): Appui((-PRISE_TRACTION, 0.00, 2.20),
+                                       (-0.42, -0.20, -0.88)),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+            }),
+            _pose(PENDU, {
+                _os("LeftArm"): Appui((+PRISE_TRACTION, 0.00, 2.20),
+                                      (+0.42, -0.20, -0.88)),
+                _os("RightArm"): Appui((-PRISE_TRACTION, 0.00, 2.20),
+                                       (-0.42, -0.20, -0.88)),
+                _os("LeftHand"): SUIVRE,
+                _os("RightHand"): SUIVRE,
+                # Cuisse à l'horizontale, tibia dans son prolongement, pointes
+                # tendues : la ligne bassin-orteils est droite et parallèle au
+                # sol, ce que les sources appellent « heels parallel to the
+                # floor ».
+                _os("LeftUpLeg"): (+0.03, -0.997, +0.06),
+                _os("RightUpLeg"): (-0.03, -0.997, +0.06),
+                _os("LeftLeg"): (+0.01, -0.998, -0.06),
+                _os("RightLeg"): (-0.01, -0.998, -0.06),
+                _os("LeftFoot"): (0, -0.87, -0.49),
+                _os("RightFoot"): (0, -0.87, -0.49),
             }),
         ],
     },

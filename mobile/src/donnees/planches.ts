@@ -397,6 +397,33 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 2400,
   },
+
+  // Les trois gestes pendus à la barre. Ils partagent leur position de départ
+  // et leur agrès ; ce qui les sépare tient à une clé.
+  //
+  // Sept exercices étaient rangés derrière un obstacle « suspension » qui
+  // n'existait pas : `ancrage: False` laisse le corps quitter le sol depuis le
+  // saut squaté, et la barre était déjà dessinée pour le rowing inversé.
+  "suspension": {
+    source: require("../../assets/gestes/suspension.png"),
+    images: 20,
+    colonnes: 4,
+    duree: 3000,
+  },
+  "traction": {
+    source: require("../../assets/gestes/traction.png"),
+    images: 32,
+    colonnes: 4,
+    duree: 2600,
+  },
+  // De trois-quarts : de profil, les deux montants de la barre tombent pile
+  // sur le corps et lui plantent un poteau du crâne aux pieds.
+  "releve-jambes-suspendu": {
+    source: require("../../assets/gestes/releve-jambes-suspendu.png"),
+    images: 32,
+    colonnes: 4,
+    duree: 2800,
+  },
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
 

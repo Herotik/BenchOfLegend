@@ -187,7 +187,13 @@ def controler(slug, images, colonnes, duree):
             f"il lui faut plus que {images} images"
         )
     # Le retour au départ ne doit pas se voir davantage qu'un pas ordinaire.
-    if sauts[-1] > 3 * moyen:
+    #
+    # Le seuil absolu compte autant que le rapport : sur un **maintien**, rien
+    # ne bouge, la moyenne est nulle, et trois fois rien reste rien — mais
+    # `0,02 > 3 × 0,00` est vrai, et la suspension à la barre se faisait refuser
+    # pour une couture qu'aucun œil ne peut voir. Un dixième de niveau de gris
+    # par pixel est le plancher en deçà duquel il n'y a rien à juger.
+    if sauts[-1] > 3 * moyen and sauts[-1] > 0.1:
         fautes.append(
             f"la boucle saute : {sauts[-1]:.1f} contre {moyen:.1f} en moyenne"
         )

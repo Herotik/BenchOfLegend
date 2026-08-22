@@ -76,9 +76,18 @@ OBSTACLES = {
     #
     # Le relevé en V et le russian twist sont rendus depuis ; les cinq autres
     # sont désormais rangés sous « rien ».
-    "suspension": (
-        "traction", "suspension", "releve-jambes-suspendu",
-    ),
+    # L'obstacle « suspension » a été retiré à son tour, et pour la même raison
+    # que « tronc » : il n'avait jamais été essayé.
+    #
+    # Trois gestes y étaient rangés — traction, suspension, relevés de jambes
+    # suspendus — au motif que « rien ne tient un corps qui pend, le moteur
+    # pose toujours le personnage au sol ». Or `ancrage: False` le laisse
+    # quitter le sol depuis le saut squaté, `bassin` le fait monter d'une clé à
+    # l'autre, et la barre était déjà dessinée pour le rowing inversé. Les
+    # trois planches ont été écrites en une séance.
+    #
+    # Deux obstacles supposés, deux fois faux, dix-huit exercices derrière.
+    # Ce qui reste sous « agrès » n'a pas été essayé non plus.
     # `corde-a-sauter` n'y figure plus : une vidéo de démonstration l'a montrée
     # **mimée sans corde**, et le personnage n'en tient pas davantage. L'agrès
     # qu'on croyait rédhibitoire ne l'était pas — il suffisait de regarder le
@@ -139,7 +148,7 @@ def main():
         par_slug[slug].append(nom)
 
     print("\nCe qui reste, par obstacle :")
-    for nom in ("rien", "suspension", "agrès"):
+    for nom in ("rien", "agrès"):
         concernes = {s: l for s, l in par_slug.items() if obstacle(s) == nom}
         exercices = sum(len(l) for l in concernes.values())
         etiquette = "faisable aujourd'hui" if nom == "rien" else nom

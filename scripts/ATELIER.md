@@ -108,8 +108,13 @@ seul l'œil sait si l'arrêt appartient à l'exercice.
   toujours `Spine` sur l'axe de l'assise — une convention de l'outil de relevé,
   prise pour une limite du moteur. Le relevé en V et le russian twist sont
   rendus depuis ; il reste à mesurer l'angle du tronc à la main.
-- **La suspension.** Rien ne tient un corps qui pend à une barre ; le moteur
-  pose toujours le personnage au sol. Sept exercices.
+- ~~**La suspension.**~~ Levée, et elle n'avait jamais été essayée non plus :
+  `ancrage: False` laisse le corps quitter le sol depuis le saut squaté,
+  `bassin` le fait monter d'une clé à l'autre, et la barre existait déjà pour
+  le rowing inversé. Traction, suspension et relevés de jambes suspendus sont
+  rendus. **Deux obstacles supposés, deux fois faux, dix-huit exercices
+  derrière** — le seul qui reste, le tapis roulant, n'a pas été essayé non
+  plus.
 - **Le tapis roulant.** Le sol défile sous les pieds, et une boucle de vingt
   images ne peut pas le dire. Quatre exercices.
 - **Le pied arrière de la fente**, au point bas, ne touche pas tout à fait le
