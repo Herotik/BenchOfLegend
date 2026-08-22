@@ -1943,17 +1943,21 @@ GESTES = {
         "assise": ((+0.00, +0.695, -0.719), (+0.00, -0.719, -0.695)),
         "ancrage": False,
         "hauteur": 0.773,
-        "bassin": [(0, 0, 0.00), (0, +0.112, -0.117)],
+        "bassin": [(0, 0, 0.00), (0, +0.112, -0.111)],
         "pauses": [0.30, 0.06],
         "cles": [
             _pose({
                 _os("Spine"): (0, +0.695, -0.719),
                 _os("Spine1"): (0, +0.695, -0.719),
                 _os("Spine2"): (0, +0.695, -0.719),
-                # « Tête neutre, oreilles dans l'axe des bras » : la nuque
-                # prolonge le tronc, elle ne se relève pas pour regarder devant.
-                _os("Neck"): (0, +0.695, -0.719),
-                _os("Head"): (0, +0.695, -0.719),
+                # « Oreilles dans l'axe des bras », et c'est à prendre au
+                # mot : la nuque et la tête suivent la ligne des **bras**, à
+                # 57°, et non celle du tronc, à 46°. Onze degrés de flexion de
+                # nuque, ce qui est peu, mais c'est ce qui met le crâne dans le
+                # plan des deux bras au lieu de le laisser en arrière sur le
+                # prolongement du dos.
+                _os("Neck"): (0, +0.545, -0.839),
+                _os("Head"): (0, +0.545, -0.839),
                 # Mains plantées largeur d'épaules. **Les x sont négatifs à
                 # gauche** : dans cette assise, la tête vers +Y, le demi-tour
                 # met la gauche du personnage en -X. Écrits à l'endroit d'un
@@ -1962,8 +1966,8 @@ GESTES = {
                 # s'arrêtait alors onze centimètres au-dessus du sol. Le coude part vers
                 # l'arrière du corps, qui dans cette assise est le ciel : il
                 # s'ouvre vers le haut et un peu de côté, à 45° du tronc.
-                _os("LeftArm"): Appui((-0.22, +0.634, 0.065), (-0.45, +0.55, +0.70)),
-                _os("RightArm"): Appui((+0.22, +0.634, 0.065), (+0.45, +0.55, +0.70)),
+                _os("LeftArm"): Appui((-0.22, +0.634, 0.065), (-0.96, +0.20, +0.20)),
+                _os("RightArm"): Appui((+0.22, +0.634, 0.065), (+0.96, +0.20, +0.20)),
                 _os("LeftHand"): APlat((0, +1, 0), paume=(0, 0, -1)),
                 _os("RightHand"): APlat((0, +1, 0), paume=(0, 0, -1)),
                 # Pieds plantés, talons décollés : les hanches trop hautes ne
@@ -1978,10 +1982,10 @@ GESTES = {
                 _os("Spine"): (0, +0.616, -0.788),
                 _os("Spine1"): (0, +0.616, -0.788),
                 _os("Spine2"): (0, +0.616, -0.788),
-                _os("Neck"): (0, +0.616, -0.788),
-                _os("Head"): (0, +0.616, -0.788),
-                _os("LeftArm"): Appui((-0.22, +0.634, 0.065), (-0.45, +0.55, +0.70)),
-                _os("RightArm"): Appui((+0.22, +0.634, 0.065), (+0.45, +0.55, +0.70)),
+                _os("Neck"): (0, +0.545, -0.839),
+                _os("Head"): (0, +0.545, -0.839),
+                _os("LeftArm"): Appui((-0.22, +0.634, 0.065), (-0.96, +0.20, +0.20)),
+                _os("RightArm"): Appui((+0.22, +0.634, 0.065), (+0.96, +0.20, +0.20)),
                 _os("LeftHand"): APlat((0, +1, 0), paume=(0, 0, -1)),
                 _os("RightHand"): APlat((0, +1, 0), paume=(0, 0, -1)),
                 _os("LeftUpLeg"): Appui((-0.12, -0.621, 0.138), (0, -0.70, -0.71)),
