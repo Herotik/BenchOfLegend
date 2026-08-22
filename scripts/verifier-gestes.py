@@ -43,8 +43,21 @@ import gestes_generes as g  # noqa: E402
 # n'ont pas à être exactes : elles servent à placer une articulation par rapport
 # aux deux autres, et seul le signe du résultat compte.
 CUISSE, TIBIA = 0.45, 0.45
-#: Du bassin aux épaules, sur ce squelette.
-TRONC = 0.50
+#: Du bassin à l'articulation de l'épaule, sur ce squelette : **0,432 m**,
+#: mesuré entre `Hips` à (0 ; -0,016 ; 1,043) et `LeftArm` à
+#: (0,152 ; 0,055 ; 1,441).
+#:
+#: Il valait 0,50, et ce demi-mètre rond a fini par refuser un geste juste.
+#: Sur les dips, il plaçait l'épaule sept centimètres trop haut et annonçait
+#: l'appui « à 0,67 m d'une racine » là où Blender le mesure à 0,54 — le bras
+#: atteignait la main sans forcer, le contrôle disait le contraire.
+#:
+#: L'arrondi tenait lieu de compensation pour un autre défaut du calcul :
+#: l'épaule est cherchée sur l'axe du corps alors qu'elle est quinze
+#: centimètres de côté. Deux approximations qui se rattrapaient l'une l'autre
+#: tant que les appuis restaient dans le plan sagittal. La vraie longueur, plus
+#: la tolérance de douze centimètres qui suit, couvrent le cas honnêtement.
+TRONC = 0.432
 BRAS, AVANT_BRAS = 0.28, 0.26
 
 #: En deçà, l'articulation est trop alignée pour qu'on affirme quoi que ce soit —
@@ -90,7 +103,7 @@ def _direction(valeur):
     return _normalise(valeur)
 
 
-def appuis_a_portee(pose, geste):
+def appuis_a_portee(pose, geste, rang=0):
     """Un appui doit rester à portée du membre, et ne pas passer sous le sol.
 
     Hors de portée, `atteindre` tend le membre sans atteindre la cible : le
@@ -125,7 +138,19 @@ def appuis_a_portee(pose, geste):
         colonne if isinstance(colonne, (tuple, list)) and len(colonne) == 3
         else geste.get("assise", ((0, 0, 1), None))[0]
     )
+    # Le corps peut être **décalé** d'une clé à l'autre par `bassin` : les dips
+    # avancent de vingt-quatre centimètres devant l'origine du rig pour ne pas
+    # entrer dans le banc. Ignorer ce décalage plaçait la hanche à un mètre
+    # onze d'une cheville plantée à quatre-vingt-treize, et le contrôle
+    # refusait une jambe parfaitement tendue.
+    decale = geste.get("bassin")
+    if decale is not None and isinstance(decale[0], (tuple, list)):
+        decale = decale[min(rang, len(decale) - 1)]
+    else:
+        decale = (0.0, 0.0, 0.0)
+
     epaule = tuple(a * TRONC for a in axe)
+    epaule = tuple(e + d for e, d in zip(epaule, decale))
     epaule = (epaule[0], epaule[1], epaule[2] + (hauteur or 0))
     fautes = []
     for nom, valeur in pose.items():
@@ -139,7 +164,9 @@ def appuis_a_portee(pose, geste):
             fautes.append(f"{court} : appui déclaré sans hauteur de bassin")
             continue
         # Distance de la racine du membre à la cible.
-        racine = epaule if membre == "Arm" else (0, 0, hauteur)
+        racine = epaule if membre == "Arm" else (
+            decale[0], decale[1], decale[2] + hauteur
+        )
         d = sum((c - r) ** 2 for c, r in zip(valeur.cible, racine)) ** 0.5
         # Tolérance serrée : c'est une marge de 35 cm qui avait laissé passer
         # un pied visé à 1,02 m pour une jambe de 90 — le membre pendait alors
@@ -154,7 +181,7 @@ def appuis_a_portee(pose, geste):
     return fautes
 
 
-def pole_a_lendroit(pose, geste):
+def pole_a_lendroit(pose, geste, rang=0):
     """Le pôle d'un appui doit plier l'articulation dans le bon sens.
 
     Un genou ne plie que d'une façon : la jambe se replie vers l'**arrière** du
@@ -233,7 +260,7 @@ def pole_a_lendroit(pose, geste):
     return fautes
 
 
-def genou_a_lendroit(pose, geste):
+def genou_a_lendroit(pose, geste, rang=0):
     """Le genou doit être en avant du segment hanche→cheville.
 
     C'est l'invariant le plus simple qui distingue une jambe humaine d'une patte
@@ -262,7 +289,7 @@ def genou_a_lendroit(pose, geste):
     return fautes
 
 
-def dos_plat(pose, _geste):
+def dos_plat(pose, _geste, rang=0):
     """Les trois vertèbres doivent pointer à peu près dans la même direction.
 
     Un dos qui s'enroule est ce qu'on corrige chez un débutant ; une
@@ -289,7 +316,7 @@ def dos_plat(pose, _geste):
     return []
 
 
-def symetrie(pose, geste):
+def symetrie(pose, geste, rang=0):
     """Gauche et droite doivent se répondre en miroir : X opposé, Y et Z égaux.
 
     La plupart de ces poses sont symétriques, et un signe oublié s'y voit ici
@@ -316,7 +343,7 @@ def symetrie(pose, geste):
     return fautes
 
 
-def directions_utilisables(pose, _geste):
+def directions_utilisables(pose, _geste, rang=0):
     """Une direction nulle ne définit aucune orientation."""
     fautes = []
     for nom, valeur in pose.items():
@@ -331,7 +358,7 @@ def directions_utilisables(pose, _geste):
     return fautes
 
 
-def assise_utilisable(_pose, geste):
+def assise_utilisable(_pose, geste, rang=0):
     """Le haut et le regard d'une assise doivent définir un repère.
 
     Colinéaires, ils n'en définissent aucun. Et le cas **opposé** mérite d'être
@@ -355,7 +382,7 @@ def assise_utilisable(_pose, geste):
     return []
 
 
-def bras_pas_en_croix(pose, geste):
+def bras_pas_en_croix(pose, geste, rang=0):
     """Un bras laissé au repos, debout, se retrouve **en croix**.
 
     C'est le piège le plus coûteux du moteur, et il ne se voit pas dans le
@@ -435,7 +462,7 @@ def main():
     for nom in sorted(g.GESTES):
         for rang, pose in enumerate(g.GESTES[nom]["cles"]):
             for controle in CONTROLES:
-                for faute in controle(pose, g.GESTES[nom]):
+                for faute in controle(pose, g.GESTES[nom], rang):
                     print(f"  ✗ {nom} · pose {rang + 1} — {faute}")
                     total += 1
         for controle in CONTROLES_DU_GESTE:

@@ -1996,6 +1996,100 @@ GESTES = {
         ],
     },
 
+    # Dips sur chaise. Mains sur l'arête d'un banc derrière soi, bassin devant,
+    # jambes tendues talons au sol : on descend en pliant les coudes.
+    #
+    # ## Les critères
+    #
+    # - mains sur l'arête, juste **à l'extérieur des hanches**, doigts devant ;
+    # - coudes droit vers l'**arrière**, jamais écartés en croix ;
+    # - on descend jusqu'à l'avant-bras à angle droit, et **pas plus bas** :
+    #   descendre davantage sort l'épaule de son amplitude, et c'est la faute
+    #   que toutes les sources signalent en premier ;
+    # - jambes tendues, talons au sol ;
+    # - le corps reste près du banc.
+    #
+    # ## Ce que la géométrie impose
+    #
+    # Le banc fait 0,45 m, l'arête est en y = +0,10 et la main s'y pose trois
+    # centimètres au-dessus. De là tout est contraint : le bras tendu place
+    # l'épaule à 0,562 m du poignet, le coude à angle droit l'y ramène à
+    # 0,397 — la racine de 0,278² + 0,283² —, donc le corps descend de
+    # **seize centimètres et demi** et pas d'un de plus.
+    #
+    # Le tronc s'incline de vingt-six degrés vers l'arrière. Ce n'est pas un
+    # choix de style : bassin vertical sous les épaules, le poignet tombait à
+    # 0,60 m de l'épaule pour un bras de 0,562, donc hors de portée. Vingt-six
+    # degrés le ramènent à 0,55, et c'est aussi ce que montrent les photos.
+    #
+    # Le corps est avancé de vingt-quatre centimètres devant l'origine du
+    # rig, et ce n'est pas décoratif non plus : sans ce décalage le bassin
+    # tombe à dix centimètres de l'arête, la chair des fessiers en fait quinze,
+    # et le personnage **entre dans le banc** au point bas. Avancé, il le frôle
+    # à quatre centimètres près — ce qui est précisément la consigne « rester
+    # près du banc ».
+    #
+    # Enfin le bassin **recule de dix centimètres en descendant**, et là encore
+    # c'est forcé : le talon est planté, la jambe est tendue, donc la hanche
+    # suit un arc autour de la cheville. Plus le bassin descend, plus il se
+    # rapproche du banc — ce qui est exactement pourquoi les descriptions
+    # disent de rester près du banc. Le geste ne le décrit pas, il l'obtient.
+    "dips": {
+        "vue": "profil",
+        "duree": 2600,
+        "assise": ((+0.00, +0.00, +1.00), (+0.00, -1.00, +0.00)),
+        "ancrage": False,
+        "hauteur": 0.642,
+        "banc": {"hauteur": 0.45, "bord": 0.06, "longueur": 0.55},
+        "bassin": [(0, -0.240, 0.00), (0, -0.136, -0.166)],
+        # Un temps en haut, bras tendus ; rien en bas, où l'on ne s'attarde
+        # pas — c'est là que l'épaule est la plus exposée.
+        "pauses": [0.16, 0.04],
+        "cles": [
+            _pose({
+                _os("Spine"): (0, +0.438, +0.899),
+                _os("Spine1"): (0, +0.438, +0.899),
+                _os("Spine2"): (0, +0.438, +0.899),
+                # Le regard devant, la nuque plus droite que le dos : un buste
+                # incliné en arrière qui emmènerait la tête avec lui ferait
+                # regarder le plafond.
+                _os("Neck"): (0, +0.20, +0.98),
+                _os("Head"): (0, +0.10, +0.99),
+                # Mains sur l'arête, à vingt centimètres de l'axe — juste à
+                # l'extérieur des hanches. Le pôle envoie le coude droit vers
+                # l'**arrière**, ce qui est ici le +Y du monde.
+                _os("LeftArm"): Appui((+0.20, +0.10, 0.48), (0, +1.00, 0)),
+                _os("RightArm"): Appui((-0.20, +0.10, 0.48), (0, +1.00, 0)),
+                # Doigts vers l'avant, paume sur le banc.
+                _os("LeftHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                _os("RightHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                # Talons plantés à quatre-vingts centimètres devant le bassin :
+                # c'est la distance qui tend la jambe sans la forcer.
+                _os("LeftUpLeg"): Appui((+0.10, -0.936, 0.079), (0, -0.99, +0.14)),
+                _os("RightUpLeg"): Appui((-0.10, -0.936, 0.079), (0, -0.99, +0.14)),
+                # Talon au sol, pointes en l'air : c'est la position qui dit
+                # que la jambe est tendue et que rien ne pousse au sol.
+                _os("LeftFoot"): (0, -0.95, +0.31),
+                _os("RightFoot"): (0, -0.95, +0.31),
+            }),
+            _pose({
+                _os("Spine"): (0, +0.438, +0.899),
+                _os("Spine1"): (0, +0.438, +0.899),
+                _os("Spine2"): (0, +0.438, +0.899),
+                _os("Neck"): (0, +0.20, +0.98),
+                _os("Head"): (0, +0.10, +0.99),
+                _os("LeftArm"): Appui((+0.20, +0.10, 0.48), (0, +1.00, 0)),
+                _os("RightArm"): Appui((-0.20, +0.10, 0.48), (0, +1.00, 0)),
+                _os("LeftHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                _os("RightHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                _os("LeftUpLeg"): Appui((+0.10, -0.936, 0.079), (0, -0.99, +0.14)),
+                _os("RightUpLeg"): Appui((-0.10, -0.936, 0.079), (0, -0.99, +0.14)),
+                _os("LeftFoot"): (0, -0.95, +0.31),
+                _os("RightFoot"): (0, -0.95, +0.31),
+            }),
+        ],
+    },
+
     # Talons-fesses, relevés sur le plan **de profil** de la même vidéo. C'est
     # ce qui explique que la cuisse y reste verticale de bout en bout : en
     # talon-fesse, seul le genou plie. Le tibia part droit vers l'arrière, à

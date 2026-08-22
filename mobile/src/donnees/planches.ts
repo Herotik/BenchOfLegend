@@ -491,6 +491,17 @@ export const PLANCHES: Record<string, Planche> = {
     colonnes: 4,
     duree: 3300,
   },
+
+  // Dips sur chaise : mains sur l'arête d'un banc derrière soi, jambes
+  // tendues talons au sol. Le banc se déclare à un endroit **précis** ici, et
+  // non sous le corps comme celui du développé couché : c'est lui le repère,
+  // les mains le tiennent, et c'est le corps qui se place par rapport à lui.
+  "dips": {
+    source: require("../../assets/gestes/dips.png"),
+    images: 32,
+    colonnes: 4,
+    duree: 2600,
+  },
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
 

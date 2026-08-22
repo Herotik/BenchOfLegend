@@ -473,8 +473,21 @@ def poser_le_tapis(mini, maxi):
     return tapis
 
 
-def poser_le_banc(hauteur, mini, maxi):
-    """Un banc sous le corps, qui part dans l'app.
+def poser_le_banc(banc, mini, maxi):
+    """Un banc, sous le corps ou derrière lui, qui part dans l'app.
+
+    `banc` vaut soit une **hauteur** — le banc se place alors tout seul sous le
+    tronc, ce que veut un développé couché —, soit un dictionnaire
+    `{"hauteur", "bord", "longueur"}` qui le pose à un endroit précis : `bord`
+    est le y de son arête avant, celle qu'on empoigne ou sur laquelle on pose
+    le pied, et le meuble s'étend vers l'arrière sur `longueur`.
+
+    Les deux formes existent parce que les deux usages sont contraires. Sous un
+    corps couché, la place du banc **se déduit** du corps et rien d'autre ne
+    serait juste. Derrière un corps qui fait des dips, c'est l'inverse : le
+    banc est le repère, les mains le tiennent, et c'est le corps qui se place
+    par rapport à lui. Laisser le meuble suivre le personnage donnerait un banc
+    qui recule à chaque descente.
 
     ## Pourquoi il en faut un
 
@@ -497,6 +510,14 @@ def poser_le_banc(hauteur, mini, maxi):
     # sol, si bien que son centre tombe vers les pieds et que la tête finit
     # dans le vide, au bout du banc. Un banc dont la tête dépasse donne un
     # corps qui glisse, ce qui est exactement la faute qu'on corrige ailleurs.
+    if isinstance(banc, dict):
+        hauteur = banc["hauteur"]
+        longueur = banc.get("longueur", 0.55)
+        milieu_y = banc["bord"] + longueur / 2
+        centre_x = 0.0
+        return _dessiner_le_banc(centre_x, milieu_y, longueur, hauteur)
+
+    hauteur = banc
     tete, bassin = None, None
     for objet in bpy.data.objects:
         if objet.type == "ARMATURE" and "mixamorig:Head" in objet.pose.bones:
@@ -517,6 +538,12 @@ def poser_le_banc(hauteur, mini, maxi):
         milieu_y = (mini.y + maxi.y) / 2
         centre_x = (mini.x + maxi.x) / 2
 
+    return _dessiner_le_banc(centre_x, milieu_y, longueur, hauteur)
+
+
+def _dessiner_le_banc(centre_x, milieu_y, longueur, hauteur):
+    """Le meuble lui-même, une fois sa place connue."""
+    epaisseur = 0.08
     bpy.ops.mesh.primitive_cube_add(
         size=1, location=(centre_x, milieu_y, hauteur - epaisseur / 2)
     )
