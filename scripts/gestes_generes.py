@@ -1905,24 +1905,40 @@ GESTES = {
     # les photos, et c'est arithmétique : à bassin égal, le segment le plus
     # court est le plus raide.
     #
-    # D'où le V : tronc-bras à 50° du sol, jambes à 63°, bassin à 0,81 m.
+    # D'où le V : tronc-bras à 50° du sol, jambes à 55°, bassin à 0,81 m et
+    # chevilles à soixante centimètres derrière lui.
+    #
+    # Ces cinquante centimètres ne sont pas approximatifs. Une première
+    # version posait les chevilles à quarante, et raccourcissait du même coup
+    # la distance hanche-cheville à 0,73 m pour une jambe de 0,89 : les genoux
+    # se pliaient de **soixante-dix degrés**, ce qui n'est plus un V mais un
+    # accroupissement. Une jambe tendue impose sa longueur, et la place du
+    # pied s'en déduit — elle ne se choisit pas.
     #
     # ## La descente
     #
     # Le crâne arrive au sol à y = +0,57, c'est-à-dire un centimètre en arrière
     # des mains posées à +0,55 : **entre** elles, comme demandé. Pour cela le
-    # bassin descend de dix-neuf centimètres et avance de dix, le tronc passe de
-    # 50 à 53° et le coude se plie à 80°. Ces quatre nombres ne sont pas
+    # bassin descend de onze centimètres et avance de treize, le tronc passe de
+    # 50 à 60° et le coude se plie à 92°. Le bassin suit alors un **arc** autour
+    # de la cheville : la distance hanche-cheville reste à 0,870 m aux deux
+    # clés, si bien que la jambe ne se plie à aucun moment — c'est ce que fait
+    # un corps dont le pied est planté et la jambe tendue. Ces quatre nombres ne sont pas
     # indépendants — le crâne est au bout du tronc, et c'est lui qui les fixe.
     "pompe-piquee": {
-        "vue": "profil",
+        # Trois-quarts, et non de profil. Le corps se plie dans le plan Y-Z :
+        # vu de côté on le regarde par la tranche, la tête se confond avec le
+        # thorax et les deux bras se superposent — la première planche livrée
+        # était un tas illisible. De trois-quarts, la tête pend visiblement
+        # entre les bras et le V se lit.
+        "vue": "trois-quarts",
         "duree": 2600,
         # L'axe du corps pointe vers la tête, donc vers +Y et **vers le bas** :
         # dans un V renversé, la tête est le point bas.
         "assise": ((+0.00, +0.643, -0.766), (+0.00, -0.766, -0.643)),
         "ancrage": False,
         "hauteur": 0.81,
-        "bassin": [(0, 0, 0.00), (0, +0.10, -0.13)],
+        "bassin": [(0, 0, 0.00), (0, +0.110, -0.108)],
         "pauses": [0.10, 0.08],
         "cles": [
             _pose({
@@ -1941,32 +1957,32 @@ GESTES = {
                 # s'arrêtait alors onze centimètres au-dessus du sol. Le coude part vers
                 # l'arrière du corps, qui dans cette assise est le ciel : il
                 # s'ouvre vers le haut et un peu de côté, à 45° du tronc.
-                _os("LeftArm"): Appui((-0.18, +0.55, 0.065), (-0.45, +0.55, +0.70)),
-                _os("RightArm"): Appui((+0.18, +0.55, 0.065), (+0.45, +0.55, +0.70)),
+                _os("LeftArm"): Appui((-0.22, +0.55, 0.065), (-0.45, +0.55, +0.70)),
+                _os("RightArm"): Appui((+0.22, +0.55, 0.065), (+0.45, +0.55, +0.70)),
                 _os("LeftHand"): APlat((0, +1, 0), paume=(0, 0, -1)),
                 _os("RightHand"): APlat((0, +1, 0), paume=(0, 0, -1)),
                 # Pieds plantés, talons décollés : les hanches trop hautes ne
                 # laissent pas le talon toucher, et toutes les photos montrent
                 # l'appui sur la plante.
-                _os("LeftUpLeg"): Appui((-0.09, -0.40, 0.205), (0, -0.70, -0.71)),
-                _os("RightUpLeg"): Appui((+0.09, -0.40, 0.205), (0, -0.70, -0.71)),
-                _os("LeftFoot"): (0, -0.60, -0.80),
-                _os("RightFoot"): (0, -0.60, -0.80),
+                _os("LeftUpLeg"): Appui((-0.12, -0.593, 0.184), (0, -0.70, -0.71)),
+                _os("RightUpLeg"): Appui((+0.12, -0.593, 0.184), (0, -0.70, -0.71)),
+                _os("LeftFoot"): (0, -0.77, -0.638),
+                _os("RightFoot"): (0, -0.77, -0.638),
             }),
             _pose({
-                _os("Spine"): (0, +0.600, -0.800),
-                _os("Spine1"): (0, +0.600, -0.800),
-                _os("Spine2"): (0, +0.600, -0.800),
-                _os("Neck"): (0, +0.600, -0.800),
-                _os("Head"): (0, +0.600, -0.800),
-                _os("LeftArm"): Appui((-0.18, +0.55, 0.065), (-0.45, +0.55, +0.70)),
-                _os("RightArm"): Appui((+0.18, +0.55, 0.065), (+0.45, +0.55, +0.70)),
+                _os("Spine"): (0, +0.500, -0.866),
+                _os("Spine1"): (0, +0.500, -0.866),
+                _os("Spine2"): (0, +0.500, -0.866),
+                _os("Neck"): (0, +0.500, -0.866),
+                _os("Head"): (0, +0.500, -0.866),
+                _os("LeftArm"): Appui((-0.22, +0.55, 0.065), (-0.45, +0.55, +0.70)),
+                _os("RightArm"): Appui((+0.22, +0.55, 0.065), (+0.45, +0.55, +0.70)),
                 _os("LeftHand"): APlat((0, +1, 0), paume=(0, 0, -1)),
                 _os("RightHand"): APlat((0, +1, 0), paume=(0, 0, -1)),
-                _os("LeftUpLeg"): Appui((-0.09, -0.40, 0.205), (0, -0.70, -0.71)),
-                _os("RightUpLeg"): Appui((+0.09, -0.40, 0.205), (0, -0.70, -0.71)),
-                _os("LeftFoot"): (0, -0.60, -0.80),
-                _os("RightFoot"): (0, -0.60, -0.80),
+                _os("LeftUpLeg"): Appui((-0.12, -0.593, 0.184), (0, -0.70, -0.71)),
+                _os("RightUpLeg"): Appui((+0.12, -0.593, 0.184), (0, -0.70, -0.71)),
+                _os("LeftFoot"): (0, -0.77, -0.638),
+                _os("RightFoot"): (0, -0.77, -0.638),
             }),
         ],
     },
