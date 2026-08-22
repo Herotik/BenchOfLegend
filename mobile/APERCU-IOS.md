@@ -22,11 +22,27 @@ npx eas-cli login          # compte Expo, gratuit
 npx eas-cli init           # inscrit un projectId dans app.json
 ```
 
-**2. Lancer la build** :
+**2. Lancer la build**, depuis un poste :
 
 ```bash
-npx eas-cli build --platform ios --profile simulateur
+npx eas-cli@22.2.0 build --platform ios --profile simulateur
 ```
+
+ou, sans poste du tout, **depuis GitHub** : onglet Actions → « Fabriquer l'app
+mobile » → *Run workflow*, en choisissant la branche dans le premier sélecteur.
+C'est le même chemin que la publication, et pour les mêmes raisons — un poste
+d'entreprise où npm casse, et surtout une version d'eas-cli figée des deux
+côtés, sans quoi les empreintes divergent et le téléphone cesse de recevoir les
+mises à jour.
+
+Le workflow lance les tests et `tsc` avant de dépenser un quart d'heure de file
+d'attente, puis rend un lien vers la build. L'archive s'installe depuis
+expo.dev.
+
+Une réserve : EAS réutilise le certificat et le profil de provisionnement qu'il
+garde sur ses serveurs, ce qui marche en `--non-interactive` tant qu'aucun
+appareil nouveau n'est à déclarer. **Enregistrer un iPhone** demande encore un
+poste : `npx eas-cli@22.2.0 device:create`.
 
 Compte une dizaine de minutes, file d'attente comprise. La commande rend une
 URL de téléchargement : c'est une archive contenant un `.app`.

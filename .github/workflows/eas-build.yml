@@ -1,0 +1,125 @@
+# Fabrique l'app mobile depuis GitHub, sans passer par un poste.
+#
+# ## Pourquoi ce workflow existe
+#
+# Deux raisons, et la seconde est la plus coûteuse à découvrir.
+#
+# **La première** est celle du workflow de mise à jour : sur un poste
+# d'entreprise, npm échoue avec `ECOMPROMISED / Lock compromised` — un verrou de
+# cache retiré sous ses pieds. GitHub Actions part d'une machine neuve.
+#
+# **La seconde** est l'empreinte. `runtimeVersion` suit la politique
+# `fingerprint`, calculée par eas-cli au moment où l'on publie *et* au moment où
+# l'on construit. Si les deux ne tournent pas la même version de l'outil, elles
+# n'obtiennent pas la même empreinte, et la build cesse de recevoir les mises à
+# jour — sans message ni erreur. C'est arrivé : eas-cli est passé de 21.8 à 22.2
+# le 20 août, le workflow demandait `latest`, et un iPhone est resté quinze
+# jours sur une version que plus rien n'atteignait.
+#
+# Construire ici, avec **la même version figée** que la publication, supprime le
+# problème à la racine : les deux commandes lisent le même outil.
+#
+# ## Les identifiants Apple
+#
+# EAS garde le certificat de distribution et le profil de provisionnement sur
+# ses serveurs. En `--non-interactive`, il les réutilise sans rien demander —
+# tant qu'ils sont valides et qu'aucun appareil nouveau n'est à déclarer. Pour
+# **enregistrer un iPhone**, il faut passer par un poste :
+# `npx eas-cli@22.2.0 device:create`, puis revenir ici.
+#
+# ## S'en servir
+#
+#   Onglet Actions → « Fabriquer l'app mobile » → Run workflow
+#
+# Choisir la **branche** dans le premier sélecteur : c'est elle qui sera
+# compilée. La build part dans la file d'EAS et le workflow n'attend pas —
+# il rend un lien à suivre, et l'archive s'installe depuis expo.dev.
+name: Fabriquer l'app mobile
+
+on:
+  workflow_dispatch:
+    inputs:
+      plateforme:
+        description: Plateforme
+        type: choice
+        default: ios
+        options: [ios, android, all]
+      profil:
+        description: Profil de build
+        type: choice
+        default: appareil
+        options: [appareil, developpement, apercu, simulateur, production]
+
+jobs:
+  fabriquer:
+    name: eas build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            mobile/package-lock.json
+
+      # **Figée**, et à la même valeur que le workflow de publication. C'est ce
+      # qui garantit que la build et les mises à jour calculent la même
+      # empreinte. Changer l'une sans l'autre isole les téléphones.
+      - name: Installer eas-cli
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: 22.2.0
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Installer les dépendances de la racine
+        run: npm ci
+
+      - name: Installer les dépendances de l'app
+        working-directory: mobile
+        run: npm ci
+
+      # Les mêmes gardes que la publication. Une build coûte un quart d'heure
+      # de file d'attente : autant ne pas la dépenser sur du code qui ne
+      # compile pas.
+      - name: Tests unitaires
+        run: npx vitest run
+
+      - name: Vérifier les types de l'app
+        working-directory: mobile
+        run: npx tsc --noEmit
+
+      # `--no-wait` : la compilation tourne sur les machines d'EAS, pas ici.
+      # Bloquer un exécutant GitHub pendant vingt minutes pour regarder une
+      # file d'attente ne sert à rien.
+      - name: Lancer la build
+        id: build
+        working-directory: mobile
+        run: |
+          eas build \
+            --platform "${{ inputs.plateforme }}" \
+            --profile "${{ inputs.profil }}" \
+            --non-interactive \
+            --no-wait \
+            --json > builds.json
+          cat builds.json
+
+      - name: Récapitulatif
+        if: always()
+        working-directory: mobile
+        run: |
+          {
+            echo "## Builds lancées"
+            echo
+            node -e '
+              const builds = require("./builds.json");
+              for (const b of builds) {
+                const url = `https://expo.dev/accounts/herotik/projects/frame-of-legends/builds/${b.id}`;
+                console.log(`- **${b.platform}** · profil \`${b.buildProfile}\` · [suivre la build](${url})`);
+              }
+              console.log("");
+              console.log("Quand elle est terminée, l’archive s’installe depuis cette page.");
+            ' 2>/dev/null || echo "_La build n'a pas démarré — voir le journal ci-dessus._"
+          } >> "$GITHUB_STEP_SUMMARY"
