@@ -26,6 +26,7 @@ import { Bouton } from "../../src/composants/Bouton";
 import { Carte, Ornement, TitreSection } from "../../src/composants/Carte";
 import { Chargement } from "../../src/composants/Etats";
 import { Marque } from "../../src/composants/Logo";
+import { Version } from "../../src/composants/Version";
 import { jourEnFrancais } from "../../src/outils/dates";
 import { POLICE_TEXTE_MOYEN, POLICE_TEXTE, POLICE_TITRE, type Couleurs } from "../../src/theme/couleurs";
 import { useStyles, useTheme, type ChoixTheme } from "../../src/theme/theme";
@@ -154,6 +155,7 @@ export default function Reglages() {
         <Marque taille={44} />
         <Text style={styles.signatureNom}>FRAME OF LEGENDS</Text>
         <Text style={styles.mention}>Serveur : {BASE_API}</Text>
+        <Version />
       </View>
     </ScrollView>
   );
