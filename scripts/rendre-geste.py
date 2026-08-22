@@ -510,12 +510,19 @@ def poser_le_banc(banc, mini, maxi):
     # sol, si bien que son centre tombe vers les pieds et que la tête finit
     # dans le vide, au bout du banc. Un banc dont la tête dépasse donne un
     # corps qui glisse, ce qui est exactement la faute qu'on corrige ailleurs.
+    # Une **liste** en pose plusieurs, ce que demandent les dips entre deux
+    # chaises : un meuble de chaque côté du corps. `x` dit alors où, et il n'a
+    # pas de valeur par défaut utile — un banc de dips est à droite ou à
+    # gauche, jamais au milieu.
+    if isinstance(banc, (list, tuple)):
+        return [poser_le_banc(un, mini, maxi) for un in banc]
+
     if isinstance(banc, dict):
         hauteur = banc["hauteur"]
         longueur = banc.get("longueur", 0.55)
         milieu_y = banc["bord"] + longueur / 2
-        centre_x = 0.0
-        return _dessiner_le_banc(centre_x, milieu_y, longueur, hauteur)
+        return _dessiner_le_banc(banc.get("x", 0.0), milieu_y, longueur, hauteur,
+                                 banc.get("largeur", 0.34))
 
     hauteur = banc
     tete, bassin = None, None
@@ -541,7 +548,7 @@ def poser_le_banc(banc, mini, maxi):
     return _dessiner_le_banc(centre_x, milieu_y, longueur, hauteur)
 
 
-def _dessiner_le_banc(centre_x, milieu_y, longueur, hauteur):
+def _dessiner_le_banc(centre_x, milieu_y, longueur, hauteur, largeur=0.34):
     """Le meuble lui-même, une fois sa place connue."""
     epaisseur = 0.08
     bpy.ops.mesh.primitive_cube_add(
@@ -557,7 +564,7 @@ def _dessiner_le_banc(centre_x, milieu_y, longueur, hauteur):
     # personnage tombaient **dedans** au lieu de le border. La largeur d'un banc
     # de musculation ne dépend pas de ce qu'on y fait : elle fait la largeur du
     # dos, un peu plus de trente centimètres.
-    banc.scale = (0.34, longueur, epaisseur)
+    banc.scale = (largeur, longueur, epaisseur)
 
     # Un **bleu sombre**, et non le gris de la première version. Le gris moyen
     # avait la même valeur que la chair du mannequin : ses deux pieds verticaux

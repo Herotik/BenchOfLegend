@@ -500,7 +500,22 @@ export const PLANCHES: Record<string, Planche> = {
     source: require("../../assets/gestes/dips.png"),
     images: 32,
     colonnes: 4,
+    duree: 2400,
+  },
+  "dips-jambes-tendues": {
+    source: require("../../assets/gestes/dips-jambes-tendues.png"),
+    images: 32,
+    colonnes: 4,
     duree: 2600,
+  },
+  // Mains **à côté** du corps et non derrière : c'est la mécanique des barres
+  // parallèles, et elle ne se lit pas de profil — les deux chaises s'y
+  // superposent au corps. D'où le trois-quarts.
+  "dips-deux-chaises": {
+    source: require("../../assets/gestes/dips-deux-chaises.png"),
+    images: 32,
+    colonnes: 4,
+    duree: 2500,
   },
 };
 /* eslint-enable @typescript-eslint/no-require-imports */

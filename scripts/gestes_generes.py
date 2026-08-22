@@ -1996,8 +1996,12 @@ GESTES = {
         ],
     },
 
-    # Dips sur chaise. Mains sur l'arête d'un banc derrière soi, bassin devant,
-    # jambes tendues talons au sol : on descend en pliant les coudes.
+    # Dips sur chaise, **jambes tendues**. Mains sur l'arête d'un banc derrière
+    # soi, bassin devant, talons au sol : on descend en pliant les coudes.
+    #
+    # La variante la plus dure des trois, et la seule où la jambe contraint la
+    # trajectoire : talon planté et genou tendu, la hanche suit un arc autour
+    # de la cheville et **recule de dix centimètres en descendant**.
     #
     # ## Les critères
     #
@@ -2034,7 +2038,7 @@ GESTES = {
     # suit un arc autour de la cheville. Plus le bassin descend, plus il se
     # rapproche du banc — ce qui est exactement pourquoi les descriptions
     # disent de rester près du banc. Le geste ne le décrit pas, il l'obtient.
-    "dips": {
+    "dips-jambes-tendues": {
         "vue": "profil",
         "duree": 2600,
         "assise": ((+0.00, +0.00, +1.00), (+0.00, -1.00, +0.00)),
@@ -2084,6 +2088,135 @@ GESTES = {
                 _os("RightHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
                 _os("LeftUpLeg"): Appui((+0.10, -0.936, 0.079), (0, -0.99, +0.14)),
                 _os("RightUpLeg"): Appui((-0.10, -0.936, 0.079), (0, -0.99, +0.14)),
+                _os("LeftFoot"): (0, -0.95, +0.31),
+                _os("RightFoot"): (0, -0.95, +0.31),
+            }),
+        ],
+    },
+
+    # Dips sur chaise, genoux pliés. La version de base : pieds à plat au sol,
+    # ramenés sous les genoux.
+    #
+    # C'est la seule des trois où la jambe **ne contraint rien**. Le genou est
+    # libre de se plier davantage à la descente — de 88° à 64° mesurés —, si
+    # bien que le bassin descend droit au lieu de reculer. D'où une hanche qui
+    # reste à la même profondeur aux deux clés, là où la version jambes tendues
+    # doit reculer de dix centimètres.
+    #
+    # Tout le reste est commun aux trois : arête à 0,45 m, main trois
+    # centimètres plus haut, descente de seize centimètres et demi imposée par
+    # le coude à angle droit.
+    "dips": {
+        "vue": "profil",
+        "duree": 2400,
+        "assise": ((+0.00, +0.00, +1.00), (+0.00, -1.00, +0.00)),
+        "ancrage": False,
+        "hauteur": 0.642,
+        "banc": {"hauteur": 0.45, "bord": 0.06, "longueur": 0.55},
+        "bassin": [(0, -0.240, 0.00), (0, -0.240, -0.166)],
+        "pauses": [0.16, 0.04],
+        "cles": [
+            _pose({
+                _os("Spine"): (0, +0.438, +0.899),
+                _os("Spine1"): (0, +0.438, +0.899),
+                _os("Spine2"): (0, +0.438, +0.899),
+                _os("Neck"): (0, +0.20, +0.98),
+                _os("Head"): (0, +0.10, +0.99),
+                _os("LeftArm"): Appui((+0.20, +0.10, 0.48), (0, +1.00, 0)),
+                _os("RightArm"): Appui((-0.20, +0.10, 0.48), (0, +1.00, 0)),
+                _os("LeftHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                _os("RightHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                # Pieds à plat, chevilles à cinquante centimètres devant le
+                # bassin : le genou tombe alors à 88°, ce que montrent les
+                # photos de la version facile.
+                _os("LeftUpLeg"): Appui((+0.10, -0.739, 0.087), (0, -0.99, +0.14)),
+                _os("RightUpLeg"): Appui((-0.10, -0.739, 0.087), (0, -0.99, +0.14)),
+                _os("LeftFoot"): (0, -0.78, -0.63),
+                _os("RightFoot"): (0, -0.78, -0.63),
+            }),
+            _pose({
+                _os("Spine"): (0, +0.438, +0.899),
+                _os("Spine1"): (0, +0.438, +0.899),
+                _os("Spine2"): (0, +0.438, +0.899),
+                _os("Neck"): (0, +0.20, +0.98),
+                _os("Head"): (0, +0.10, +0.99),
+                _os("LeftArm"): Appui((+0.20, +0.10, 0.48), (0, +1.00, 0)),
+                _os("RightArm"): Appui((-0.20, +0.10, 0.48), (0, +1.00, 0)),
+                _os("LeftHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                _os("RightHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                _os("LeftUpLeg"): Appui((+0.10, -0.739, 0.087), (0, -0.99, +0.14)),
+                _os("RightUpLeg"): Appui((-0.10, -0.739, 0.087), (0, -0.99, +0.14)),
+                _os("LeftFoot"): (0, -0.78, -0.63),
+                _os("RightFoot"): (0, -0.78, -0.63),
+            }),
+        ],
+    },
+
+    # Dips entre deux chaises. Une chaise de chaque côté, mains sur les
+    # assises, corps suspendu entre les deux.
+    #
+    # ## Ce qui la distingue des deux autres
+    #
+    # Les mains ne sont plus **derrière** mais **à côté**, à trente-deux
+    # centimètres de l'axe. Le bras descend donc à la verticale au lieu de
+    # partir en arrière, et le tronc se redresse : douze degrés au lieu de
+    # vingt-six. C'est la mécanique des barres parallèles, pas celle du banc,
+    # et cela se voit au premier coup d'œil — c'est bien pourquoi elle méritait
+    # sa propre planche plutôt que de partager celle des dips sur chaise.
+    #
+    # Les jambes restent tendues devant, talons au sol : les assises ne font
+    # que quarante-cinq centimètres, et à cette hauteur un corps suspendu ne
+    # peut pas laisser pendre ses jambes sans toucher le sol. C'est la vraie
+    # contrainte de l'exercice à la maison, et non une simplification.
+    "dips-deux-chaises": {
+        "vue": "trois-quarts",
+        "duree": 2500,
+        "assise": ((+0.00, +0.00, +1.00), (+0.00, -1.00, +0.00)),
+        "ancrage": False,
+        "hauteur": 0.626,
+        # Deux chaises, une de chaque côté, plus étroites qu'un banc.
+        "banc": [
+            {"hauteur": 0.45, "bord": -0.32, "longueur": 0.50, "x": +0.38,
+             "largeur": 0.30},
+            {"hauteur": 0.45, "bord": -0.32, "longueur": 0.50, "x": -0.38,
+             "largeur": 0.30},
+            # Trente-huit centimètres d'axe, pour trente de large : le bord
+            # intérieur tombe à 0,23 et la cuisse s'arrête à 0,19. Quatre
+            # centimètres de jeu. À trente-quatre, l'assise et la cuisse se
+            # touchaient.
+        ],
+        "bassin": [(0, -0.100, 0.00), (0, +0.007, -0.173)],
+        "pauses": [0.16, 0.04],
+        "cles": [
+            _pose({
+                _os("Spine"): (0, +0.208, +0.978),
+                _os("Spine1"): (0, +0.208, +0.978),
+                _os("Spine2"): (0, +0.208, +0.978),
+                _os("Neck"): (0, +0.10, +0.99),
+                _os("Head"): (0, +0.05, +1.00),
+                # Mains sur les assises, de part et d'autre du bassin. Le coude
+                # part droit vers l'arrière, comme sur des barres parallèles.
+                _os("LeftArm"): Appui((+0.32, -0.10, 0.48), (0, +1.00, 0)),
+                _os("RightArm"): Appui((-0.32, -0.10, 0.48), (0, +1.00, 0)),
+                _os("LeftHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                _os("RightHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                _os("LeftUpLeg"): Appui((+0.10, -0.799, 0.079), (0, -0.99, +0.14)),
+                _os("RightUpLeg"): Appui((-0.10, -0.799, 0.079), (0, -0.99, +0.14)),
+                _os("LeftFoot"): (0, -0.95, +0.31),
+                _os("RightFoot"): (0, -0.95, +0.31),
+            }),
+            _pose({
+                _os("Spine"): (0, +0.208, +0.978),
+                _os("Spine1"): (0, +0.208, +0.978),
+                _os("Spine2"): (0, +0.208, +0.978),
+                _os("Neck"): (0, +0.10, +0.99),
+                _os("Head"): (0, +0.05, +1.00),
+                _os("LeftArm"): Appui((+0.32, -0.10, 0.48), (0, +1.00, 0)),
+                _os("RightArm"): Appui((-0.32, -0.10, 0.48), (0, +1.00, 0)),
+                _os("LeftHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                _os("RightHand"): APlat((0, -1, 0), paume=(0, 0, -1)),
+                _os("LeftUpLeg"): Appui((+0.10, -0.799, 0.079), (0, -0.99, +0.14)),
+                _os("RightUpLeg"): Appui((-0.10, -0.799, 0.079), (0, -0.99, +0.14)),
                 _os("LeftFoot"): (0, -0.95, +0.31),
                 _os("RightFoot"): (0, -0.95, +0.31),
             }),
