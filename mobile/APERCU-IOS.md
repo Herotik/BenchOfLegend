@@ -44,6 +44,19 @@ garde sur ses serveurs, ce qui marche en `--non-interactive` tant qu'aucun
 appareil nouveau n'est à déclarer. **Enregistrer un iPhone** demande encore un
 poste : `npx eas-cli@22.2.0 device:create`.
 
+Une seconde, qui ne se devine pas : **un workflow n'apparaît dans l'onglet
+Actions que si son fichier existe sur la branche par défaut.** Écrit sur une
+branche de travail, il reste invisible — on ne peut pas le lancer, y compris
+sur cette branche-là. La liste des workflows se construit à partir de `main` ;
+le sélecteur de branche ne sert qu'ensuite, à choisir le code compilé. Les deux
+lectures sont indépendantes, et c'est ce qui trompe : le fichier exécuté est
+bien celui de la branche choisie, seule sa *présence* se vérifie sur `main`.
+
+D'où deux conséquences. Ajouter un workflow demande un commit sur `main`, même
+quand tout le reste du travail vit ailleurs. Et **le premier sélecteur compte
+autant que les autres** : lancé sur `main`, « Fabriquer l'app mobile »
+compilerait une app dépourvue de ce qu'on voulait justement essayer.
+
 Compte une dizaine de minutes, file d'attente comprise. La commande rend une
 URL de téléchargement : c'est une archive contenant un `.app`.
 
