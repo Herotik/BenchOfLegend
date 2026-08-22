@@ -87,6 +87,19 @@ seul l'œil sait si l'arrêt appartient à l'exercice.
   93° du sol, mesuré —, donc la hauteur du bassin découle de la longueur du
   bras. Voir `HAUTEUR_PLANCHE`.
 
+## Deux pièges de mesure qui ont coûté cher
+
+- **Le mannequin arrive en deux maillages.** `Beta_Surface` est la peau,
+  `Beta_Joints` les billes d'articulation. `next(o for o in … if o.type ==
+  "MESH")` tombe sur l'un ou sur l'autre selon l'ordre, et mesurer contre les
+  billes fait ressortir « à cinq centimètres du corps » un bras enfoncé de deux
+  dans le thorax. Prendre le maillage **le plus fourni**.
+- **La tête de l'humérus est dans le tronc**, par construction : l'articulation
+  de l'épaule est enfouie sous le deltoïde. Un contrôle de pénétration qui
+  échantillonne le bras depuis son origine crie sur tous les gestes où le bras
+  longe le buste. `auditer-gestes.py` ne mesure l'humérus qu'à partir de son
+  milieu.
+
 ## Ce qui reste ouvert
 
 - ~~**Une assise par pose clé.**~~ Levée, et elle n'avait jamais existé : les os

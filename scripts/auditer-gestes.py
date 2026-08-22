@@ -29,6 +29,12 @@ chant. Rien ne le signalait, parce que rien ne regardait.
 - **L'orientation des paumes**, quand la main porte. Une main posée à plat et
   une main posée sur le chant ont la même direction et ne diffèrent que par le
   roulis ; c'est exactement la faute qui est passée deux fois.
+- **Le bras dans le tronc.** Un humérus qui passe sous la peau de la poitrine
+  se voit tout de suite à l'œil et ne se déduit d'aucune direction écrite :
+  c'est l'endroit où la cible tombe qui décide, pas l'angle. Sept versions du
+  russian twist ont été livrées avec le bras opposé enfoncé de deux à quatre
+  centimètres dans le thorax, chacune contrôlée et déclarée bonne, parce que
+  rien ici ne regardait la chair.
 
 Un appui qui **décolle** n'est pas une faute : sur une planche jambes
 alternées, chaque pied se lève à son tour, et c'est le geste. Ce qui serait
@@ -113,6 +119,86 @@ def paume(armature, cote):
     return doigts.cross(vers) if cote == "Left" else vers.cross(doigts)
 
 
+#: Os qui portent la chair du tronc. C'est dedans qu'un bras n'a rien à faire.
+TRONC = {"Hips", "Spine", "Spine1", "Spine2"}
+
+#: Retenu d'un geste à l'autre : dépouiller les groupes de sommets coûte une
+#: seconde, et rien n'y change entre deux poses du même corps.
+_PEAU_DU_TRONC = []
+
+
+def peau_du_tronc(corps):
+    if not _PEAU_DU_TRONC:
+        groupes = {g.index: g.name.removeprefix("mixamorig:")
+                   for g in corps.vertex_groups}
+        for v in corps.data.vertices:
+            if not v.groups:
+                continue
+            majoritaire = max(v.groups, key=lambda g: g.weight)
+            if groupes.get(majoritaire.group) in TRONC:
+                _PEAU_DU_TRONC.append(v.index)
+    return _PEAU_DU_TRONC
+
+
+def enfoncement(contexte, armature):
+    """De combien le bras entre dans le tronc, au pire, sur cette image.
+
+    On échantillonne l'humérus et l'avant-bras, on cherche pour chaque point le
+    sommet de peau du tronc le plus proche, et l'on regarde de quel côté de sa
+    normale il tombe. Négatif, le bras est dehors, et le nombre dit de combien.
+
+    C'est la mesure de la chair, pas celle d'un plan : un coude « en avant du
+    plan des épaules » de trois centimètres est encore dans les côtes, et c'est
+    précisément l'approximation qui avait fait croire le geste réparé.
+    """
+    from mathutils.kdtree import KDTree
+
+    depsgraph = contexte.evaluated_depsgraph_get()
+    # Le mannequin Mixamo arrive en **deux** maillages : `Beta_Surface`, la
+    # peau, et `Beta_Joints`, les billes d'articulation. Prendre le premier
+    # venu tombe sur les billes une fois sur deux, et l'on mesure alors la
+    # distance à une petite sphère posée sur la colonne — un bras enfoncé dans
+    # le thorax en ressort « à cinq centimètres du corps ». C'est la peau qu'on
+    # veut, donc le maillage le plus fourni.
+    corps = max((o for o in contexte.scene.objects if o.type == "MESH"),
+                key=lambda o: len(o.data.vertices))
+    indices = peau_du_tronc(corps)
+    evalue = corps.evaluated_get(depsgraph)
+    monde, tourne = evalue.matrix_world, evalue.matrix_world.to_3x3()
+    sommets = evalue.data.vertices
+
+    arbre = KDTree(len(indices))
+    points, normales = [], []
+    for rang, i in enumerate(indices):
+        points.append(monde @ sommets[i].co)
+        normales.append((tourne @ sommets[i].normal).normalized())
+        arbre.insert(points[rang], rang)
+    arbre.balance()
+
+    def tete(n):
+        return armature.matrix_world @ armature.pose.bones[f"mixamorig:{n}"].head
+
+    def queue(n):
+        return armature.matrix_world @ armature.pose.bones[f"mixamorig:{n}"].tail
+
+    # L'humérus ne se mesure qu'à partir de son milieu. Sa tête est **dans** le
+    # corps par construction — l'articulation de l'épaule est enfouie sous le
+    # deltoïde —, et l'y chercher fait crier le contrôle sur le superman et le
+    # relevé en V, dont les bras longent le buste sans rien traverser.
+    pire = -9.0
+    for cote in ("Left", "Right"):
+        for a, b, depart in (
+            (tete(f"{cote}Arm"), tete(f"{cote}ForeArm"), 0.45),
+            (tete(f"{cote}ForeArm"), queue(f"{cote}Hand"), 0.0),
+        ):
+            for i in range(12):
+                avance = depart + (1.0 - depart) * (i / 11)
+                p = a + (b - a) * avance
+                _, j, _ = arbre.find(p)
+                pire = max(pire, -(p - points[j]).dot(normales[j]))
+    return pire
+
+
 def auditer(armature, nom):
     geste = gg.GESTES[nom]
     numeros = gg.appliquer(armature, nom, IMAGES, bpy.context)
@@ -120,10 +206,12 @@ def auditer(armature, nom):
     nomme = ancrage if isinstance(ancrage, (list, tuple)) else ()
 
     bas, appuis, paumes = [], {n: [] for n in nomme}, {"Left": [], "Right": []}
+    dedans = []
     for numero in numeros:
         bpy.context.scene.frame_set(numero)
         bpy.context.view_layer.update()
         bas.append(plus_bas(bpy.context))
+        dedans.append(enfoncement(bpy.context, armature))
         for n, p in gg.contacts(bpy.context, armature, nomme).items():
             appuis[n].append(p.z)
         for cote in paumes:
@@ -152,8 +240,15 @@ def auditer(armature, nom):
                 f"pas le sol"
             )
 
+    # Un centimètre de tolérance : la peau du bras et celle du tronc se
+    # touchent pour de bon quand les deux se frôlent, et le maillage n'est pas
+    # assez fin pour distinguer un contact d'une intersection à ce niveau-là.
+    if max(dedans) > 0.01:
+        fautes.append(f"bras dans le tronc ({max(dedans) * 100:+.0f} cm)")
+
     etat = "ok" if not fautes else "; ".join(fautes)
-    print(f"  {nom:26s} sol {min(bas) * 100:+5.1f} cm   {etat}")
+    print(f"  {nom:26s} sol {min(bas) * 100:+5.1f} cm   "
+          f"bras {max(dedans) * 100:+5.1f}   {etat}")
     return not fautes
 
 

@@ -113,7 +113,14 @@ def appuis_a_portee(pose, geste):
     # rowing, elle plaçait l'épaule à plat à 0,31 m pendant qu'elle est en
     # réalité à 0,40, et refusait comme « hors de portée » une barre que la
     # main tient très bien.
+    #
+    # `Spine` peut s'écrire en direction nue **ou** en `APlat` — le russian
+    # twist a besoin du roulis pour dire sa torsion. Ne lire que le tuple
+    # renvoyait alors l'épaule sur l'axe de l'assise, à trente centimètres de
+    # là où elle est, et refusait deux appuis parfaitement atteignables.
     colonne = pose.get(g._os("Spine"))
+    if isinstance(colonne, g.APlat):
+        colonne = colonne.direction
     axe = _normalise(
         colonne if isinstance(colonne, (tuple, list)) and len(colonne) == 3
         else geste.get("assise", ((0, 0, 1), None))[0]
@@ -158,15 +165,38 @@ def pole_a_lendroit(pose, geste):
     exactement ceux des gestes au sol.
 
     « L'avant » se prend dans le repère du corps : à plat ventre, c'est le sol.
+
+    ## Sauf quand les deux mains visent le même point
+
+    Le coude vers l'arrière suppose l'épaule au repos. Elle ne l'est plus dès
+    que les **mains sont jointes** : l'un des deux bras traverse forcément le
+    devant du corps pour rejoindre l'autre, son humérus tourne vers l'intérieur,
+    et son coude mène alors vers l'avant. C'est le russian twist, et c'est aussi
+    n'importe quel geste à deux mains sur un côté.
+
+    La règle rendait donc ce geste inécrivable, et le contourner l'a cassé : le
+    pôle arrière imposé au bras qui croise plantait l'humérus **onze centimètres
+    sous la peau du thorax**. Mieux vaut lever la règle là où elle ne dit rien
+    de vrai et confier la question à `auditer-gestes.py`, qui mesure la
+    pénétration sur le maillage au lieu de la deviner sur un repère.
     """
     avant = _normalise(geste.get("assise", (None, (0, -1, 0)))[1])
     fautes = []
+    mains = [v.cible for n, v in pose.items()
+             if isinstance(v, g.Appui) and n.removeprefix("mixamorig:") in
+             ("LeftArm", "RightArm")]
+    jointes = (
+        len(mains) == 2
+        and sum((a - b) ** 2 for a, b in zip(*mains)) ** 0.5 < 0.10
+    )
     for nom, valeur in pose.items():
         if not isinstance(valeur, g.Appui):
             continue
         court = nom.removeprefix("mixamorig:")
         pole = _normalise(valeur.pole)
         vers_avant = sum(a * b for a, b in zip(pole, avant))
+        if court.endswith("Arm") and jointes:
+            continue
         if court.endswith("UpLeg") and vers_avant < 0.1:
             fautes.append(
                 f"{court} : pôle {tuple(round(c, 2) for c in pole)} — le genou "

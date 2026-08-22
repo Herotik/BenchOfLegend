@@ -1206,34 +1206,52 @@ GESTES = {
 
     # Russian twist, relevé sur trois vidéos de démonstration.
     #
-    # ## Ce qui fait l'exercice
+    # ## Le mouvement, tel que les vidéos le montrent
     #
-    # Le torse pivote de gauche à droite, les bras avec, et **le coude touche
-    # le sol** au bout de la course de chaque côté. C'est ce contact-là qui
-    # borne le mouvement et le rend lisible : sans lui, on ne sait pas jusqu'où
-    # tourner, et cinq versions ont balancé les bras à mi-chemin sans que rien
-    # ne dise que c'était fini.
+    # Assis, buste en arrière d'une quarantaine de degrés, genoux pliés, talons
+    # décollés, mains jointes devant la poitrine. Ce qui tourne, c'est la
+    # **ceinture scapulaire** : les épaules pivotent autour de l'axe du tronc,
+    # une épaule part en avant pendant que l'autre recule, et les mains suivent
+    # jusqu'à venir frôler le tapis à côté de la hanche.
     #
-    # Un coude qui descend au tapis à côté de la hanche demande plus qu'une
-    # rotation : il faut que le buste **penche** du même côté. Les deux vont
-    # ensemble, et c'est pourquoi les clés extrêmes inclinent la colonne en
-    # plus de la faire rouler.
+    # Cette description a coûté six essais, dont un qui a failli passer. Ce qui
+    # les a tous tués tient en une phrase : **une inclinaison latérale n'est pas
+    # une rotation**. Coucher le buste sur le côté descend bien la main au sol,
+    # mais laisse les deux épaules à la même profondeur — et le bras de
+    # l'épaule opposée doit alors traverser la poitrine pour rejoindre les
+    # mains. Mesuré sur la version précédente : l'humérus droit passait
+    # **2,6 cm sous la peau du thorax** sur quatorze images sur seize.
     #
-    # ## Les mesures
+    # ## Les nombres, et d'où ils sortent
     #
-    # Moyenne des **vecteurs** unitaires du relevé sur trente-huit images —
-    # jamais moyenne des angles, qui explose quand le segment passe près de la
+    # Relevé sur trente-huit images, en moyennant les **vecteurs** unitaires et
+    # jamais les angles, qui explosent quand un segment passe près de la
     # verticale de l'image :
     #
-    #     bassin → épaule    (-0,436 ; +0,900)   64° au-dessus de l'horizontale
     #     bassin → genou     (+0,452 ; +0,892)   63°
     #     genou  → cheville  (+0,690 ; -0,724)  -46°
     #
-    # Dispersion : 1,0°, 2,2° et 3,6°. Genou fléchi à 109°, cheville au-dessus
-    # du bassin d'un quart de longueur de tronc — assise, genoux hauts, talons
-    # décollés.
+    # Repris de l'image elle-même pour ce que le relevé ne donne pas — il rend
+    # une pose de profil, et la rotation se joue dans la profondeur :
+    #
+    #     épaule au-dessus du tapis, au bout de course   ≈ 46 cm
+    #     inclinaison du tronc sur le côté, au bout      ≈ 52°
+    #     rotation des épaules autour de l'axe du tronc  ≈ 45°
+    #
+    # De là tout se déduit. Le bassin est à 0,19 m, le tronc mesure 0,432 m :
+    # la base du cou tombe à 0,43 · u du bassin, les épaules à 0,14 de part et
+    # d'autre le long de l'axe scapulaire tourné de 45°, et il ne reste qu'à
+    # vérifier que le point visé par les mains est à portée des deux bras et
+    # **devant** le plan de la poitrine. Il l'est : 0,43 m et 0,50 m pour une
+    # allonge de 0,562, et 36 cm en avant du sternum pour les deux.
     "russian-twist": {
-        "vue": "trois-quarts",
+        # De profil, comme les trois vidéos filment l'exercice. Le trois-quarts
+        # avait été pris par réflexe — « le buste plie, donc trois-quarts » —,
+        # et il tombait mal : la rotation amène le personnage face à la caméra
+        # à un bout de course et de dos à l'autre, si bien que le corps se
+        # raccourcit au moment précis où l'on veut lire la torsion. De côté,
+        # elle se lit comme dans la vidéo, par le dos qui se présente.
+        "vue": "profil",
         "duree": 1750,
         "assise": ((+0.00, +0.423, +0.906), (+0.00, -0.906, +0.423)),
         "ancrage": False,
@@ -1244,50 +1262,40 @@ GESTES = {
         # centre, qu'on traverse.
         "pauses": [0.16, 0.00, 0.16],
         "cles": [
-            # Coude **gauche au sol**, à côté de la hanche gauche. Debout comme
-            # assis, la gauche du personnage est en +X.
+            # Bout de course **à gauche**. Debout comme assis, la gauche du
+            # personnage est en +X.
             _pose(ASSIS_EN_ARRIERE, {
-                # La colonne penche à gauche **et** roule à gauche : les deux
-                # ensemble descendent l'épaule assez bas pour que le coude
-                # atteigne le tapis.
-                _os("Spine"): (+0.645, +0.665, +0.375),
-                _os("Spine1"): APlat((+0.645, +0.665, +0.375),
-                                     paume=(+0.72, -0.70, +0.00)),
-                _os("Spine2"): APlat((+0.685, +0.635, +0.355),
-                                     paume=(+0.72, -0.70, +0.00)),
-                _os("Neck"): (+0.52, +0.42, +0.74),
-                _os("Head"): (+0.44, -0.30, +0.84),
-                # Les mains jointes se posent près du sol, contre la hanche, et
-                # **en avant** du buste : seize centimètres devant le bassin, et
-                # non six.
+                # Le tronc s'incline de 52° vers la gauche en gardant sa
+                # bascule arrière : u = (0,788 ; 0,260 ; 0,558), ce qui pose
+                # l'épaule à 46 cm du tapis — la hauteur relevée.
                 #
-                # C'est ce qui fait passer les deux bras devant le torse au lieu
-                # de les laisser filer à côté. Mesuré sur la version précédente,
-                # le coude tombait à y = +0,22, c'est-à-dire à hauteur d'épaule
-                # — le bras sortait donc sur le flanc puis revenait, ce qui se
-                # lit comme un bras passé derrière. Avec la main avancée, il est
-                # à +0,12 pour une épaule à +0,26 : quatorze centimètres devant
-                # elle.
-                #
-                # Le pôle, lui, est **latéral et fixe**, et les deux le sont
-                # pour toute la durée du geste : le gauche vers +X, le droit
-                # vers -X, quelle que soit la clé.
-                #
-                # Les deux moitiés de cette phrase ont été payées. Un pôle
-                # dirigé vers l'arrière — le +0,30 en y qu'on avait mis pour
-                # contenter le contrôle des postures — plantait les deux coudes
-                # onze à douze centimètres **derrière** le plan de la poitrine :
-                # c'est le bras qui passait derrière. Et un pôle qui change de
-                # signe d'une clé à l'autre traverse zéro au passage, où la
-                # chaîne n'a plus d'orientation définie et le coude bascule d'un
-                # coup. Fixe et latéral, le coude reste devant sur les seize
-                # images — mesuré entre +0,0 et +6,9 cm en avant du sternum.
-                #
-                # La main, elle, se pose à dix centimètres du tapis et non neuf :
-                # à neuf, l'avant-bras s'enfonçait de sept millimètres dedans.
-                # À dix, le coude affleure — quatre millimètres au-dessus.
-                _os("LeftArm"): Appui((+0.42, -0.12, 0.10), (+0.99, +0.11, -0.05)),
-                _os("RightArm"): Appui((+0.42, -0.12, 0.10), (-0.99, +0.11, -0.05)),
+                # Le roulis, lui, dit la **rotation**, et il monte par étages :
+                # le bassin ne tourne pas, la colonne lombaire à moitié, le
+                # thorax en entier. C'est la torsion de l'exercice, et c'est
+                # elle qui manquait.
+                _os("Spine"): APlat((+0.839, +0.230, +0.494),
+                                    paume=(+0.273, -0.963, -0.014)),
+                _os("Spine1"): APlat((+0.839, +0.230, +0.494),
+                                     paume=(+0.472, -0.760, -0.446)),
+                _os("Spine2"): APlat((+0.839, +0.230, +0.494),
+                                     paume=(+0.472, -0.760, -0.446)),
+                _os("Neck"): (+0.65, +0.18, +0.74),
+                _os("Head"): (+0.38, -0.28, +0.88),
+                # L'axe des épaules, tourné de 45° : l'épaule gauche part en
+                # arrière et plonge, la droite vient en avant et monte. Sans ces
+                # deux lignes, les épaules gardent la profondeur que leur donne
+                # la seule inclinaison — et le bras droit n'a plus d'autre
+                # chemin que le travers de la poitrine.
+                _os("LeftShoulder"): (+0.273, +0.607, -0.746),
+                _os("RightShoulder"): (-0.273, -0.607, +0.746),
+                # Mains jointes à côté de la hanche gauche, à dix centimètres
+                # du tapis. Elles ne se superposent pas : l'une passe trois
+                # centimètres devant l'autre, le long de la normale au thorax,
+                # comme deux poings qu'on serre l'un contre l'autre.
+                _os("LeftArm"): Appui((+0.394, -0.283, +0.087),
+                                      (+0.273, +0.607, -0.746)),
+                _os("RightArm"): Appui((+0.366, -0.237, +0.113),
+                                       (-0.273, -0.607, +0.746)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
                 # Les jambes **contrebalancent** : quand les bras descendent à
@@ -1299,77 +1307,75 @@ GESTES = {
                 # des épaules, et à -0,93 avec celle des mains sur la portion la
                 # mieux détectée. Elles vont dans le sens opposé, toujours.
                 #
-                # L'amplitude relevée va d'une largeur et demie d'épaules à
-                # deux ; on en prend une, la profondeur de l'estimateur étant
-                # la coordonnée qu'il devine plutôt qu'il ne la voit. Trente
-                # centimètres de décalage latéral sur la cuisse, soit un genou
-                # qui se déplace de quinze centimètres de chaque côté.
-                _os("LeftUpLeg"): (-0.234, -0.440, +0.867),
-                _os("RightUpLeg"): (-0.339, -0.425, +0.839),
-                _os("LeftLeg"): (-0.252, -0.818, -0.518),
-                _os("RightLeg"): (-0.325, -0.808, -0.512),
-                _os("LeftFoot"): (-0.289, -0.897, -0.357),
-                _os("RightFoot"): (-0.289, -0.897, -0.357),
+                # Trente centimètres de décalage latéral sur la cuisse, soit un
+                # genou qui se déplace de quinze centimètres de chaque côté.
+                _os("LeftUpLeg"): (-0.234, -0.670, +0.704),
+                _os("RightUpLeg"): (-0.339, -0.648, +0.681),
+                _os("LeftLeg"): (-0.252, -0.678, -0.691),
+                _os("RightLeg"): (-0.322, -0.663, -0.675),
+                _os("LeftFoot"): (-0.288, -0.910, -0.297),
+                _os("RightFoot"): (-0.288, -0.910, -0.297),
             }),
-            # De face, mains jointes devant le sternum.
+            # De face, mains jointes devant le sternum. Aucune torsion : c'est
+            # le point de passage, pas une pose tenue.
             _pose(ASSIS_EN_ARRIERE, {
+                _os("Spine"): APlat((+0.00, +0.423, +0.906),
+                                    paume=(+0.00, -0.906, +0.423)),
                 _os("Spine1"): APlat((+0.00, +0.423, +0.906),
                                      paume=(+0.00, -0.906, +0.423)),
                 _os("Spine2"): APlat((+0.00, +0.423, +0.906),
                                      paume=(+0.00, -0.906, +0.423)),
-                # Les mains traversent par la **poche** que laissent le ventre
-                # et les cuisses, et non par-dessus les genoux ni par-dessous.
+                _os("Neck"): (+0.00, +0.30, +0.95),
+                _os("Head"): (+0.00, -0.20, +0.98),
+                _os("LeftShoulder"): (+1.00, +0.00, +0.00),
+                _os("RightShoulder"): (-1.00, +0.00, +0.00),
+                # Les mains remontent devant la poitrine, coudes pliés et
+                # rentrés — c'est la position de départ des trois vidéos, et
+                # non la main basse sur le ventre qu'avaient les versions
+                # précédentes. Vingt-quatre centimètres en avant de l'axe de la
+                # colonne, donc une douzaine devant la peau du thorax.
                 #
-                # Les trois trajets ont été essayés et mesurés. À cinquante et
-                # un centimètres, elles passaient pile à la hauteur des genoux
-                # — 0,51 et 0,52 — et entre eux : au travers des jambes. À
-                # vingt-deux, elles filaient **sous** les cuisses, ce qui n'est
-                # pas davantage le geste et laissait l'avant-bras à moins de
-                # cinq centimètres de la cuisse, donc chair contre chair.
-                #
-                # Les genoux étant hauts, il reste entre eux et le buste un
-                # creux : six centimètres devant le bassin, trente-huit
-                # au-dessus du tapis. La cuisse n'y est qu'à vingt-trois
-                # centimètres du sol à cette profondeur, et la main passe donc
-                # dix-huit centimètres au-dessus d'elle, sans la toucher.
-                _os("LeftArm"): Appui((+0.00, -0.06, 0.38), (+0.99, +0.11, -0.05)),
-                _os("RightArm"): Appui((+0.00, -0.06, 0.38), (-0.99, +0.11, -0.05)),
+                # Le creux entre le buste et les cuisses est ce qui décide de
+                # la hauteur : les genoux passent à 0,50 m, les mains à 0,46 m
+                # et huit centimètres derrière eux. Elles longent la cuisse,
+                # elles ne la traversent pas.
+                _os("LeftArm"): Appui((+0.00, -0.160, +0.460),
+                                      (+0.90, +0.30, -0.31)),
+                _os("RightArm"): Appui((+0.00, -0.160, +0.460),
+                                       (-0.90, +0.30, -0.31)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
+                _os("LeftUpLeg"): (+0.06, -0.688, +0.723),
+                _os("RightUpLeg"): (-0.06, -0.688, +0.723),
+                _os("LeftLeg"): (+0.04, -0.700, -0.713),
+                _os("RightLeg"): (-0.04, -0.700, -0.713),
+                _os("LeftFoot"): (+0.00, -0.95, -0.31),
+                _os("RightFoot"): (+0.00, -0.95, -0.31),
             }),
-            # Coude **droit au sol**, miroir exact.
+            # Bout de course **à droite**, miroir exact.
             _pose(ASSIS_EN_ARRIERE, {
-                _os("Spine"): (-0.645, +0.665, +0.375),
-                _os("Spine1"): APlat((-0.645, +0.665, +0.375),
-                                     paume=(-0.72, -0.70, +0.00)),
-                _os("Spine2"): APlat((-0.685, +0.635, +0.355),
-                                     paume=(-0.72, -0.70, +0.00)),
-                _os("Neck"): (-0.52, +0.42, +0.74),
-                _os("Head"): (-0.44, -0.30, +0.84),
-                _os("LeftArm"): Appui((-0.42, -0.12, 0.10), (+0.99, +0.11, -0.05)),
-                _os("RightArm"): Appui((-0.42, -0.12, 0.10), (-0.99, +0.11, -0.05)),
+                _os("Spine"): APlat((-0.839, +0.230, +0.494),
+                                    paume=(-0.273, -0.963, -0.014)),
+                _os("Spine1"): APlat((-0.839, +0.230, +0.494),
+                                     paume=(-0.472, -0.760, -0.446)),
+                _os("Spine2"): APlat((-0.839, +0.230, +0.494),
+                                     paume=(-0.472, -0.760, -0.446)),
+                _os("Neck"): (-0.65, +0.18, +0.74),
+                _os("Head"): (-0.38, -0.28, +0.88),
+                _os("LeftShoulder"): (+0.273, -0.607, +0.746),
+                _os("RightShoulder"): (-0.273, +0.607, -0.746),
+                _os("LeftArm"): Appui((-0.366, -0.237, +0.113),
+                                      (+0.273, -0.607, +0.746)),
+                _os("RightArm"): Appui((-0.394, -0.283, +0.087),
+                                       (-0.273, +0.607, -0.746)),
                 _os("LeftHand"): SUIVRE,
                 _os("RightHand"): SUIVRE,
-                # Les jambes **contrebalancent** : quand les bras descendent à
-                # droite, les genoux partent à gauche.
-                #
-                # Ce n'est pas une licence, c'est ce que fait le corps et le
-                # relevé le mesure sans ambiguïté : sur 243 images, la position
-                # latérale des genoux est corrélée à **-0,86** avec la torsion
-                # des épaules, et à -0,93 avec celle des mains sur la portion la
-                # mieux détectée. Elles vont dans le sens opposé, toujours.
-                #
-                # L'amplitude relevée va d'une largeur et demie d'épaules à
-                # deux ; on en prend une, la profondeur de l'estimateur étant
-                # la coordonnée qu'il devine plutôt qu'il ne la voit. Trente
-                # centimètres de décalage latéral sur la cuisse, soit un genou
-                # qui se déplace de quinze centimètres de chaque côté.
-                _os("LeftUpLeg"): (+0.234, -0.440, +0.867),
-                _os("RightUpLeg"): (+0.339, -0.425, +0.839),
-                _os("LeftLeg"): (+0.252, -0.818, -0.518),
-                _os("RightLeg"): (+0.325, -0.808, -0.512),
-                _os("LeftFoot"): (+0.289, -0.897, -0.357),
-                _os("RightFoot"): (+0.289, -0.897, -0.357),
+                _os("LeftUpLeg"): (+0.339, -0.648, +0.681),
+                _os("RightUpLeg"): (+0.234, -0.670, +0.704),
+                _os("LeftLeg"): (+0.322, -0.663, -0.675),
+                _os("RightLeg"): (+0.252, -0.678, -0.691),
+                _os("LeftFoot"): (+0.288, -0.910, -0.297),
+                _os("RightFoot"): (+0.288, -0.910, -0.297),
             }),
         ],
     },
