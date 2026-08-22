@@ -418,7 +418,14 @@ function EtapeExercice({
         comportement voulu : mieux vaut une case vide qu'une démonstration à
         côté de la plaque, qu'un débutant suivrait sans se douter de rien.
       */}
-      <Demonstration motif={gesteDe(exercice.nom)} taille={180} />
+      {/*
+        260 et non 180. Les planches sont rendues dans un champ de 2,60 m,
+        commun à tous les gestes pour qu'un personnage garde la même taille
+        d'un exercice à l'autre — mais un corps allongé n'occupe alors qu'une
+        bande au milieu de la vignette. À 180 points, le mannequin d'une pompe
+        faisait soixante points de haut sur un écran qui en fait sept cents.
+      */}
+      <Demonstration motif={gesteDe(exercice.nom)} taille={260} />
 
       <Carte style={styles.consigne}>
         <Text style={styles.consigneTexte}>{exercice.description}</Text>

@@ -126,5 +126,10 @@ function PlancheAnimee({ planche, taille }: { planche: Planche; taille: number }
 
 const styles = StyleSheet.create({
   // La fenêtre rogne la planche : sans elle on verrait les vingt images.
-  fenetre: { overflow: "hidden" },
+  //
+  // `alignSelf` la **centre**, et ce n'est pas un détail : une vue de largeur
+  // fixe dans une colonne se colle au bord de départ, si bien que la
+  // démonstration s'affichait contre la marge gauche avec un vide à sa droite.
+  // Personne ne l'avait vu tant qu'aucun écran ne l'affichait pour de bon.
+  fenetre: { overflow: "hidden", alignSelf: "center" },
 });
