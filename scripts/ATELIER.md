@@ -87,6 +87,35 @@ seul l'œil sait si l'arrêt appartient à l'exercice.
   93° du sol, mesuré —, donc la hauteur du bassin découle de la longueur du
   bras. Voir `HAUTEUR_PLANCHE`.
 
+## Voir les planches **dans l'app**, sans compte ni serveur
+
+C'est la dernière étape, et elle a été sautée pendant des semaines. Les
+quarante-quatre planches étaient rendues, contrôlées et associées à leurs
+exercices sans que personne les ait vues à l'écran — où deux fautes attendaient :
+la démonstration collée à la marge gauche, et un mannequin de soixante points
+de haut sur un écran qui en fait sept cents. Ni `verifier-planches.py` ni la
+page de revue ne pouvaient les voir : elles ne regardent pas la mise en page.
+
+    node scripts/bouchon-seance.js &          # sert une séance par groupe
+    cd mobile
+    echo "EXPO_PUBLIC_API_URL=http://localhost:8787" > .env
+    npx expo start --web
+
+Puis, dans la console du navigateur, avant d'ouvrir une séance :
+
+    localStorage.setItem("fol.jeton_acces", "apercu")
+    localStorage.setItem("fol.jeton_rafraichissement", "apercu")
+
+et l'on va sur `/seance/pectoraux`, `/seance/cardio`, etc. La séance servie ne
+contient que les exercices **qui ont une planche** : c'est une revue des
+démonstrations, pas un programme.
+
+Depuis un téléphone sur le même réseau, `npx expo start --web --host lan` donne
+une adresse à ouvrir dans Safari. **Expo Go ne convient pas** : le projet
+embarque des modules natifs — Google Sign-In, Apple Authentication,
+notifications, secure-store — qu'il ne contient pas. Pour l'app native il faut
+un build de développement, `npx eas-cli build --profile developpement`.
+
 ## Deux pièges de mesure qui ont coûté cher
 
 - **Le mannequin arrive en deux maillages.** `Beta_Surface` est la peau,
